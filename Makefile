@@ -42,7 +42,7 @@ MCU = atmega8
 
 # Main Oscillator Frequency
 # This is only used to define F_OSC in all assembler and c-sources.
-F_OSC = 1000000
+# F_OSC = 18432000
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex

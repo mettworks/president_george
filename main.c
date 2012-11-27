@@ -1,85 +1,370 @@
-#define F_CPU 1000000UL
+/*
+1. Version die was sinnvolles tut...
+
+Orginal CPU wurde abgeklemmt. Der Atmega schaltet das Geraet auf Kanal 23 FM ein. An PC3 und PC2 (die beiden LE's) befinden 10kOhm Widerstaende nach VCC. 
+
+Noch Quick and Dirty!
+
+*/
+
+#define F_CPU 7372800UL
+#define BAUD 9600UL
+#define CLOCK 2000
+
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stdint.h>
+#include <util/setbaud.h> 
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
 
-#define EEPROM ((void *)0x32)
+/*
+// Berechnungen
+#define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
+#define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     // Reale Baudrate
+#define BAUD_ERROR ((BAUD_REAL*1000)/BAUD) // Fehler in Promille, 1000 = kein Fehler.
+#if ((BAUD_ERROR<990) || (BAUD_ERROR>1010))
+  #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
+#endif
 
-int press (char ausgang)
+int uart_putc(unsigned char c)
 {
-  _delay_ms(100);
-  PORTC |= (1<<ausgang);
-  _delay_ms(100);
-  PORTC &= ~(1<<ausgang);
+  while (!(UCSRA & (1<<UDRE)))  
+  {
+  }                             
+  UDR = c;                     
   return 0;
 }
 
-//
-// wenn sich beim PD2 etwas tut, wird ein Interrupt ausgelöst
-// dann hätte sich die Spannung geändert, d.h. Gerät wurde aus oder eingeschaltet
-ISR(INT0_vect)
+void uart_puts (char *s)
 {
-  //
-  // wenn das Gerät stromlos wird, kann u.U. der falsche Status gespeichert werden
-  // das Gerät geht ja aus und wenn das Ding hier noch bis zum speichern kommt...
-  // daher 2 Sekunden warten...
-  _delay_ms(2000);
-  if ( PIND & (1<<PIND2) )
-  {
-    // ausgeschaltet
-    eeprom_write_byte(EEPROM, 0);
-  }
-  else
-  {
-    // eingeschaltet
-    eeprom_write_byte(EEPROM, 1);
+  while (*s)
+  {   
+    uart_putc(*s);
+    s++;
   }
 }
 
-int main (void)
+void inituart()
 {
-  cli();
-  //
-  // es wird 4 Mal die Program Taste gedrückt
-  press(PC0);
-  press(PC0);
-  press(PC0);
-  press(PC0);	    // Program
-  //
-  // einmal Power zum einschalten (gehört noch zum umgehen der Code Sperre)
-  press(PC1);	    // Power
-  //
-  // Echo und RB einmal drücken weil wir es können... ;-)
-  press(PC2);	    // Echo
-  press(PC3);	    // Beep
+  UBRRH = UBRR_VAL >> 8;
+  UBRRL = UBRR_VAL & 0xFF;
  
-  //_delay_ms(500);
+  UCSRB |= (1<<TXEN);  // UART TX einschalten
+  UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);  // Asynchron 8N1 
+}
+SIGNAL (SIG_OVERFLOW1)
+{
+  PORTC ^= (1 << PC5);
+}
+*/
+int wait(void)
+{
+  _delay_us(40);
+  return 0;
+}
+int data0(void)
+{
+  PORTC &= ~(1<<PC4);	  // Data 0
+  _delay_us(14);
+  PORTC |= (1<<PC5);	  // Clock 1
+  _delay_us(14);
+  PORTC &= ~(1<<PC5);	  // Clock 0
+  return 0;
+}
+int data1(void)
+{
+  PORTC |= (1<<PC4);	  // Data 1
+  _delay_us(14); 
+  PORTC |= (1<<PC5);	  // Clock 1
+  _delay_us(14);
+  PORTC &= ~(1<<PC5);     // Clock 0
+  PORTC &= ~(1<<PC4);	  // Data 0
+  return 0;
+}
 
-  //
-  // wenn das Gerät zuletzt aus war, schalten wir es wieder aus
-  // da die Code Sperre umgangen ist, reicht ein Druck auf die Power Taste
-  if(eeprom_read_byte(EEPROM) == 0)
-  {
-    press(PC1);
-  }
+int begin0(void)
+{
+  PORTC &= ~(1<<PC5);	// Clock 0
+  PORTC &= ~(1<<PC4);   // Data 0
+  PORTC &= ~(1<<PC3);   // LE 0
+  _delay_us(56);
+  return 0;
+}
+int end0(void)
+{
+  PORTC &= ~(1<<PC5);    // Clock 1
+  PORTC |= (1<<PC3);	// LE1
+  _delay_us(14);
+  PORTC &= ~(1<<PC3);
+   
+  return 0;
+}
 
-  //
-  // PD wird ein Eingang und der interne Pull-Up wird aktiviert
-  DDRD  &= ~(1<<PD2);
-  PORTD |= (1<<PD2);
+int begin1(void)
+{
+  PORTC &= ~(1<<PC5);	// Clock 0
+  PORTC &= ~(1<<PC4);   // Data 0
+  PORTC &= ~(1<<PC2);   // LE 0
+  _delay_us(56);
+  return 0;
+}
+int end1(void)
+{
+  PORTC &= ~(1<<PC5);    // Clock 1
+  PORTC |= (1<<PC2);	// LE1
+  _delay_us(14);
+  PORTC &= ~(1<<PC2);
+  return 0;
+}
 
-  //
-  // Interrupts scharfschalten
-  MCUCR |= (1 << ISC00);
-  GIMSK |= (1 << INT0);
-  sei();
 
-  //
-  // Däumchen drehen... 
+int main(void) 
+{
+  /*
   while(1)
   {
   }
+  */
+  DDRC=0xff;
+  PORTC=0x0;
+
+  _delay_ms(5000);
+
+  /*
+  inituart();
+  while(1)
+  {
+    uart_puts("blabla\r\n");
+    _delay_ms(500);
+  }
+  */
+  /* 
+  while(1)
+  {
+    _delay_us(1);
+    // ein
+    PORTC |= (1<<PC5);
+    _delay_us(1);
+    // aus
+    PORTC &= ~(1<<PC5);
+  }
+  */
+  /*
+  DDRC=(1<<PC5);
+  TCCR1B |= 0x01;
+  TIMSK |= (1 << TOIE1);
+  sei();
+  _delay_ms(5000);
+  cli();
+  */
+
+  //DDRC=(1<<PC2);  // LE PLL
+  //DDRC=(1<<PC3);  // LE FUER DIE AUSGAENGE
+  //DDRC=(1<<PC5);  // Clock
+  //DDRC=(1<<PC4);  // Data
+  /*
+  while(1)
+  {
+    begin();
+    data1();
+    data0();
+    end();
+    _delay_ms(1000);
+  }
+  */
+  /*
+  while(1)
+  {
+    // hell
+    begin0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    end0();
+    _delay_ms(2000);
+
+    //dunkel
+    begin0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    end0();
+    _delay_ms(2000);
+  }
+  */
+    // FM 
+    begin0();
+    // 01000001
+    data0();
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 00000001
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 0
+    data0();
+    end0();
+
+    // nochmal 
+    begin0();
+    // 10010010
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    // 00000010
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    end0();    
+
+    // PLL auf Kanal 22 rasten lassen
+    begin1();
+    // 10000001
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 00000000
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    // 01000001
+    data0();
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 00000001
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 01001001
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    // 00000001
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    // 00000100
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    // 00000000
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    // 01
+    data0();
+    data1();
+    end1();
+
+    // immer noch PLL...
+    begin1();
+    // 00011101
+    data0();
+    data0();
+    data0();
+    data1();
+    data1();
+    data1();
+    data0();
+    data1();
+    // 10100110
+    data1();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data1();
+    data0();
+    // 0
+    data0();
+    end1();
+
   return 0;
-}
+} 
