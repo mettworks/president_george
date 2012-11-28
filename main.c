@@ -1,12 +1,3 @@
-/*
-1. Version die was sinnvolles tut...
-
-Orginal CPU wurde abgeklemmt. Der Atmega schaltet das Geraet auf Kanal 23 FM ein. An PC3 und PC2 (die beiden LE's) befinden 10kOhm Widerstaende nach VCC. 
-
-Noch Quick and Dirty!
-
-*/
-
 #define F_CPU 7372800UL
 #define BAUD 9600UL
 #define CLOCK 2000
@@ -140,40 +131,6 @@ int main(void)
   /* 
   while(1)
   {
-    _delay_us(1);
-    // ein
-    PORTC |= (1<<PC5);
-    _delay_us(1);
-    // aus
-    PORTC &= ~(1<<PC5);
-  }
-  */
-  /*
-  DDRC=(1<<PC5);
-  TCCR1B |= 0x01;
-  TIMSK |= (1 << TOIE1);
-  sei();
-  _delay_ms(5000);
-  cli();
-  */
-
-  //DDRC=(1<<PC2);  // LE PLL
-  //DDRC=(1<<PC3);  // LE FUER DIE AUSGAENGE
-  //DDRC=(1<<PC5);  // Clock
-  //DDRC=(1<<PC4);  // Data
-  /*
-  while(1)
-  {
-    begin();
-    data1();
-    data0();
-    end();
-    _delay_ms(1000);
-  }
-  */
-  /*
-  while(1)
-  {
     // hell
     begin0();
     data1();
@@ -217,31 +174,8 @@ int main(void)
     _delay_ms(2000);
   }
   */
-    // FM 
-    begin0();
-    // 01000001
-    data0();
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    // 00000001
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    // 0
-    data0();
-    end0();
-
-    // nochmal 
+    /*
+    // FM
     begin0();
     // 10010010
     data1();
@@ -261,48 +195,11 @@ int main(void)
     data0();
     data1();
     data0();
-    end0();    
-
-    // PLL auf Kanal 22 rasten lassen
-    begin1();
-    // 10000001
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    // 00000000
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    // 01000001
-    data0();
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    // 00000001
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    // 01001001
-    data0();
+    end0();   
+    
+    // AM
+    begin0();
+    // 10010010
     data1();
     data0();
     data0();
@@ -310,15 +207,7 @@ int main(void)
     data0();
     data0();
     data1();
-    // 00000001
     data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
     // 00000100
     data0();
     data0();
@@ -328,6 +217,46 @@ int main(void)
     data1();
     data0();
     data0();
+    end0();    
+    */
+    // USB 
+    begin0();
+    // 10010010
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data1();
+    data0();
+    // 00010000
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    end0();    
+
+
+    /*
+    stellt den Teiler für die Referenz ein. Referenzquarz ist 10240kH
+    10240/2048 = 5
+    also ein Kanalraster von 5kHz    
+    */
+    begin1();
+    // 00001000
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    data0();
+    data0();
     // 00000000
     data0();
     data0();
@@ -337,13 +266,26 @@ int main(void)
     data0();
     data0();
     data0();
-    // 01
-    data0();
+    // 1
     data1();
-    end1();
+    end1();    
 
-    // immer noch PLL...
+    /*
+    N Paket:
+    stellt den Teiler von der Sollfrequenz ein. 
+    (27255 + 10695) / 7590 = 5
+    */
+    /*
     begin1();
+    // 00000000
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
     // 00011101
     data0();
     data0();
@@ -353,7 +295,7 @@ int main(void)
     data1();
     data0();
     data1();
-    // 10100110
+     // 10100110
     data1();
     data0();
     data1();
@@ -364,7 +306,45 @@ int main(void)
     data0();
     // 0
     data0();
-    end1();
+    end1();    
+    */
+
+    /*
+    und jetzt einmal auf 27075 einrasten... :-)
+    */
+    begin1();
+    // 00000000
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    // 00011101
+    data0();
+    data0();
+    data0();
+    data1();
+    data1();
+    data1();
+    data0();
+    data1();
+     // 10000010
+    data1();
+    data0();
+    data0();
+    data0();
+    data0();
+    data0();
+    data1();
+    data0();
+    // 0
+    data0();
+    end1();    
+
+
 
   return 0;
 } 
