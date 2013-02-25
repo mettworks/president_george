@@ -1,13 +1,11 @@
 #define F_CPU 7372800UL
 #define BAUD 9600UL
-#define CLOCK 2000
+//#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
 #include <util/setbaud.h> 
 #include <avr/interrupt.h>
-
-/*
 // Berechnungen
 #define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
 #define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     // Reale Baudrate
@@ -16,6 +14,7 @@
   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
 #endif
 
+#ifdef debug
 int uart_putc(unsigned char c)
 {
   while (!(UCSRA & (1<<UDRE)))  
@@ -42,11 +41,8 @@ void inituart()
   UCSRB |= (1<<TXEN);  // UART TX einschalten
   UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);  // Asynchron 8N1 
 }
-SIGNAL (SIG_OVERFLOW1)
-{
-  PORTC ^= (1 << PC5);
-}
-*/
+#endif
+
 int wait(void)
 {
   _delay_us(40);
@@ -71,7 +67,8 @@ int data1(void)
   PORTC &= ~(1<<PC4);	  // Data 0
   return 0;
 }
-
+//
+// Treiber
 int begin0(void)
 {
   PORTC &= ~(1<<PC5);	// Clock 0
@@ -89,7 +86,8 @@ int end0(void)
    
   return 0;
 }
-
+//
+// PLL
 int begin1(void)
 {
   PORTC &= ~(1<<PC5);	// Clock 0
@@ -107,244 +105,143 @@ int end1(void)
   return 0;
 }
 
-
+int tune(unsigned int freq,unsigned int step)
+{
+  begin1();
+  //
+  // Festlegung Kanalraster
+  // Referenzquarz ist 10240kHz
+  // 10240 / 2048 = 5, also der Teiler von 2048 waere dann ein Kanalraster von 5khz
+  // 10240 / step = teiler
+  // die Bitfolge muss 17 Bits lang sein
+  #ifdef debug 
+  uart_puts("Tuning\r\n");
+  uart_puts("Bitfolge fuer Kanalraster bzw. Referenz:\t");
+  #endif
+  unsigned int teiler_ref; 
+  // TODO: define !
+  teiler_ref=10240/step;
+  int index[16];
+  int i;
+  for(i=0; teiler_ref > 0; i++)
+  {
+    index[i]=teiler_ref%2;
+    teiler_ref=teiler_ref/2;
+  }
+  for(;i < 16; i++)
+  {
+    index[i]=0;
+  }
+  for (; i > 0; i--)
+  {
+    if(index[i-1] == 0)
+    {
+      #ifdef debug
+      uart_puts("0");
+      #endif
+      data0();
+    }
+    else
+    {
+      #ifdef debug
+      uart_puts("1");
+      #endif
+      data1();
+    }
+  }
+  //
+  // Achtung, Abschlussbit!
+  data1();
+  #ifdef debug
+  uart_puts("1");
+  uart_puts("\r\n");
+  #endif
+  end1();
+  //
+  // Festlegen des Teilers fuer die andere Seite
+  // N Paket:
+  // stellt den Teiler von der Sollfrequenz ein. 
+  // (27255 + 10695) / 7590 = 5
+  #ifdef debug
+  uart_puts("Bitfolge fuer Teiler Sollfrequenz:\t\t");
+  #endif
+  begin1();
+  unsigned int teiler_soll; 
+  unsigned int teiler_soll_temp=freq+10695;
+  teiler_soll=teiler_soll_temp/step;
+  int index_soll[24];
+  int j;
+  for(j=0; teiler_soll > 0; j++)
+  {
+    index_soll[j]=teiler_soll%2;
+    teiler_soll=teiler_soll/2;
+  }
+  for(;j < 24; j++)
+  {
+    index_soll[j]=0;
+  }
+  for (; j > 0; j--)
+  {
+    if(index_soll[j-1] == 0)
+    {
+      #ifdef debug
+      uart_puts("0");
+      #endif
+      data0();
+    }
+    else
+    {
+      #ifdef debug
+      uart_puts("1");
+      #endif 
+      data1();
+    }
+  }
+  // 
+  // Achtung, Abschlussbit!
+  data0();
+  #ifdef debug
+  uart_puts("0");  
+  uart_puts("\r\n");
+  #endif
+  end1();
+  return 0;
+}
 int main(void) 
 {
-  /*
-  while(1)
-  {
-  }
-  */
   DDRC=0xff;
   PORTC=0x0;
 
   _delay_ms(5000);
-
-  /*
+  #ifdef debug
   inituart();
-  while(1)
-  {
-    uart_puts("blabla\r\n");
-    _delay_ms(500);
-  }
-  */
-  /* 
-  while(1)
-  {
-    // hell
-    begin0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    end0();
-    _delay_ms(2000);
+  uart_puts("\r\n\r\n");
+  #endif
 
-    //dunkel
-    begin0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    end0();
-    _delay_ms(2000);
-  }
-  */
-    /*
-    // FM
-    begin0();
-    // 10010010
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    // 00000010
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    end0();   
+  // FM
+  begin0();
+  // 10010010
+  data1();
+  data0();
+  data0();
+  data1();
+  data0();
+  data0();
+  data1();
+  data0();
+  // 00000010
+  data0();
+  data0();
+  data0();
+  data0();
+  data0();
+  data0();
+  data1();
+  data0();
+  end0();  
     
-    // AM
-    begin0();
-    // 10010010
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    // 00000100
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    end0();    
-    */
-    // USB 
-    begin0();
-    // 10010010
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data0();
-    // 00010000
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    end0();    
-
-
-    /*
-    stellt den Teiler für die Referenz ein. Referenzquarz ist 10240kH
-    10240/2048 = 5
-    also ein Kanalraster von 5kHz    
-    */
-    begin1();
-    // 00001000
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    data0();
-    data0();
-    // 00000000
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    // 1
-    data1();
-    end1();    
-
-    /*
-    N Paket:
-    stellt den Teiler von der Sollfrequenz ein. 
-    (27255 + 10695) / 7590 = 5
-    */
-    /*
-    begin1();
-    // 00000000
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    // 00011101
-    data0();
-    data0();
-    data0();
-    data1();
-    data1();
-    data1();
-    data0();
-    data1();
-     // 10100110
-    data1();
-    data0();
-    data1();
-    data0();
-    data0();
-    data1();
-    data1();
-    data0();
-    // 0
-    data0();
-    end1();    
-    */
-
-    /*
-    und jetzt einmal auf 27075 einrasten... :-)
-    */
-    begin1();
-    // 00000000
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    // 00011101
-    data0();
-    data0();
-    data0();
-    data1();
-    data1();
-    data1();
-    data0();
-    data1();
-     // 10000010
-    data1();
-    data0();
-    data0();
-    data0();
-    data0();
-    data0();
-    data1();
-    data0();
-    // 0
-    data0();
-    end1();    
-
-
-
+  unsigned int freq = 27555;
+  unsigned int step = 5;
+  tune(freq,step);
   return 0;
 } 
