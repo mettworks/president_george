@@ -1,6 +1,6 @@
 #define F_CPU 7372800UL
 #define BAUD 9600UL
-//#define debug
+#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -211,6 +211,13 @@ int main(void)
 {
   DDRC=0xff;
   PORTC=0x0;
+  //einschalten
+  DDRD=2;		// D2 als Ausgang   Bit 2 ist 1
+  PORTD |= (1<<PD2);	// einschalten
+
+  // PortD3 wird Eingang, ohne Pullup
+  //DDRD &= ~(1<<PD3);
+  //PORTD |= (1<<PD3);
 
   _delay_ms(5000);
   #ifdef debug
@@ -219,29 +226,87 @@ int main(void)
   #endif
 
   // FM
+  // TODO: Belegung der Bits ist noch falsch!!
   begin0();
   // 10010010
-  data1();
-  data0();
-  data0();
-  data1();
-  data0();
-  data0();
-  data1();
-  data0();
+  data1();    // DIM?
+  data0();    // ?
+  data0();    // TX
+  data1();    // PA
+  data0();    // MUTE
+  data0();    // CAL
+  data1();    // SWR
+  data0();    // S/RF
   // 00000010
-  data0();
-  data0();
-  data0();
-  data0();
-  data0();
-  data0();
-  data1();
-  data0();
+  data0();    // ECHO
+  data0();    // HI/CUT
+  data0();    // NB/ANL
+  data0();    // USB
+  data0();    // LSB
+  data0();    // AM
+  data1();    // FM
+  data0();    // 
   end0();  
     
   unsigned int freq = 27555;
   unsigned int step = 5;
   tune(freq,step);
+  
+  //
+  // Endlos Schleife fuer die Taster
+  while(1)
+  {
+    if(!(PIND & (1 << PIND3)))
+    {
+      _delay_ms(100);
+      uart_puts("TX\r\n");
+      // TODO: das geht noch deutlich eleganter, aber erst mal testen.... :-)
+      begin0();
+      data1();    
+      data0();   
+      data0();  
+      data1();   
+      data0();  
+      data1();	  // <<< ---- Bit fuer TX 
+      data1();    
+      data0();    
+      data0();    
+      data0();   
+      data0();   
+      data0();    
+      data0();    
+      data0();   
+      data1();   
+      data0();   
+      end0(); 
+      while(1)
+      { 
+	if(PIND & (1 << PIND3))
+	{    
+	  _delay_ms(100); 
+	  uart_puts("RX\r\n");
+	  begin0();
+	  data1(); 
+	  data0();  
+	  data0();   
+	  data1();    
+	  data0();    
+	  data0();    // <<< ---- Bit fuer TX
+	  data1();    
+	  data0();    
+	  data0();    
+	  data0();    
+	  data0();  
+	  data0(); 
+	  data0();    
+	  data0();   
+	  data1();  
+	  data0();  
+	  end0();  
+	  break;
+	}
+      }
+    }
+  } 
   return 0;
 } 
