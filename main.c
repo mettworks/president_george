@@ -248,7 +248,7 @@ int main(void)
   data0();    // 
   end0();  
     
-  unsigned int freq = 27555;
+  unsigned int freq = 29100;
   unsigned int step = 5;
   tune(freq,step);
   
