@@ -15,28 +15,7 @@
 #endif
 
 unsigned int wert;
-
-/*
-  HTH, richtige Reihenfolge:
-  S/RF 1. Bit
-  SWR
-  CAL
-  MUTE
-  PA
-  T/R
-  ?
-  DIM
-
-  ECHO 
-  HICUT
-  NB/ANL
-  USB
-  LSB
-  AM
-  FM
-  MOD 16.Bit
-  
-*/
+//
 // Bits fuer den Treiberbaustein
 #define TREIBER_MOD 0  
 #define TREIBER_FM 1
@@ -418,6 +397,9 @@ int main(void)
   //
   // Achtung, MUTE muss auf 1 stehen!!
   wert |= (1 << TREIBER_MUTE);
+  // TEST
+  wert |= (1 << TREIBER_ECHO);
+
   treiber(wert); 
 
   //
