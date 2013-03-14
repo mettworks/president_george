@@ -6,6 +6,7 @@
 #include <util/delay.h>
 #include <util/setbaud.h> 
 #include <avr/interrupt.h>
+#include <i2cmaster.h>
 // Berechnungen
 #define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
 #define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     // Reale Baudrate
@@ -71,58 +72,57 @@ int wait(void)
 }
 int data0(void)
 {
-  PORTC &= ~(1<<PC4);	  // Data 0
+  PORTC &= ~(1<<PC2);	  // Data 0
   _delay_us(14);
-  PORTC |= (1<<PC5);	  // Clock 1
+  PORTC |= (1<<PC3);	  // Clock 1
   _delay_us(14);
-  PORTC &= ~(1<<PC5);	  // Clock 0
+  PORTC &= ~(1<<PC3);	  // Clock 0
   return 0;
 }
 int data1(void)
 {
-  PORTC |= (1<<PC4);	  // Data 1
+  PORTC |= (1<<PC2);	  // Data 1
   _delay_us(14); 
-  PORTC |= (1<<PC5);	  // Clock 1
+  PORTC |= (1<<PC3);	  // Clock 1
   _delay_us(14);
-  PORTC &= ~(1<<PC5);     // Clock 0
-  PORTC &= ~(1<<PC4);	  // Data 0
+  PORTC &= ~(1<<PC3);     // Clock 0
+  PORTC &= ~(1<<PC2);	  // Data 0
   return 0;
 }
 //
 // Treiber
 int begin0(void)
 {
-  PORTC &= ~(1<<PC5);	// Clock 0
-  PORTC &= ~(1<<PC4);   // Data 0
-  PORTC &= ~(1<<PC3);   // LE 0
+  PORTC &= ~(1<<PC3);	// Clock 0
+  PORTC &= ~(1<<PC2);   // Data 0
+  PORTC &= ~(1<<PC1);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end0(void)
 {
-  PORTC &= ~(1<<PC5);    // Clock 1
-  PORTC |= (1<<PC3);	// LE1
+  PORTC &= ~(1<<PC3);    // Clock 1
+  PORTC |= (1<<PC1);	// LE1
   _delay_us(14);
-  PORTC &= ~(1<<PC3);
-   
+  PORTC &= ~(1<<PC1);
   return 0;
 }
 //
 // PLL
 int begin1(void)
 {
-  PORTC &= ~(1<<PC5);	// Clock 0
-  PORTC &= ~(1<<PC4);   // Data 0
-  PORTC &= ~(1<<PC2);   // LE 0
+  PORTC &= ~(1<<PC3);	// Clock 0
+  PORTC &= ~(1<<PC2);   // Data 0
+  PORTC &= ~(1<<PC0);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end1(void)
 {
-  PORTC &= ~(1<<PC5);    // Clock 1
-  PORTC |= (1<<PC2);	// LE1
+  PORTC &= ~(1<<PC3);    // Clock 1
+  PORTC |= (1<<PC0);	// LE1
   _delay_us(14);
-  PORTC &= ~(1<<PC2);
+  PORTC &= ~(1<<PC0);
   return 0;
 }
 
@@ -355,10 +355,10 @@ int main(void)
   // PD6 ist		    -> Eingang, mit Pullup  
   // PD7 ist		    -> Eingang, mit Pullup
   // PB0 ist		    -> Eingang, mit Pullup
-  // PC2 ist		    -> Ausgang
-  // PC3 ist		    -> Ausgang
-  // PC4 ist		    -> Ausgang
-  // PC5 ist		    -> Ausgang
+  // PC0 ist Latch PLL      -> Ausgang
+  // PC1 ist Latch Treiber  -> Ausgang
+  // PC2 ist Data	    -> Ausgang
+  // PC3 ist Clock	    -> Ausgang
   
   // PD2
   DDRD |= (1<<PD2);
@@ -377,21 +377,35 @@ int main(void)
   // PB0
   DDRB &= ~(1<<PB0);	// Eingang
   PORTB |= (1<<PB0);	// internen Pullup aktivieren
+  // PC0
+  DDRC |= (1<<PC0);
+   // PC1
+  DDRC |= (1<<PC1);
   // PC2
   DDRC |= (1<<PC2);
-   // PC3
+  // PC3
   DDRC |= (1<<PC3);
-  // PC4
-  DDRC |= (1<<PC4);
-  // PC5
-  DDRC |= (1<<PC5);
  
   //_delay_ms(5000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   #endif
-  
+  i2c_init();
+  while(1)
+  {
+    i2c_start_wait(0x58+I2C_WRITE);
+    i2c_write(0);
+    i2c_write(0xff);	  // Wert
+    i2c_stop();
+    _delay_ms(4000);
+    i2c_start_wait(0x58+I2C_WRITE);
+    i2c_write(0);
+    i2c_write(0);	  // Wert
+    i2c_stop();
+    _delay_ms(4000);
+  }
+
   wert=0;
   //wert |= (1 << TREIBER_FM);
   //
