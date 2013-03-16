@@ -1,4 +1,8 @@
-#define F_CPU 7372800UL
+/*
+avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:0xC9:m -U lfuse:w:0xDF:m
+*/
+
+#define F_CPU 18432000UL
 #define BAUD 9600UL
 #define debug
 
@@ -39,10 +43,10 @@ unsigned int wert;
 #ifdef debug
 int uart_putc(unsigned char c)
 {
-  while (!(UCSRA & (1<<UDRE)))  
+  while (!(UCSR1A & (1<<UDRIE1)))  
   {
   }                             
-  UDR = c;                     
+  UDR1 = c;                     
   return 0;
 }
 
@@ -57,11 +61,12 @@ void uart_puts (char *s)
 
 void inituart()
 {
-  UBRRH = UBRR_VAL >> 8;
-  UBRRL = UBRR_VAL & 0xFF;
- 
-  UCSRB |= (1<<TXEN);  // UART TX einschalten
-  UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);  // Asynchron 8N1 
+  //
+  // Achtung, wir nutzen die 2. UART!
+  UBRR1H = UBRR_VAL >> 8;
+  UBRR1L = UBRR_VAL & 0xFF;
+  UCSR1B |= (1<<TXEN);			  // UART TX einschalten
+  UCSR1C =  (1 << UCSZ1) | (1 << UCSZ0);  // Asynchron 8N1 
 }
 #endif
 
@@ -72,57 +77,57 @@ int wait(void)
 }
 int data0(void)
 {
-  PORTC &= ~(1<<PC2);	  // Data 0
+  PORTD &= ~(1<<PD4);	  // Data 0
   _delay_us(14);
-  PORTC |= (1<<PC3);	  // Clock 1
+  PORTD |= (1<<PD5);	  // Clock 1
   _delay_us(14);
-  PORTC &= ~(1<<PC3);	  // Clock 0
+  PORTD &= ~(1<<PD5);	  // Clock 0
   return 0;
 }
 int data1(void)
 {
-  PORTC |= (1<<PC2);	  // Data 1
+  PORTD |= (1<<PD4);	  // Data 1
   _delay_us(14); 
-  PORTC |= (1<<PC3);	  // Clock 1
+  PORTD |= (1<<PD5);	  // Clock 1
   _delay_us(14);
-  PORTC &= ~(1<<PC3);     // Clock 0
-  PORTC &= ~(1<<PC2);	  // Data 0
+  PORTD &= ~(1<<PD5);     // Clock 0
+  PORTD &= ~(1<<PD4);	  // Data 0
   return 0;
 }
 //
 // Treiber
 int begin0(void)
 {
-  PORTC &= ~(1<<PC3);	// Clock 0
-  PORTC &= ~(1<<PC2);   // Data 0
-  PORTC &= ~(1<<PC1);   // LE 0
+  PORTD &= ~(1<<PD5);	// Clock 0
+  PORTD &= ~(1<<PD4);   // Data 0
+  PORTD &= ~(1<<PD7);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end0(void)
 {
-  PORTC &= ~(1<<PC3);    // Clock 1
-  PORTC |= (1<<PC1);	// LE1
+  PORTD &= ~(1<<PD5);    // Clock 1
+  PORTD |= (1<<PD7);	// LE1
   _delay_us(14);
-  PORTC &= ~(1<<PC1);
+  PORTD &= ~(1<<PD7);
   return 0;
 }
 //
 // PLL
 int begin1(void)
 {
-  PORTC &= ~(1<<PC3);	// Clock 0
-  PORTC &= ~(1<<PC2);   // Data 0
-  PORTC &= ~(1<<PC0);   // LE 0
+  PORTD &= ~(1<<PD5);	// Clock 0
+  PORTD &= ~(1<<PD4);   // Data 0
+  PORTD &= ~(1<<PD6);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end1(void)
 {
-  PORTC &= ~(1<<PC3);    // Clock 1
-  PORTC |= (1<<PC0);	// LE1
+  PORTD &= ~(1<<PD5);    // Clock 1
+  PORTD |= (1<<PD6);	// LE1
   _delay_us(14);
-  PORTC &= ~(1<<PC0);
+  PORTD &= ~(1<<PD6);
   return 0;
 }
 
@@ -349,63 +354,67 @@ int main(void)
 
   //
   // Ein und Ausgaenge
-  // PD2 ist Ein/Aus	    -> Ausgang
-  // PD3 ist TX vom Mikro   -> Eingang, ohne Pullup
-  // PD5 ist		    -> Eingang, mit Pullup
-  // PD6 ist		    -> Eingang, mit Pullup  
-  // PD7 ist		    -> Eingang, mit Pullup
-  // PB0 ist		    -> Eingang, mit Pullup
-  // PC0 ist Latch PLL      -> Ausgang
-  // PC1 ist Latch Treiber  -> Ausgang
-  // PC2 ist Data	    -> Ausgang
-  // PC3 ist Clock	    -> Ausgang
+  // PE2 ist Ein/Aus	    -> Ausgang		      - ja
+  // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup   - ja
+  // PA3 ist		    -> Eingang, mit Pullup    - ja
+  // PA4 ist		    -> Eingang, mit Pullup    - ja
+  // PA5 ist		    -> Eingang, mit Pullup    - ja
+  // PA6 ist		    -> Eingang, mit Pullup    - ja
+  // PD6 ist Latch PLL      -> Ausgang		      - ja
+  // PD7 ist Latch Treiber  -> Ausgang		      - ja
+  // PD4 ist Data	    -> Ausgang		      - ja
+  // PD5 ist Clock	    -> Ausgang		      - ja
   
-  // PD2
-  DDRD |= (1<<PD2);
-  PORTD |= (1<<PD2);	// einschalten
-  // PD3 
-  DDRD &= ~(1<<PD3);
-  // PD5
-  DDRD &= ~(1<<PD5);	// Eingang
-  PORTD |= (1<<PD5);	// internen Pullup aktivieren
+  // PE2
+  DDRE |= (1<<PE2);
+  PORTE |= (1<<PE2);	// einschalten
+  // PE3 
+  DDRE &= ~(1<<PE3);
+  // PA3
+  DDRA &= ~(1<<PA3);	// Eingang
+  PORTA |= (1<<PA3);	// internen Pullup aktivieren
+  // PA4
+  DDRA &= ~(1<<PA4);	// Eingang
+  PORTA |= (1<<PA4);	// internen Pullup aktivieren
+  // PA5
+  DDRA &= ~(1<<PA5);	// Eingang
+  PORTA |= (1<<PA5);	// internen Pullup aktivieren
+  // PA6
+  DDRA &= ~(1<<PA6);	// Eingang
+  PORTA |= (1<<PA6);	// internen Pullup aktivieren
   // PD6
-  DDRD &= ~(1<<PD6);	// Eingang
-  PORTD |= (1<<PD6);	// internen Pullup aktivieren
+  DDRD |= (1<<PD6);
   // PD7
-  DDRD &= ~(1<<PD7);	// Eingang
-  PORTD |= (1<<PD7);	// internen Pullup aktivieren
-  // PB0
-  DDRB &= ~(1<<PB0);	// Eingang
-  PORTB |= (1<<PB0);	// internen Pullup aktivieren
-  // PC0
-  DDRC |= (1<<PC0);
-   // PC1
-  DDRC |= (1<<PC1);
-  // PC2
-  DDRC |= (1<<PC2);
-  // PC3
-  DDRC |= (1<<PC3);
+  DDRD |= (1<<PD7);
+  // PD4
+  DDRD |= (1<<PD4);
+  // PD5
+  DDRD |= (1<<PD5);
  
   //_delay_ms(5000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   #endif
+  /*
   i2c_init();
   while(1)
   {
+    #ifdef debug
+    uart_puts("blubb\r\n");
+    #endif
     i2c_start_wait(0x58+I2C_WRITE);
     i2c_write(0);
     i2c_write(0xff);	  // Wert
     i2c_stop();
-    _delay_ms(4000);
+    _delay_ms(14000);
     i2c_start_wait(0x58+I2C_WRITE);
     i2c_write(0);
     i2c_write(0);	  // Wert
     i2c_stop();
-    _delay_ms(4000);
+    _delay_ms(1000);
   }
-
+  */
   wert=0;
   //wert |= (1 << TREIBER_FM);
   //
@@ -424,12 +433,11 @@ int main(void)
   unsigned int freq = 29100;
   unsigned int step = 5;
   tune(freq,step);
-  
   //
   // Endlos Schleife fuer die Taster
   while(1)
   {
-    if(!(PIND & (1 << PIND5)))
+    if(!(PINA & (1 << PINA3)))
     {
       _delay_ms(150);
       #ifdef debug
@@ -438,7 +446,7 @@ int main(void)
       freq=freq+step;
       tune(freq,step);
     }
-    if(!(PIND & (1 << PIND6)))
+    if(!(PINA & (1 << PINA4)))
     {
       _delay_ms(150);
       #ifdef debug
@@ -447,7 +455,7 @@ int main(void)
       freq=freq-step;
       tune(freq,step);
     }
-    if(!(PIND & (1 << PIND7)))
+    if(!(PINA & (1 << PINA5)))
     {
       _delay_ms(150);
       #ifdef debug
@@ -471,7 +479,7 @@ int main(void)
       }
       modulation(mod);
     }
-    if(!(PINB & (1 << PINB0)))
+    if(!(PINA & (1 << PINA6)))
     {
       _delay_ms(150);
       #ifdef debug
@@ -491,7 +499,7 @@ int main(void)
       tune(freq,step);
       #endif
     }
-    if(!(PIND & (1 << PIND3)))
+    if(!(PINE & (1 << PINE3)))
     {
       _delay_ms(100);
       #ifdef debug
@@ -501,7 +509,7 @@ int main(void)
       treiber(wert); 
       while(1)
       { 
-	if(PIND & (1 << PIND3))
+	if(PINE & (1 << PINE3))
 	{    
 	  _delay_ms(100); 
 	  #ifdef debug
