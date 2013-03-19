@@ -390,31 +390,41 @@ int main(void)
   DDRD |= (1<<PD4);
   // PD5
   DDRD |= (1<<PD5);
- 
+
+  //DDRD |= (1<<PD0);
+  //DDRD |= (1<<PD1);
+
   //_delay_ms(5000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   #endif
-  /*
   i2c_init();
   while(1)
   {
     #ifdef debug
     uart_puts("blubb\r\n");
     #endif
-    i2c_start_wait(0x58+I2C_WRITE);
-    i2c_write(0);
-    i2c_write(0xff);	  // Wert
+
+    i2c_start(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
+
+    i2c_write(0xe0);  // ??   // IMHO Device Select 0
+    i2c_write(0xcd);  // ??   // statisch   11001101	
+    i2c_write(0xFB);   // Bank select 2	    11111011 
+    i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
+    i2c_write(0x00); 
+    i2c_write(0xff); 
+    i2c_write(0xff);  
+    i2c_write(0xff);  
+    i2c_write(0xff);  
+    i2c_write(0xff);  
+    i2c_write(0xff);  
+    i2c_write(0xff);  
+    i2c_write(0xff); 
     i2c_stop();
-    _delay_ms(14000);
-    i2c_start_wait(0x58+I2C_WRITE);
-    i2c_write(0);
-    i2c_write(0);	  // Wert
-    i2c_stop();
-    _delay_ms(1000);
+    _delay_ms(2000);
   }
-  */
+  
   wert=0;
   //wert |= (1 << TREIBER_FM);
   //

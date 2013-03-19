@@ -16,10 +16,13 @@
 //#ifndef F_CPU
 //#define F_CPU 4000000UL
 //#endif
-#define F_CPU 7372800UL
-
+//#define F_CPU 7372800UL
+#define F_CPU 18432000UL
 /* I2C clock in Hz */
-#define SCL_CLOCK  100000L
+#define SCL_CLOCK  50000L
+
+//#define SCL_CLOCK  100000L
+//#define SCL_CLOCK  400000L
 
 
 /*************************************************************************
@@ -31,7 +34,7 @@ void i2c_init(void)
   
   TWSR = 0;                         /* no prescaler */
   TWBR = ((F_CPU/SCL_CLOCK)-16)/2;  /* must be > 10 for stable operation */
-
+  //TWBR=48;
 }/* i2c_init */
 
 
