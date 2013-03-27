@@ -406,23 +406,119 @@ int main(void)
     uart_puts("blubb\r\n");
     #endif
 
+    _delay_ms(10);
+    /* 
     i2c_start(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
 
-    i2c_write(0xe0);  // ??   // IMHO Device Select 0
-    i2c_write(0xcd);  // ??   // statisch   11001101	
-    i2c_write(0xFB);   // Bank select 2	    11111011 
-    i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
-    i2c_write(0x00); 
-    i2c_write(0xff); 
-    i2c_write(0xff);  
-    i2c_write(0xff);  
-    i2c_write(0xff);  
-    i2c_write(0xff);  
-    i2c_write(0xff);  
-    i2c_write(0xff);  
-    i2c_write(0xff); 
+    //i2c_write(0xe0);  // ??   // IMHO Device Select 0
+    i2c_write(0xcb);	//  1100 1011	
+    //i2c_write(0xf8);	//  1111 1000 
+    //i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
+    i2c_write(0x00);
+
+    0000 0000
+    0000 0000
+    0000 0000
+    0000 0000
+    0000 0000
+    #define WERT 0xf
+    i2c_write(WERT);  
+    i2c_write(WERT);
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+ 
+    i2c_write(WERT);  
+    i2c_write(WERT);
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+ 
+    i2c_write(WERT);  
+    i2c_write(WERT);
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+ 
+    i2c_write(WERT);  
+    i2c_write(WERT);
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+    i2c_write(WERT);  
+ 
     i2c_stop();
-    _delay_ms(2000);
+    */
+    i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
+    i2c_write(0xe0);  // ??   // IMHO Device Select 0
+    //i2c_write(0xcf);	  // multiplex 1100 1111
+    i2c_write(0xcd);	  // statisch 1100 1101	
+    //i2c_write(0xFB);   // Bank select 2	    11111011 
+    i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
+    i2c_write(0);
+
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+    i2c_write(0xff);
+
+    /*
+    // Bank 0xff auswaehlen 
+    // 1111 10xff00
+    //i2c_write(0xf8);
+    // Pointer setzen
+    //i2c_write(0x0);
+    // Daten 
+    i2c_write(0x0); 
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0); 
+
+    //i2c_write(0xf9);
+    // Pointer setzen
+    //i2c_write(0x0);
+    // Daten 
+    i2c_write(0x0); 
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0); 
+
+    //i2c_write(0xfa);
+    // Pointer setzen
+    //i2c_write(0x0);
+    // Daten 
+    i2c_write(0x0); 
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0);  
+    i2c_write(0x0); 
+
+    */
+    i2c_stop();
+    //delay_ms(2000);
+    while(1)
+    {
+    }
   }
   
   wert=0;
