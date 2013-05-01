@@ -346,6 +346,54 @@ int tune(unsigned int freq,unsigned int step)
   end1();
   return 0;
 }
+
+int init_led()
+{
+	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
+  i2c_write(0x80);  // autoincrement ab Register 0h
+
+  i2c_write(0x00);  // Register 00 /  Mode1  
+  i2c_write(0x00);  // Register 01 /  Mode2 
+
+  i2c_write(0x00);  // Register 02 /  PWM LED 1    // Default alle PWM auf 0
+  i2c_write(0x00);  // Register 03 /  PWM LED 2    
+  i2c_write(0x00);  // Register 04 /  PWM LED 3
+  i2c_write(0x00);  // Register 05 /  PWM LED 4
+  i2c_write(0x00);  // Register 06 /  PWM LED 5
+  i2c_write(0x00);  // Register 07 /  PWM LED 6
+  i2c_write(0x00);  // Register 08 /  PWM LED 7
+  i2c_write(0x00);  // Register 09 /  PWM LED 8
+  i2c_write(0x00);  // Register 0A /  PWM LED 9
+  i2c_write(0x00);  // Register 0B /  PWM LED 10
+  i2c_write(0x00);  // Register 0C /  PWM LED 11
+  i2c_write(0x00);  // Register 0D /  PWM LED 12
+  i2c_write(0x00);  // Register 0E /  PWM LED 13
+  i2c_write(0x00);  // Register 0F /  PWM LED 14
+  i2c_write(0x00);  // Register 10 /  PWM LED 15
+  i2c_write(0x00);  // Register 11 /  PWM LED 16  // Default alle PWM auf 0
+
+  i2c_write(0xFF);  // Register 12 /  Group duty cycle control
+  i2c_write(0x00);  // Register 13 /  Group frequency
+  i2c_write(0xAA);  // Register 14 /  LED output state 0  // Default alle LEDs auf PWM
+  i2c_write(0xAA);  // Register 15 /  LED output state 1  // Default alle LEDs auf PWM
+  i2c_write(0xAA);  // Register 16 /  LED output state 2  // Default alle LEDs auf PWM
+  i2c_write(0xAA);  // Register 17 /  LED output state 3  // Default alle LEDs auf PWM
+  i2c_write(0x00);  // Register 18 /  I2C bus subaddress 1
+  i2c_write(0x00);  // Register 19 /  I2C bus subaddress 2
+  i2c_write(0x00);  // Register 1A /  I2C bus subaddress 3
+  i2c_write(0x00);  // Register 1B /  All Call I2C bus address
+  i2c_write(0xFF);  // Register 1C /  IREF configuration  
+  i2c_stop();  // I2C-Stop
+}
+
+int led_pwm(int led, int pwm)
+{
+	i2c_start_wait(0xc0);
+	i2c_write(0x01 + led);
+	i2c_write(pwm);
+	i2c_stop();
+}
+
 int main(void) 
 {
   //
@@ -394,7 +442,7 @@ int main(void)
   //DDRD |= (1<<PD0);
   //DDRD |= (1<<PD1);
 
-  //_delay_ms(5000);
+  _delay_ms(5000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -403,56 +451,15 @@ int main(void)
   while(1)
   {
     #ifdef debug
-    uart_puts("blubb\r\n");
+    uart_puts("Anfang\r\n");
     #endif
 
     _delay_ms(10);
-    /* 
-    i2c_start(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
-
-    //i2c_write(0xe0);  // ??   // IMHO Device Select 0
-    i2c_write(0xcb);	//  1100 1011	
-    //i2c_write(0xf8);	//  1111 1000 
-    //i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
-    i2c_write(0x00);
-
-    0000 0000
-    0000 0000
-    0000 0000
-    0000 0000
-    0000 0000
-    #define WERT 0xf
-    i2c_write(WERT);  
-    i2c_write(WERT);
-    i2c_write(WERT);  
-    i2c_write(WERT);  
-    i2c_write(WERT);  
- 
-    i2c_write(WERT);  
-    i2c_write(WERT);
-    i2c_write(WERT);  
-    i2c_write(WERT);  
-    i2c_write(WERT);  
- 
-    i2c_write(WERT);  
-    i2c_write(WERT);
-    i2c_write(WERT);  
-    i2c_write(WERT);  
-    i2c_write(WERT);  
- 
-    i2c_write(WERT);  
-    i2c_write(WERT);
-    i2c_write(WERT);  
-    i2c_write(WERT);  
-    i2c_write(WERT);  
- 
-    i2c_stop();
-    */
+    
     i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
     i2c_write(0xe0);  // ??   // IMHO Device Select 0
-    //i2c_write(0xcf);	  // multiplex 1100 1111
-    i2c_write(0xcd);	  // statisch 1100 1101	
-    //i2c_write(0xFB);   // Bank select 2	    11111011 
+    i2c_write(0xcf);	  // multiplex 1100 1111
+    i2c_write(0xFB);   // Bank select 2	    11111011 
     i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
     i2c_write(0);
 
@@ -473,49 +480,26 @@ int main(void)
     i2c_write(0xff);
     i2c_write(0xff);
     i2c_write(0xff);
-
+/*
     i2c_write(0xff);
     i2c_write(0xff);
     i2c_write(0xff);
     i2c_write(0xff);
     i2c_write(0xff);
+*/
 
-    /*
-    // Bank 0xff auswaehlen 
-    // 1111 10xff00
-    //i2c_write(0xf8);
-    // Pointer setzen
-    //i2c_write(0x0);
-    // Daten 
-    i2c_write(0x0); 
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0); 
-
-    //i2c_write(0xf9);
-    // Pointer setzen
-    //i2c_write(0x0);
-    // Daten 
-    i2c_write(0x0); 
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0); 
-
-    //i2c_write(0xfa);
-    // Pointer setzen
-    //i2c_write(0x0);
-    // Daten 
-    i2c_write(0x0); 
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0);  
-    i2c_write(0x0); 
-
-    */
     i2c_stop();
+	
+	
+	init_led();
+	led_pwm(6,255);
+
+
+	
     //delay_ms(2000);
+    #ifdef debug
+    uart_puts("Ende\r\n");
+    #endif
     while(1)
     {
     }
