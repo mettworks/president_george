@@ -394,6 +394,26 @@ int led_pwm(int led, int pwm)
 	i2c_stop();
 }
 
+int led_color(int color)
+{
+	if (color == 0 )
+	{
+	  #ifdef debug
+		uart_puts("LED Farbe: Rot\r\n");
+		#endif
+		PORTG |= (1<<PG0);	  		// Rot 1
+		PORTG &= ~(1<<PG1);     	// Grün 0
+	}
+	else if (color == 1)
+	{
+		#ifdef debug
+		uart_puts("LED Farbe: Gruen\r\n");
+		#endif
+		PORTG |= (1<<PG1);	  		// Grün 1
+		PORTG &= ~(1<<PG0);     	// Rot 0
+	}
+}
+
 int main(void) 
 {
   //
@@ -402,16 +422,18 @@ int main(void)
 
   //
   // Ein und Ausgaenge
-  // PE2 ist Ein/Aus	    -> Ausgang		      - ja
-  // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup   - ja
-  // PA3 ist		    -> Eingang, mit Pullup    - ja
-  // PA4 ist		    -> Eingang, mit Pullup    - ja
-  // PA5 ist		    -> Eingang, mit Pullup    - ja
-  // PA6 ist		    -> Eingang, mit Pullup    - ja
-  // PD6 ist Latch PLL      -> Ausgang		      - ja
-  // PD7 ist Latch Treiber  -> Ausgang		      - ja
-  // PD4 ist Data	    -> Ausgang		      - ja
-  // PD5 ist Clock	    -> Ausgang		      - ja
+  // PE2 ist Ein/Aus	    	-> Ausgang		      
+  // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup  
+  // PA3 ist		    				-> Eingang, mit Pullup    
+  // PA4 ist		    				-> Eingang, mit Pullup    
+  // PA5 ist		    				-> Eingang, mit Pullup    
+  // PA6 ist		    				-> Eingang, mit Pullup    
+  // PD6 ist Latch PLL      -> Ausgang		     
+  // PD7 ist Latch Treiber  -> Ausgang		     
+  // PD4 ist Data	    			-> Ausgang		   
+  // PD5 ist Clock	    		-> Ausgang		     
+	// PG0 ist LED Rot				-> Ausgang
+	// PG1 ist LED Grün 			-> Ausgang
   
   // PE2
   DDRE |= (1<<PE2);
@@ -438,10 +460,11 @@ int main(void)
   DDRD |= (1<<PD4);
   // PD5
   DDRD |= (1<<PD5);
-
-  //DDRD |= (1<<PD0);
-  //DDRD |= (1<<PD1);
-
+	// PG0
+	DDRG |= (1<<PG0);
+	// PG1
+	DDRG |= (1<<PG1);
+ 
   _delay_ms(5000);
   #ifdef debug
   inituart();
@@ -493,7 +516,13 @@ int main(void)
 	
 	init_led();
 	led_pwm(6,255);
-
+	while(1)
+	{
+		led_color(0);
+		_delay_ms(1000);
+		led_color(1);
+		_delay_ms(1000);
+	}
 
 	
     //delay_ms(2000);
