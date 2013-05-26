@@ -424,10 +424,10 @@ int main(void)
   // Ein und Ausgaenge
   // PE2 ist Ein/Aus	    	-> Ausgang		      
   // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup  
-  // PA3 ist		    				-> Eingang, mit Pullup    
-  // PA4 ist		    				-> Eingang, mit Pullup    
-  // PA5 ist		    				-> Eingang, mit Pullup    
-  // PA6 ist		    				-> Eingang, mit Pullup    
+  // PA3 ist Taster 1				-> Eingang, mit Pullup    
+  // PA4 ist Taster 2				-> Eingang, mit Pullup    
+  // PA5 ist Taster 3				-> Eingang, mit Pullup    
+  // PA6 ist Taster 4				-> Eingang, mit Pullup    
   // PD6 ist Latch PLL      -> Ausgang		     
   // PD7 ist Latch Treiber  -> Ausgang		     
   // PD4 ist Data	    			-> Ausgang		   
@@ -471,51 +471,55 @@ int main(void)
   uart_puts("\r\n\r\n");
   #endif
   i2c_init();
-  while(1)
-  {
-    #ifdef debug
-    uart_puts("Anfang\r\n");
-    #endif
 
-    _delay_ms(10);
     
-    i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
-    i2c_write(0xe0);  // ??   // IMHO Device Select 0
-    i2c_write(0xcf);	  // multiplex 1100 1111
-    i2c_write(0xFB);   // Bank select 2	    11111011 
-    i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
-    i2c_write(0);
+  i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
+  i2c_write(0xe0);  // ??   // IMHO Device Select 0
+  i2c_write(0xcf);	  // multiplex 1100 1111
+  i2c_write(0xFB);   // Bank select 2	    11111011 
+  i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
+  i2c_write(0);
 
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
 
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
 
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-/*
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-    i2c_write(0xff);
-*/
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
 
-    i2c_stop();
-	
-	
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+
+  i2c_stop();
+
 	init_led();
+	led_pwm(1,255);
+	led_pwm(2,255);
+	led_pwm(3,255);
+	led_pwm(4,255);
+	led_pwm(5,255);
 	led_pwm(6,255);
+	led_pwm(7,255);
+	led_pwm(8,255);
+	led_pwm(9,255);
+	led_pwm(10,255);
+
+	led_color(0);
+		/*
 	while(1)
 	{
 		led_color(0);
@@ -523,8 +527,8 @@ int main(void)
 		led_color(1);
 		_delay_ms(1000);
 	}
-
-	
+	*/
+	/*
     //delay_ms(2000);
     #ifdef debug
     uart_puts("Ende\r\n");
@@ -533,14 +537,14 @@ int main(void)
     {
     }
   }
-  
+  */
   wert=0;
   //wert |= (1 << TREIBER_FM);
   //
   // Achtung, MUTE muss auf 1 stehen!!
   wert |= (1 << TREIBER_MUTE);
   // TEST
-  wert |= (1 << TREIBER_ECHO);
+  wert |= (0 << TREIBER_ECHO);
 
   treiber(wert); 
 
@@ -549,7 +553,7 @@ int main(void)
   int mod = 1;
   modulation(mod);
   
-  unsigned int freq = 29100;
+  unsigned int freq = 28100;
   unsigned int step = 5;
   tune(freq,step);
   //
