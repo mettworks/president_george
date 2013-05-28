@@ -1,0 +1,8 @@
+- Footprint der Taster, ggf. mit Leiterplattenmann klären
+- Drehschalter fehlt komplett im Layout und Plan
+- Dicke der Platine muss identisch sein, wegen der Befestigung
+- Drechrichtung der Potis
+- Löcher und Langlöcher für Display fehlen
+- LED's für Display müssen positioniert werden
+- EEPROM muss in das runde Loch passen
+- passt der Elko von der Höhe
