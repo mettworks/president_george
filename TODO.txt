@@ -5,4 +5,5 @@
 - Löcher und Langlöcher für Display fehlen
 - LED's für Display müssen positioniert werden
 - EEPROM muss in das runde Loch passen
-- passt der Elko von der Höhe
+- passt der Elko von der Höhe?
+- Stimmt die Pinbelegung der Taster WIRKLICH?
