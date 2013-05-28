@@ -7,3 +7,6 @@
 - EEPROM muss in das runde Loch passen
 - passt der Elko von der Höhe?
 - Stimmt die Pinbelegung der Taster WIRKLICH?
+- RS232
+- ISP
+- VFO Umbau (3 x I/O?)
