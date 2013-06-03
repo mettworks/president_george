@@ -2,6 +2,7 @@
 - Drehschalter fehlt komplett im Layout und Plan
 - Dicke der Platine muss identisch sein, wegen der Befestigung
 - Drechrichtung der Potis
+- Richtung LCD
 - Löcher und Langlöcher für Display fehlen
 - LED's für Display müssen positioniert werden
 - EEPROM muss in das runde Loch passen
@@ -10,3 +11,5 @@
 - RS232
 - ISP
 - VFO Umbau (3 x I/O?)
+- Richtung der PFC Buchsen (1 und 10 auf der richtigen Seite?)
+- die Widerstände für die Komparatoren brauchen eine geringe Toleranz

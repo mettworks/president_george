@@ -3,7 +3,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 */
 
 #define F_CPU 18432000UL
-#define BAUD 9600UL
+#define BAUD 115200UL
 #define debug
 
 #include <avr/io.h>
@@ -414,11 +414,32 @@ int led_color(int color)
 	}
 }
 
+ISR (INT4_vect)
+{
+	cli();
+	while(1)
+	{
+		// erstmal zum testen, macht sich gut mit dem Logikanalyzer... :-)
+		PORTG |= (1<<PG0);	
+		_delay_ms(1);
+		PORTG &= ~(1<<PG0);
+		_delay_ms(1);
+	}
+}
+
 int main(void) 
 {
   //
   // Definitionen
   //unsigned int wert;
+	
+	//
+	// Interrupts
+	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
+	DDRE &= ~(1<<PE4);	// Eingang
+	EICRB |= (1<< ISC41);
+	EIMSK |= (1 << INT4);
+	sei();
 
   //
   // Ein und Ausgaenge
@@ -469,6 +490,11 @@ int main(void)
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
+	while(1)
+	{
+		uart_puts("bla\r\n");
+		_delay_ms(1000);
+	}
   #endif
   i2c_init();
 
