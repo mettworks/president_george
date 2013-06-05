@@ -11,6 +11,9 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <util/setbaud.h> 
 #include <avr/interrupt.h>
 #include <i2cmaster.h>
+#include "eeprom.h"
+
+
 // Berechnungen
 #define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
 #define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     // Reale Baudrate
@@ -40,22 +43,6 @@ unsigned int wert;
 #define TREIBER_SWR 14
 #define TREIBER_SRF 15
 
-//
-// EEPROM Geraffel
-#define NOP asm("nop");
-#define SPIEE_CS 0
-#define SPIEE_CS_PORT PORTB
-#define SPI_EEPROM_WREN 0x6
-#define SPI_EEPROM_RDSR 0x5
-#define SPI_EEPROM_WRITE 0x2
-#define SPI_EEPROM_READ 0x3
-/*
-uint8_t spieeprom_read (uint16_t);
-uint8_t spi_transfer (uint8_t);
-uint8_t spieeprom_write (uint16_t, uint8_t);
-*/
-unsigned char status = 0;
-
 
 #ifdef debug
 int uart_putc(unsigned char c)
@@ -66,142 +53,6 @@ int uart_putc(unsigned char c)
   UDR1 = c;                     
   return 0;
 }
-
-
-//
-// EEPROM Test Beginn
-void master_init (void) 
-{
-	DDRB = _BV(PB1) | _BV(PB2) | _BV(PB0);		// setze SCK,MOSI,PB0 (SS) als Ausgang
-	DDRB &= ~_BV(PB3);							// setze MISO als Eingang
-	PORTB = _BV(PB1) | _BV(PB0);				// SCK und PB0 high (ist mit SS am Slave verbunden)
-	SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPR0) | _BV(SPR1);	//Aktivierung des SPI, Master, Taktrate fck/16
-	status = SPSR;								//Status löschen
-}
-
-unsigned char master_transmit (unsigned char data) 
-{
-	PORTB &= ~_BV(PB0);						//SS am Slave Low --> Beginn der Übertragung
-	SPDR = data;										// -> SPI Data Register
-	while (!(SPSR & (1<<SPIF)));		// SPI Status Register, SPIF SPI Interrupt Flag , fertig?
-	PORTB |= _BV(PB0);							//SS High --> Ende der Übertragung
-	return SPDR;
-}
-/*
-// Transfer the data to the eeprom using SPI
-uint8_t spi_transfer (uint8_t c)
-{
-	USIDR = c;
-	USISR = (1 << USIOIF);
-	while (!(USISR & (1 << USIOIF)))
-	{
-		USICR = (1 << USIWM0) | (1 << USICS1) | (1 << USICLK) | (1 << USITC);
-	}
-	return USIDR;
-}
-*/
-uint8_t spieeprom_write (uint16_t addr, uint8_t data)
-{
-	uart_puts("schreibe via SPI\r\n");
-	unsigned char i;
-
-	// Before performing the write, first check to see if eeprom is in the middle of
-	// a read. Send in the Read Status (RDSR 0000 0101). Check the returned status
-	// to see if it is ok to do a write.
-	do
-	{
-		asm ("wdr");
-		// Activate eeprom by pulling CS low
-		//SPIEE_CS_PORT &= ~(1 << SPIEE_CS);
-		PORTB &= ~_BV(PB0);
-		NOP;
-		NOP;
-		NOP;
-		NOP; // wait 500 ns, CS setup time
-		master_transmit (SPI_EEPROM_RDSR); // write "READ STATUS REG" cmd
-		i = master_transmit (0); // read status
-
-		//SPIEE_CS_PORT |= (1 << SPIEE_CS); // pull CS high
-		PORTB |= _BV(PB0);
-
-	}
-	while ((i & 0x1) != 0);
-
-	uart_puts("EEPROM ist bereit\r\n");
-	
-	// pull CS low to activate eeprom
-	//SPIEE_CS_PORT &= ~(1 << SPIEE_CS);
-	PORTB &= ~_BV(PB0);
-
-	NOP;
-	NOP;
-	NOP;
-	NOP; // wait 500 ns, CS setup time
-
-	// Set the write enable latch by issuing the WREN command 0000 0110
-	// then bring CS back high
-	master_transmit (SPI_EEPROM_WREN); // send command
-	//SPIEE_CS_PORT |= (1 << SPIEE_CS); // pull CS high
-	PORTB |= _BV(PB0);
-	NOP;
-	NOP;
-	NOP;
-	NOP; // wait 500 ns, CS setup time
-
-	// Once the latch is set, proceed by setting CS low and
-	// sending the WRITE command 0000 0010
-	//SPIEE_CS_PORT &= ~(1 << SPIEE_CS); // pull CS low
-	PORTB &= ~_BV(PB0);
-	master_transmit (SPI_EEPROM_WRITE); // send WRITE command
-
-	// Send in the memory address you will write to.
-	// The address is 16bits, so send in 8 bites at a time
-	master_transmit (addr >> 8); // send high bits of address
-	master_transmit (addr & 0xFF); // send low bits of address
-
-	master_transmit (data); // send data
-	NOP;
-	NOP;
-	NOP;
-	NOP; // wait 500 ns, CS setup time
-	// pull CS high to terminate operation
-	//SPIEE_CS_PORT |= (1 << SPIEE_CS);
-	PORTB |= _BV(PB0);
-	uart_puts("EEPROM fertig geschrieben\r\n");
-	return 0;
-}
-
-unsigned char spieeprom_read (uint16_t addr)
-{
-	uart_puts("EEPROM lesen anfang\r\n");
-	// pull CS low to activate eeprom
-	//SPIEE_CS_PORT &= ~(1 << SPIEE_CS);
-	PORTB &= ~_BV(PB0);
-	NOP;
-	NOP;
-	NOP;
-	NOP; // wait 500 ns, CS setup time
-	// send READ command 0000 0011
-	master_transmit (SPI_EEPROM_READ);
-
-	// Send in the memory address we will start to read from
-	// This is a 16 bit address. We must send in 8 bits at a time
-	master_transmit (addr >> 8); // send high bits of address
-	master_transmit (addr & 0xFF); // send low bits of address
-
-	// We will read back one byte
-	unsigned char buff = master_transmit (0);
-
-	// Once done with the read, set the CS high to terminate the operation
-	//SPIEE_CS_PORT |= (1 << SPIEE_CS);
-	PORTB |= _BV(PB0);
-	uart_puts("EEPROM lesen ende\r\n");
-
-	return buff;
-}
-
-//
-// EEPROM Test Ende
 
 void uart_puts (char *s)
 {
@@ -599,27 +450,32 @@ int main(void)
 	EIMSK |= (1 << INT4);
 	sei();
 
-	uart_puts("Anfang SPI\r\n");
-	master_init();
-	spieeprom_write(100,54);
-	_delay_ms(1000);
+	//
+	// EEPROM
+	unsigned char IOReg;
 	
-	unsigned char temp=spieeprom_read(100);
+	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+	IOReg   = SPDR;
+	PORTB |= (1<<PB0);                         //ChipSelect aus
 	
-	uart_puts("Wert:");
-	uart_puts(temp);
+	unsigned char out;
+	unsigned char test=15;
 	
-	if(temp == 54)
+	unsigned char H_Add=0b00000000;    //Test Adresse
+   unsigned char M_Add=0b00000000;
+	unsigned char L_Add=0b00000010;
+	
+	
+	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
+	_delay_ms(100);
+	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
+
+	if(out == test)
 	{
-		uart_puts("passt\r\n");
+		uart_puts("passt!");
 	}
-	else
-	{
-		uart_puts("passt nicht\r\n");
-	}
-	
-	
-	uart_puts("Ende SPI\r\n");
 
   //
   // Ein und Ausgaenge
