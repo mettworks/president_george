@@ -462,12 +462,12 @@ int main(void)
 	
 	unsigned char out;
 	unsigned char test=15;
-	
 	unsigned char H_Add=0b00000000;    //Test Adresse
   unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000010;
 	
 	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
+
 	//uart_puts("Schreiben fertig\r\n");
 	_delay_ms(100);
 	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben

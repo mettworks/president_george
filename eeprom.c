@@ -5,9 +5,9 @@
  *  Author: Stefan Wohlers
  * gefunden: http://www.mikrocontroller.net/topic/260261
  */ 
- /*
+ 
 #define F_CPU 18432000UL
-
+/*
 #include <avr/io.h>
 #include "eeprom.h"
 #include <util/delay.h>
@@ -176,6 +176,7 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned 
 		
 		PORTB |= (1<<PB0);    //ChipSelect aus
 				
+		
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////
