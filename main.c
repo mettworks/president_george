@@ -468,10 +468,10 @@ int main(void)
 	unsigned char L_Add=0b00000010;
 	
 	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
-	uart_puts("Schreiben fertig\r\n");
+	//uart_puts("Schreiben fertig\r\n");
 	_delay_ms(100);
 	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-	uart_puts("Lesen fertig\r\n");
+	//uart_puts("Lesen fertig\r\n");
 
 
 	if(out == test)
