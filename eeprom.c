@@ -5,6 +5,8 @@
  *  Author: Stefan Wohlers
  * gefunden: http://www.mikrocontroller.net/topic/260261
  */ 
+#define F_CPU 18432000UL
+
 #include <avr/io.h>
 #include "eeprom.h"
 #include <util/delay.h>
@@ -61,7 +63,7 @@ void SPIWIPPolling()
 		WriteSPI(0x05);          //Opcode senden
 		status=ReadSPI();       //Antwort empfangen
 		PORTB |= (1<<PB0);      //ChipSelect aus
-		uart_puts("SPIWIPPolling()\r\n");
+		//uart_puts("SPIWIPPolling()\r\n");
 	} 
 	while (status & 0x01);	//Wiederhole bis WIP Bit auf Null gesetzt wird
 }
@@ -80,7 +82,7 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char Mid
 	SPIWIPPolling();     //Auf EEPROM warten
 }
 	
-Unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd)
+unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd)
 {
 	unsigned char data=0;
 	PORTB &= ~(1<<PB0);     //ChipSelect an
