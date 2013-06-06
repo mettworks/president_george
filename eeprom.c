@@ -5,6 +5,7 @@
  *  Author: Stefan Wohlers
  * gefunden: http://www.mikrocontroller.net/topic/260261
  */ 
+#define debug
 
 #define F_CPU 18432000UL
 #include <avr/io.h>
@@ -70,6 +71,20 @@ void SPIWIPPolling()
 	
 void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd, unsigned char data)
 {
+	#ifdef debug
+	uart_puts("\r\nBeginn ByteWriteSPI()\r\n");
+	uint8_t string[20];
+	uart_puts("Zieladresse: ");
+	sprintf(string,"%u,",HighAdd);
+	uart_puts(string);
+	sprintf(string,"%u,",MidAdd);
+	uart_puts(string);
+	sprintf(string,"%u",LowAdd);
+	uart_puts(string);
+	uart_puts("\r\n");
+	sprintf(string,"zu schreibendes Byte: %u\r\n",data);
+	uart_puts(string);
+	#endif
 	WriteEnable();          //Schreiben aktivieren
 	PORTB &= ~(1<<PB0);     //ChipSelect an
 	_delay_us(10);
@@ -80,6 +95,9 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char Mid
 	WriteSPI(data);      //Datenbyte senden
 	PORTB |= (1<<PB0);   //ChipSelect aus
 	SPIWIPPolling();     //Auf EEPROM warten
+	#ifdef debug
+	uart_puts("fertig geschrieben\r\n");
+	#endif
 }
 	
 unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd)
@@ -93,5 +111,19 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned 
 	WriteSPI(LowAdd);       //Unteres Adressbyte senden
 	data=ReadSPI();         //Datenbyte in Variable data schreiben
 	PORTB |= (1<<PB0);      //ChipSelect aus
+	#ifdef debug
+	uart_puts("\r\nBeginn ByteReadSPI()\r\n");
+	uint8_t string[20];
+	uart_puts("Zieladresse: ");
+	sprintf(string,"%u,",HighAdd);
+	uart_puts(string);
+	sprintf(string,"%u,",MidAdd);
+	uart_puts(string);
+	sprintf(string,"%u",LowAdd);
+	uart_puts(string);
+	uart_puts("\r\n");
+	sprintf(string,"gelesenes Byte: %u\r\n",data);
+	uart_puts(string);
+	#endif
 	return data;            
 }

@@ -13,6 +13,11 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <i2cmaster.h>
 #include "eeprom.h"
 
+#ifdef debug
+#include <stdio.h>
+#include <stdint.h>
+#endif
+
 
 // Berechnungen
 #define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
@@ -71,6 +76,15 @@ void inituart()
   UBRR1L = UBRR_VAL & 0xFF;
   UCSR1B |= (1<<TXEN);			  // UART TX einschalten
   UCSR1C =  (1 << UCSZ1) | (1 << UCSZ0);  // Asynchron 8N1 
+}
+
+unsigned char inttochar(unsigned int rein)
+{
+	//int myInt;
+	unsigned char raus;
+	raus = (unsigned char)rein;
+	return raus;
+	
 }
 #endif
 
@@ -461,7 +475,7 @@ int main(void)
 	PORTB |= (1<<PB0);                         //ChipSelect aus
 	
 	unsigned char out;
-	unsigned char test=7;
+	unsigned char test=99;
 	unsigned char H_Add=0b00000000;    //Test Adresse
   unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000110;
@@ -469,16 +483,6 @@ int main(void)
 	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
 	_delay_ms(100);
 	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-
-	if(out == test)
-	{
-		uart_puts("passt!");
-	}
-	else
-	{	
-		uart_puts("passt nicht");
-	}
-	uart_puts("\r\n");
 
   //
   // Ein und Ausgaenge
