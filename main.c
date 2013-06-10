@@ -95,57 +95,57 @@ int wait(void)
 }
 int data0(void)
 {
-  PORTD &= ~(1<<PD4);	  // Data 0
+  PORTA &= ~(1<<PA5);	  // Data 0
   _delay_us(14);
-  PORTD |= (1<<PD5);	  // Clock 1
+  PORTA |= (1<<PA3);	  // Clock 1
   _delay_us(14);
-  PORTD &= ~(1<<PD5);	  // Clock 0
+  PORTA &= ~(1<<PA3);	  // Clock 0
   return 0;
 }
 int data1(void)
 {
-  PORTD |= (1<<PD4);	  // Data 1
+  PORTA |= (1<<PA5);	  // Data 1
   _delay_us(14); 
-  PORTD |= (1<<PD5);	  // Clock 1
+  PORTA |= (1<<PA3);	  // Clock 1
   _delay_us(14);
-  PORTD &= ~(1<<PD5);     // Clock 0
-  PORTD &= ~(1<<PD4);	  // Data 0
+  PORTA &= ~(1<<PA3);     // Clock 0
+  PORTA &= ~(1<<PA5);	  // Data 0
   return 0;
 }
 //
 // Treiber
 int begin0(void)
 {
-  PORTD &= ~(1<<PD5);	// Clock 0
-  PORTD &= ~(1<<PD4);   // Data 0
-  PORTD &= ~(1<<PD7);   // LE 0
+  PORTA &= ~(1<<PA3);	// Clock 0
+  PORTA &= ~(1<<PA5);   // Data 0
+  PORTA &= ~(1<<PA6);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end0(void)
 {
-  PORTD &= ~(1<<PD5);    // Clock 1
-  PORTD |= (1<<PD7);	// LE1
+  PORTA &= ~(1<<PA3);    // Clock 1
+  PORTA |= (1<<PA6);	// LE1
   _delay_us(14);
-  PORTD &= ~(1<<PD7);
+  PORTA &= ~(1<<PA6);
   return 0;
 }
 //
 // PLL
 int begin1(void)
 {
-  PORTD &= ~(1<<PD5);	// Clock 0
-  PORTD &= ~(1<<PD4);   // Data 0
-  PORTD &= ~(1<<PD6);   // LE 0
+  PORTA &= ~(1<<PA3);	// Clock 0
+  PORTA &= ~(1<<PA5);   // Data 0
+  PORTA &= ~(1<<PA4);   // LE 0
   _delay_us(56);
   return 0;
 }
 int end1(void)
 {
-  PORTD &= ~(1<<PD5);    // Clock 1
-  PORTD |= (1<<PD6);	// LE1
+  PORTA &= ~(1<<PA3);    // Clock 1
+  PORTA |= (1<<PA4);	// LE1
   _delay_us(14);
-  PORTD &= ~(1<<PD6);
+  PORTA &= ~(1<<PA4);
   return 0;
 }
 
@@ -486,22 +486,22 @@ int main(void)
 
   //
   // Ein und Ausgaenge
-  // PE2 ist Ein/Aus	    	-> Ausgang		      
+  // PA7 ist Ein/Aus	    	-> Ausgang		      
   // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup  
   // PA3 ist Taster 1				-> Eingang, mit Pullup    
   // PA4 ist Taster 2				-> Eingang, mit Pullup    
   // PA5 ist Taster 3				-> Eingang, mit Pullup    
   // PA6 ist Taster 4				-> Eingang, mit Pullup    
-  // PD6 ist Latch PLL      -> Ausgang		     
-  // PD7 ist Latch Treiber  -> Ausgang		     
-  // PD4 ist Data	    			-> Ausgang		   
-  // PD5 ist Clock	    		-> Ausgang		     
+  // PA4 ist Latch PLL      -> Ausgang		PIN10 vom Mainboard     
+  // PA6 ist Latch Treiber  -> Ausgang		PIN7 vom Mainboard     
+  // PA5 ist Data	    			-> Ausgang		PIN9 vom Mainboard   
+  // PA3 ist Clock	    		-> Ausgang		PIN8 vom Mainboard     
 	// PG0 ist LED Rot				-> Ausgang
 	// PG1 ist LED Grün 			-> Ausgang
   
   // PE2
-  DDRE |= (1<<PE2);
-  PORTE |= (1<<PE2);	// einschalten
+  DDRA |= (1<<PA7);
+  PORTA |= (1<<PA7);	// einschalten
   // PE3 
   DDRE &= ~(1<<PE3);
   // PA3
@@ -516,20 +516,20 @@ int main(void)
   // PA6
   DDRA &= ~(1<<PA6);	// Eingang
   PORTA |= (1<<PA6);	// internen Pullup aktivieren
-  // PD6
-  DDRD |= (1<<PD6);
-  // PD7
-  DDRD |= (1<<PD7);
-  // PD4
-  DDRD |= (1<<PD4);
-  // PD5
-  DDRD |= (1<<PD5);
+  // PA4
+  DDRA |= (1<<PA4);
+  // PA6
+  DDRA |= (1<<PA6);
+  // PA5
+  DDRA |= (1<<PA5);
+  // PA3
+  DDRA |= (1<<PA3);
 	// PG0
 	DDRG |= (1<<PG0);
 	// PG1
 	DDRG |= (1<<PG1);
  
-
+/*
   i2c_init();
 
     
@@ -577,7 +577,7 @@ int main(void)
 	led_pwm(8,255);
 	led_pwm(9,255);
 	led_pwm(10,255);
-
+*/
 	led_color(0);
 		/*
 	while(1)
@@ -616,6 +616,7 @@ int main(void)
   unsigned int freq = 28100;
   unsigned int step = 5;
   tune(freq,step);
+	/*
   //
   // Endlos Schleife fuer die Taster
   while(1)
@@ -705,5 +706,6 @@ int main(void)
       }
     }
   } 
+	*/
   return 0;
 } 
