@@ -16,8 +16,8 @@
 //#ifndef F_CPU
 //#define F_CPU 4000000UL
 //#endif
-//#define F_CPU 7372800UL
-#define F_CPU 18432000UL
+#define F_CPU 7372800UL
+//#define F_CPU 18432000UL
 /* I2C clock in Hz */
 #define SCL_CLOCK  100000L
 

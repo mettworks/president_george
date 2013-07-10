@@ -624,32 +624,25 @@ int main(void)
   unsigned int freq = 28100;
   unsigned int step = 5;
   tune(freq,step);
-	
+	_delay_ms(500);
+	uart_puts("i2c Anfang\r\n");
 	i2c_init();
-	_delay_us(12);
-	i2c_start_wait(0x40);
-	_delay_us(12);
-	i2c_write(0x0);
-	_delay_us(12);
-	i2c_stop();
-	_delay_us(12);
-	i2c_start_wait(0x41);
-	_delay_us(12);
+
+  i2c_start_wait(0x40);
+  i2c_write(0x0);
+  i2c_rep_start(0x41);
 	unsigned char byte0=i2c_readAck();
-	_delay_us(12);
-	unsigned char byte1=i2c_readNak();
-	_delay_us(12);
 	i2c_stop();
+	
+	
+	
 	uint8_t string[20];
 	uart_puts("1. Byte: ");
 	sprintf(string,"%u",byte0);
 	uart_puts(string);
 	uart_puts("\r\n");
 	
-	uart_puts("2. Byte: ");
-	sprintf(string,"%u",byte1);
-	uart_puts(string);
-	uart_puts("\r\n");
+
 	while(1)
 	{
 	}
