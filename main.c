@@ -445,6 +445,28 @@ ISR (INT4_vect)
 	}
 }
 
+ISR (INT7_vect)
+{
+	uart_puts("INT7\r\n");
+	cli();
+	i2c_init();
+
+		i2c_start_wait(0x40);
+		i2c_write(0x0);
+		i2c_rep_start(0x41);
+		unsigned char byte0=i2c_readAck();
+		i2c_stop();
+	
+	
+	
+		uint8_t string[20];
+		uart_puts("1. Byte: ");
+		sprintf(string,"%u",byte0);
+		uart_puts(string);
+		uart_puts("\r\n");
+		_delay_ms(500);
+}
+
 int main(void) 
 {
   #ifdef debug
@@ -459,9 +481,14 @@ int main(void)
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
-	DDRE &= ~(1<<PE4);	// Eingang
+	//DDRE &= ~(1<<PE4);	// Eingang
+	DDRE &= ~(1<<PE7);	// Eingang
+  //PORTE |= (1<<PE7);	// internen Pullup aktivieren
 	EICRB |= (1<< ISC41);
-	EIMSK |= (1 << INT4);
+	EICRB |= (1<< ISC70) |(1<< ISC71) ; //steigend
+
+	//EIMSK |= (1 << INT4) | (1<< INT7);
+	EIMSK |= (1<< INT7);
 	sei();
 /*
 	//
@@ -528,6 +555,11 @@ int main(void)
 	DDRG |= (1<<PG0);
 	// PG1
 	DDRG |= (1<<PG1);
+	// PE7 IRQ fuer Taster 1
+
+
+
+	
 	/*
 	i2c_init();
 	i2c_start_wait(0x20);
@@ -625,22 +657,6 @@ int main(void)
   unsigned int step = 5;
   tune(freq,step);
 	_delay_ms(500);
-	uart_puts("i2c Anfang\r\n");
-	i2c_init();
-
-  i2c_start_wait(0x40);
-  i2c_write(0x0);
-  i2c_rep_start(0x41);
-	unsigned char byte0=i2c_readAck();
-	i2c_stop();
-	
-	
-	
-	uint8_t string[20];
-	uart_puts("1. Byte: ");
-	sprintf(string,"%u",byte0);
-	uart_puts(string);
-	uart_puts("\r\n");
 	
 
 	while(1)
