@@ -463,7 +463,7 @@ int main(void)
 	EICRB |= (1<< ISC41);
 	EIMSK |= (1 << INT4);
 	sei();
-
+/*
 	//
 	// EEPROM
 	unsigned char IOReg;
@@ -483,7 +483,7 @@ int main(void)
 	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
 	_delay_ms(100);
 	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-
+*/
   //
   // Ein und Ausgaenge
   // PA7 ist Ein/Aus	    	-> Ausgang		      
@@ -528,7 +528,15 @@ int main(void)
 	DDRG |= (1<<PG0);
 	// PG1
 	DDRG |= (1<<PG1);
- 
+	/*
+	i2c_init();
+	i2c_start_wait(0x20);
+	i2c_write(0x0);
+	
+	while(1)
+	{
+	}
+ */
 /*
   i2c_init();
 
@@ -578,7 +586,7 @@ int main(void)
 	led_pwm(9,255);
 	led_pwm(10,255);
 */
-	led_color(0);
+	//led_color(0);
 		/*
 	while(1)
 	{
@@ -616,6 +624,38 @@ int main(void)
   unsigned int freq = 28100;
   unsigned int step = 5;
   tune(freq,step);
+	
+	i2c_init();
+	_delay_us(12);
+	i2c_start_wait(0x40);
+	_delay_us(12);
+	i2c_write(0x0);
+	_delay_us(12);
+	i2c_stop();
+	_delay_us(12);
+	i2c_start_wait(0x41);
+	_delay_us(12);
+	unsigned char byte0=i2c_readAck();
+	_delay_us(12);
+	unsigned char byte1=i2c_readNak();
+	_delay_us(12);
+	i2c_stop();
+	uint8_t string[20];
+	uart_puts("1. Byte: ");
+	sprintf(string,"%u",byte0);
+	uart_puts(string);
+	uart_puts("\r\n");
+	
+	uart_puts("2. Byte: ");
+	sprintf(string,"%u",byte1);
+	uart_puts(string);
+	uart_puts("\r\n");
+	while(1)
+	{
+	}
+	//uart_puts(blubb);
+
+	
 	/*
   //
   // Endlos Schleife fuer die Taster
