@@ -31,7 +31,7 @@ unsigned int wert;
 
 int mod = 1;
 unsigned int freq = 27000;
-unsigned int step = 5;
+unsigned int step = 1;
 
 //
 // Speicherarray für das EEPROM
@@ -201,7 +201,7 @@ int treiber(unsigned int wert)
   #ifdef debug
   uart_puts("\r\n");
   #endif
-
+	return 0;
 } 
 
 int modulation(unsigned int mod)
@@ -263,6 +263,7 @@ int modulation(unsigned int mod)
   uart_puts("\r\n");
   treiber(wert);
   #endif
+	return 0;
 }
 
 int tune(unsigned int freq,unsigned int step)
@@ -386,7 +387,7 @@ int tune(unsigned int freq,unsigned int step)
 	sei();
   return 0;
 }
-
+/*
 int init_led()
 {
 	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
@@ -424,6 +425,7 @@ int init_led()
   i2c_write(0x00);  // Register 1B /  All Call I2C bus address
   i2c_write(0xFF);  // Register 1C /  IREF configuration  
   i2c_stop();  // I2C-Stop
+	return 0;
 }
 
 int led_pwm(int led, int pwm)
@@ -432,6 +434,7 @@ int led_pwm(int led, int pwm)
 	i2c_write(0x01 + led);
 	i2c_write(pwm);
 	i2c_stop();
+	return 0;
 }
 
 int led_color(int color)
@@ -452,8 +455,9 @@ int led_color(int color)
 		PORTG |= (1<<PG1);	  		// Grün 1
 		PORTG &= ~(1<<PG0);     	// Rot 0
 	}
+	return 0;
 }
-
+*/
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
@@ -486,9 +490,8 @@ ISR (INT7_vect)
 	// es werden gleich wieder Interrupts aktiviert, weil:
 	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
 	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
-	sei();
-
-	uart_puts("INT7\r\n");
+	// ABER ERST WENN I2C FERTIG IST!
+	
 	i2c_init();
 
 	i2c_start_wait(0x40);
@@ -496,22 +499,31 @@ ISR (INT7_vect)
 	i2c_rep_start(0x41);
 	unsigned char byte0=i2c_readAck();
 	i2c_stop();
+
+	cli();
+	
 	
 	if(byte0 == 254)
 	{
+		#ifdef debug
 		uart_puts("+\r\n");
+		#endif
 		freq=freq+step;
     tune(freq,step);
 	}
 	else if(byte0 == 253)
 	{
+		#ifdef debug
 		uart_puts("-\r\n");
+		#endif
 		freq=freq-step;
     tune(freq,step);
 	}
 	else if(byte0 == 251)
 	{
+		#ifdef debug
 		uart_puts("mod\r\n");
+		#endif
     if(mod == 1)
     {
 			mod=2;
@@ -532,7 +544,9 @@ ISR (INT7_vect)
 	}
 	else if(byte0 == 247)
 	{
+		#ifdef debug
 		uart_puts("step\r\n");
+		#endif
     if(step == 1)
     {
 			step=5;
@@ -559,13 +573,29 @@ ISR (INT7_vect)
     }
     tune(freq,step);
 	}
+	else if(byte0 == 255)
+	{
+	}
 	else
 	{
+		#ifdef debug
 		uint8_t string[20];
 		uart_puts("1. Byte: ");
 		sprintf(string,"%u",byte0);
 		uart_puts(string);
 		uart_puts("\r\n");
+		#endif
+	}
+}
+
+
+ISR(BADISR_vect)
+{
+	#ifdef debug
+  uart_puts("RESET AUSGELOEST!\r\n");
+	#endif
+	while(1)
+	{
 	}
 }
 
@@ -646,7 +676,7 @@ int main(void)
 	IOReg   = SPDR;
 	PORTB |= (1<<PB0);                         //ChipSelect aus
 	
-	unsigned char out;
+	//unsigned char out;
 	unsigned char H_Add=0b00000000;    //Test Adresse
   unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000000;
@@ -656,7 +686,7 @@ int main(void)
 	L_Add=0b00000001;
 	memory[1] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
 
-	freq = memory[1] + (memory[0] << 8);
+	//freq = memory[1] + (memory[0] << 8);
 
 
 	/*
@@ -758,11 +788,21 @@ int main(void)
 	_delay_ms(500);
 	
   sei();
-
+	#ifdef debug
 	uart_puts("fertig\r\n");
+	#endif
 	while(1)
 	{
+		/*
+		_delay_ms(2000);
+		while(1)
+		{
+			freq=freq-step;
+			tune(freq,step);
+		}
+		*/
 		//uart_puts("bla\r\n");
+		
 	}
 	//uart_puts(blubb);
 
