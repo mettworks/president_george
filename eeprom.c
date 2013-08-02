@@ -69,22 +69,19 @@ void SPIWIPPolling()
 	while (status & 0x01);	//Wiederhole bis WIP Bit auf Null gesetzt wird
 }
 	
-void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd, unsigned char data)
+void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd, unsigned char data[6])
 {
+	
 	#ifdef debug
 	uart_puts("\r\nBeginn ByteWriteSPI()\r\n");
-	uint8_t string[20];
-	uart_puts("Zieladresse: ");
-	sprintf(string,"%u,",HighAdd);
-	uart_puts(string);
-	sprintf(string,"%u,",MidAdd);
-	uart_puts(string);
-	sprintf(string,"%u",LowAdd);
-	uart_puts(string);
-	uart_puts("\r\n");
-	sprintf(string,"zu schreibendes Byte: %u\r\n",data);
-	uart_puts(string);
+	uint8_t string0[20];
+	uint8_t string1[20];
+	sprintf(string0,"zu schreibendes Byte0: %u\r\n",data[0]);
+	uart_puts(string0);
+	sprintf(string1,"zu schreibendes Byte1: %u\r\n",data[1]);
+	uart_puts(string1);
 	#endif
+	
 	WriteEnable();          //Schreiben aktivieren
 	PORTB &= ~(1<<PB0);     //ChipSelect an
 	_delay_us(10);
@@ -92,7 +89,13 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char Mid
 	WriteSPI(HighAdd);   //Oberes Adressbyte senden
 	WriteSPI(MidAdd);    //Mittleres Adressbyte senden
 	WriteSPI(LowAdd);    //Unteres Adressbyte senden
-	WriteSPI(data);      //Datenbyte senden
+	WriteSPI(data[0]);
+	WriteSPI(data[1]); 
+	WriteSPI(data[2]);
+	WriteSPI(data[3]); 
+	WriteSPI(data[4]);
+	WriteSPI(data[5]); 
+	WriteSPI(data[6]);
 	PORTB |= (1<<PB0);   //ChipSelect aus
 	SPIWIPPolling();     //Auf EEPROM warten
 	#ifdef debug

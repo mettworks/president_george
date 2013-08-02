@@ -3,7 +3,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 */
 
 #define F_CPU 18432000UL
-#define BAUD 115200UL
+#define BAUD 9600UL
 #define debug
 
 #include <avr/io.h>
@@ -28,6 +28,18 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #endif
 
 unsigned int wert;
+
+int mod = 1;
+unsigned int freq = 27000;
+unsigned int step = 5;
+
+//
+// Speicherarray für das EEPROM
+// 0-1 	Frequenz in kHz
+// 2	 	Modulation
+// 3		Schrittweite
+static unsigned char memory[6];
+
 //
 // Bits fuer den Treiberbaustein
 #define TREIBER_MOD 0  
@@ -255,6 +267,10 @@ int modulation(unsigned int mod)
 
 int tune(unsigned int freq,unsigned int step)
 {
+  //
+	// hier müssen Interrupts gesperrt werden!
+	// der Port Expander schickt noch Quatsch weil der Taster prellt, dann wird irgendwo abgebrochen
+	cli();
   begin1();
   //
   // Festlegung Kanalraster
@@ -362,6 +378,12 @@ int tune(unsigned int freq,unsigned int step)
   uart_puts("\r\n");
   #endif
   end1();
+	
+	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
+	memory[0] = freq / 256;
+	memory[1] = freq % 256;
+
+	sei();
   return 0;
 }
 
@@ -432,39 +454,119 @@ int led_color(int color)
 	}
 }
 
+// IRQ für Spannungsabfall
+// wegspeichern der Einstellungen im EEPROM
+// beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+	//
+	// Wichtig, hier werden Interrupts gesperrt!
 	cli();
-	while(1)
-	{
-		// erstmal zum testen, macht sich gut mit dem Logikanalyzer... :-)
-		PORTG |= (1<<PG0);	
-		_delay_ms(1);
-		PORTG &= ~(1<<PG0);
-		_delay_ms(1);
-	}
+	
+  //
+	// EEPROM
+	unsigned char IOReg;
+	
+	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+	IOReg   = SPDR;
+	PORTB |= (1<<PB0);                         //ChipSelect aus
+	
+	unsigned char H_Add=0b00000000;    
+  unsigned char M_Add=0b00000000;
+	unsigned char L_Add=0b00000000;
+	
+	ByteWriteSPI(H_Add,L_Add,M_Add,memory);   //Variable test an Test Adresse schreiben
 }
 
 ISR (INT7_vect)
 {
+	// 
+	// es werden gleich wieder Interrupts aktiviert, weil:
+	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
+	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
+	sei();
+
 	uart_puts("INT7\r\n");
-	cli();
 	i2c_init();
 
-		i2c_start_wait(0x40);
-		i2c_write(0x0);
-		i2c_rep_start(0x41);
-		unsigned char byte0=i2c_readAck();
-		i2c_stop();
+	i2c_start_wait(0x40);
+	i2c_write(0x0);
+	i2c_rep_start(0x41);
+	unsigned char byte0=i2c_readAck();
+	i2c_stop();
 	
-	
-	
+	if(byte0 == 254)
+	{
+		uart_puts("+\r\n");
+		freq=freq+step;
+    tune(freq,step);
+	}
+	else if(byte0 == 253)
+	{
+		uart_puts("-\r\n");
+		freq=freq-step;
+    tune(freq,step);
+	}
+	else if(byte0 == 251)
+	{
+		uart_puts("mod\r\n");
+    if(mod == 1)
+    {
+			mod=2;
+    }
+    else if(mod == 2)
+    {
+			mod=3;
+    }
+    else if(mod == 3)
+    {
+			mod=4;
+    }
+    else if(mod == 4)
+    {
+			mod=1;
+    }
+		modulation(mod);
+	}
+	else if(byte0 == 247)
+	{
+		uart_puts("step\r\n");
+    if(step == 1)
+    {
+			step=5;
+    }
+    else if(step == 5)
+    {
+			step=10;
+    }
+		else if(step == 10)
+		{
+			step=25;
+		}
+		else if(step == 25)
+		{
+			step=100;
+		}
+		else if(step == 100)
+		{
+			step=1000;
+		}
+    else
+    {
+			step=1;
+    }
+    tune(freq,step);
+	}
+	else
+	{
 		uint8_t string[20];
 		uart_puts("1. Byte: ");
 		sprintf(string,"%u",byte0);
 		uart_puts(string);
 		uart_puts("\r\n");
-		_delay_ms(500);
+	}
 }
 
 int main(void) 
@@ -481,36 +583,15 @@ int main(void)
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
-	//DDRE &= ~(1<<PE4);	// Eingang
+	// INT7 wird für den 1. i2c Port Expander genutzt
+	// (warum nicht bei fallender Flanke? Hmmm!)
+	DDRE &= ~(1<<PE4);	// Eingang
 	DDRE &= ~(1<<PE7);	// Eingang
-  //PORTE |= (1<<PE7);	// internen Pullup aktivieren
-	EICRB |= (1<< ISC41);
-	EICRB |= (1<< ISC70) |(1<< ISC71) ; //steigend
+  PORTE |= (1<<PE7);	// internen Pullup aktivieren
+	EICRB |= (1<< ISC70);    // jede Änderung
+  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
+	EIMSK |= (1 << INT4) | (1<< INT7);
 
-	//EIMSK |= (1 << INT4) | (1<< INT7);
-	EIMSK |= (1<< INT7);
-	sei();
-/*
-	//
-	// EEPROM
-	unsigned char IOReg;
-	
-	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
-	IOReg   = SPDR;
-	PORTB |= (1<<PB0);                         //ChipSelect aus
-	
-	unsigned char out;
-	unsigned char test=99;
-	unsigned char H_Add=0b00000000;    //Test Adresse
-  unsigned char M_Add=0b00000000;
-	unsigned char L_Add=0b00000110;
-	
-	ByteWriteSPI(H_Add,L_Add,M_Add,test);   //Variable test an Test Adresse schreiben
-	_delay_ms(100);
-	out = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-*/
   //
   // Ein und Ausgaenge
   // PA7 ist Ein/Aus	    	-> Ausgang		      
@@ -555,11 +636,29 @@ int main(void)
 	DDRG |= (1<<PG0);
 	// PG1
 	DDRG |= (1<<PG1);
-	// PE7 IRQ fuer Taster 1
 
-
-
+	// EEPROM
+	unsigned char IOReg;
 	
+	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+	IOReg   = SPDR;
+	PORTB |= (1<<PB0);                         //ChipSelect aus
+	
+	unsigned char out;
+	unsigned char H_Add=0b00000000;    //Test Adresse
+  unsigned char M_Add=0b00000000;
+	unsigned char L_Add=0b00000000;
+	memory[0] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
+	H_Add=0b00000000;    //Test Adresse
+  M_Add=0b00000000;
+	L_Add=0b00000001;
+	memory[1] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
+
+	freq = memory[1] + (memory[0] << 8);
+
+
 	/*
 	i2c_init();
 	i2c_start_wait(0x20);
@@ -650,17 +749,20 @@ int main(void)
 
   //
   // initial auf FM
-  int mod = 1;
+  //int mod = 1;
   modulation(mod);
   
-  unsigned int freq = 28100;
-  unsigned int step = 5;
+  //unsigned int freq = 28100;
+  //unsigned int step = 5;
   tune(freq,step);
 	_delay_ms(500);
 	
+  sei();
 
+	uart_puts("fertig\r\n");
 	while(1)
 	{
+		//uart_puts("bla\r\n");
 	}
 	//uart_puts(blubb);
 
@@ -670,68 +772,7 @@ int main(void)
   // Endlos Schleife fuer die Taster
   while(1)
   {
-    if(!(PINA & (1 << PINA3)))
-    {
-      _delay_ms(150);
-      #ifdef debug
-      uart_puts("up\r\n");
-      #endif
-      freq=freq+step;
-      tune(freq,step);
-    }
-    if(!(PINA & (1 << PINA4)))
-    {
-      _delay_ms(150);
-      #ifdef debug
-      uart_puts("down\r\n");
-      #endif
-      freq=freq-step;
-      tune(freq,step);
-    }
-    if(!(PINA & (1 << PINA5)))
-    {
-      _delay_ms(150);
-      #ifdef debug
-      uart_puts("mod\r\n");
-      #endif
-      if(mod == 1)
-      {
-	mod=2;
-      }
-      else if(mod == 2)
-      {
-	mod=3;
-      }
-      else if(mod == 3)
-      {
-	mod=4;
-      }
-      else if(mod == 4)
-      {
-	mod=1;
-      }
-      modulation(mod);
-    }
-    if(!(PINA & (1 << PINA6)))
-    {
-      _delay_ms(150);
-      #ifdef debug
-      uart_puts("step\r\n");
-      if(step == 1)
-      {
-	step=5;
-      }
-      else if(step == 5)
-      {
-	step=10;
-      }
-      else
-      {
-	step=1;
-      }
-      tune(freq,step);
-      #endif
-    }
+ 
     if(!(PINE & (1 << PINE3)))
     {
       _delay_ms(100);
