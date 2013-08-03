@@ -387,10 +387,12 @@ int tune(unsigned int freq,unsigned int step)
 	sei();
   return 0;
 }
-/*
+
 int init_led()
 {
+	uart_puts("init_led(): Anfang\r\n");
 	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
+	uart_puts("bla\r\n");
   i2c_write(0x80);  // autoincrement ab Register 0h
 
   i2c_write(0x00);  // Register 00 /  Mode1  
@@ -444,24 +446,32 @@ int led_color(int color)
 	  #ifdef debug
 		uart_puts("LED Farbe: Rot\r\n");
 		#endif
-		PORTG |= (1<<PG0);	  		// Rot 1
-		PORTG &= ~(1<<PG1);     	// Grün 0
+		PORTC |= (1<<PC0);	  		// Rot 1
+		PORTC &= ~(1<<PC1);     	// Grün 0
 	}
 	else if (color == 1)
 	{
 		#ifdef debug
 		uart_puts("LED Farbe: Gruen\r\n");
 		#endif
-		PORTG |= (1<<PG1);	  		// Grün 1
-		PORTG &= ~(1<<PG0);     	// Rot 0
+		PORTC |= (1<<PC1);	  		// Grün 1
+		PORTC &= ~(1<<PC0);     	// Rot 0
 	}
 	return 0;
 }
-*/
+
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
+{
+	save2memory();
+	while(1)
+	{
+	}
+}
+
+int save2memory()
 {
 	//
 	// Wichtig, hier werden Interrupts gesperrt!
@@ -482,6 +492,29 @@ ISR (INT4_vect)
 	unsigned char L_Add=0b00000000;
 	
 	ByteWriteSPI(H_Add,L_Add,M_Add,memory);   //Variable test an Test Adresse schreiben
+	return 0;
+}
+
+ISR (INT5_vect)
+{
+	save2memory();
+	
+	PORTA &= ~(1<<PA7);	// ausschalten...
+	led_pwm(1,0);
+	led_pwm(2,0);
+	led_pwm(3,0);
+	led_pwm(4,0);
+	led_pwm(5,0);
+	led_pwm(6,0);
+	led_pwm(7,0);
+	led_pwm(8,0);
+	led_pwm(9,0);
+	led_pwm(10,0);
+	led_pwm(11,0);
+	led_pwm(12,0);
+	while(1)
+	{
+	}
 }
 
 ISR (INT7_vect)
@@ -593,6 +626,8 @@ ISR(BADISR_vect)
 {
 	#ifdef debug
   uart_puts("RESET AUSGELOEST!\r\n");
+	uart_puts("nicht definierter Interrupt!\r\n");
+	uart_puts("STOP\r\n");
 	#endif
 	while(1)
 	{
@@ -601,59 +636,34 @@ ISR(BADISR_vect)
 
 int main(void) 
 {
+	_delay_ms(1000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
 	uart_puts("Beginn main()\r\n");
 	#endif
-  //
-  // Definitionen
-  //unsigned int wert;
-	
-	//
-	// Interrupts
-	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
-	// INT7 wird für den 1. i2c Port Expander genutzt
-	// (warum nicht bei fallender Flanke? Hmmm!)
-	DDRE &= ~(1<<PE4);	// Eingang
-	DDRE &= ~(1<<PE7);	// Eingang
-  PORTE |= (1<<PE7);	// internen Pullup aktivieren
-	EICRB |= (1<< ISC70);    // jede Änderung
-  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
-	EIMSK |= (1 << INT4) | (1<< INT7);
 
   //
   // Ein und Ausgaenge
-  // PA7 ist Ein/Aus	    	-> Ausgang		      
-  // PE3 ist TX vom Mikro   -> Eingang, ohne Pullup  
-  // PA3 ist Taster 1				-> Eingang, mit Pullup    
-  // PA4 ist Taster 2				-> Eingang, mit Pullup    
-  // PA5 ist Taster 3				-> Eingang, mit Pullup    
-  // PA6 ist Taster 4				-> Eingang, mit Pullup    
-  // PA4 ist Latch PLL      -> Ausgang		PIN10 vom Mainboard     
-  // PA6 ist Latch Treiber  -> Ausgang		PIN7 vom Mainboard     
-  // PA5 ist Data	    			-> Ausgang		PIN9 vom Mainboard   
-  // PA3 ist Clock	    		-> Ausgang		PIN8 vom Mainboard     
-	// PG0 ist LED Rot				-> Ausgang
-	// PG1 ist LED Grün 			-> Ausgang
-  
-  // PE2
-  DDRA |= (1<<PA7);
-  PORTA |= (1<<PA7);	// einschalten
-  // PE3 
-  DDRE &= ~(1<<PE3);
-  // PA3
-  DDRA &= ~(1<<PA3);	// Eingang
-  PORTA |= (1<<PA3);	// internen Pullup aktivieren
-  // PA4
-  DDRA &= ~(1<<PA4);	// Eingang
-  PORTA |= (1<<PA4);	// internen Pullup aktivieren
-  // PA5
-  DDRA &= ~(1<<PA5);	// Eingang
-  PORTA |= (1<<PA5);	// internen Pullup aktivieren
-  // PA6
-  DDRA &= ~(1<<PA6);	// Eingang
-  PORTA |= (1<<PA6);	// internen Pullup aktivieren
+	// PE4, INT4 ist VCC Kontrolle			-> Eingang
+	// PE7, INT7 ist 1. Port Expander		-> Eingang
+ 	// PE5, INT5 ist Taster 1, Ein/Aus	-> Eingang
+  // PA4 ist Latch PLL      					-> Ausgang		PIN10 vom Mainboard     
+  // PA6 ist Latch Treiber  					-> Ausgang		PIN7 vom Mainboard     
+  // PA5 ist Data	    								-> Ausgang		PIN9 vom Mainboard   
+  // PA3 ist Clock	    							-> Ausgang		PIN8 vom Mainboard     
+	// PC0 ist LED Rot									-> Ausgang
+	// PC1 ist LED Grün 								-> Ausgang
+	// PA7 ist Ein/Aus									-> Ausgang
+	
+	// PE4
+	DDRE &= ~(1<<PE4);	// Eingang
+	// PE7
+	DDRE &= ~(1<<PE7);	// Eingang
+  PORTE |= (1<<PE7);	// internen Pullup aktivieren
+	// PE5
+  DDRE &= ~(1<<PE5);	// Eingang
+  PORTE |= (1<<PE5);	// internen Pullup aktivieren
   // PA4
   DDRA |= (1<<PA4);
   // PA6
@@ -662,32 +672,51 @@ int main(void)
   DDRA |= (1<<PA5);
   // PA3
   DDRA |= (1<<PA3);
-	// PG0
-	DDRG |= (1<<PG0);
-	// PG1
-	DDRG |= (1<<PG1);
+	// PC0
+	DDRC |= (1<<PC0);
+	// PC1
+	DDRC |= (1<<PC1);
+	// PA7
+	DDRA |= (1<<PA7);
+  PORTA |= (1<<PA7);	// einschalten
+	
+	//
+	// Interrupts
+	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
+	// INT7 wird für den 1. i2c Port Expander genutzt
+	// (warum nicht bei fallender Flanke? Hmmm!)
 
+	EICRB |= (1<< ISC70);    // jede Änderung
+  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
+	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
+	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5);
+	
 	// EEPROM
 	unsigned char IOReg;
 	
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
 	IOReg   = SPDR;
-	PORTB |= (1<<PB0);                         //ChipSelect aus
+	PORTB |= (1<<PB0);                         	//ChipSelect aus
 	
 	//unsigned char out;
-	unsigned char H_Add=0b00000000;    //Test Adresse
+	unsigned char H_Add=0b00000000;    						// Adresse
   unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000000;
 	memory[0] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-	H_Add=0b00000000;    //Test Adresse
+	H_Add=0b00000000;
   M_Add=0b00000000;
 	L_Add=0b00000001;
 	memory[1] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
 
-	//freq = memory[1] + (memory[0] << 8);
+	freq = memory[1] + (memory[0] << 8);
 
+	if(freq == 0)
+	{
+		uart_puts("ICH HABE ALZHEIMER!\r\n");
+		freq=27000;
+	}
 
 	/*
 	i2c_init();
@@ -734,7 +763,8 @@ int main(void)
   i2c_write(0xff);
 
   i2c_stop();
-
+*/
+	i2c_init();
 	init_led();
 	led_pwm(1,255);
 	led_pwm(2,255);
@@ -746,17 +776,11 @@ int main(void)
 	led_pwm(8,255);
 	led_pwm(9,255);
 	led_pwm(10,255);
-*/
-	//led_color(0);
-		/*
-	while(1)
-	{
-		led_color(0);
-		_delay_ms(1000);
-		led_color(1);
-		_delay_ms(1000);
-	}
-	*/
+	led_pwm(11,255);
+	led_pwm(12,255);
+
+	led_color(1);
+	
 	/*
     //delay_ms(2000);
     #ifdef debug
@@ -773,6 +797,7 @@ int main(void)
   // Achtung, MUTE muss auf 1 stehen!!
   wert |= (1 << TREIBER_MUTE);
   // TEST
+	
   wert |= (0 << TREIBER_ECHO);
 
   treiber(wert); 
