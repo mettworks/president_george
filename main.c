@@ -517,6 +517,40 @@ ISR (INT5_vect)
 	}
 }
 
+ISR (INT6_vect)
+{
+	// 
+	// es werden gleich wieder Interrupts aktiviert, weil:
+	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
+	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
+	// ABER ERST WENN I2C FERTIG IST!
+	
+	i2c_init();
+
+	i2c_start_wait(0x42);
+	i2c_write(0x0);
+	i2c_rep_start(0x43);
+	unsigned char byte0=i2c_readAck();
+	i2c_stop();
+
+	cli();
+	
+	
+	if(byte0 == 255)
+	{
+	}
+	else
+	{
+		#ifdef debug
+		uint8_t string[20];
+		uart_puts("1. Byte: ");
+		sprintf(string,"%u",byte0);
+		uart_puts(string);
+		uart_puts("\r\n");
+		#endif
+	}
+}
+
 ISR (INT7_vect)
 {
 	// 
@@ -647,6 +681,7 @@ int main(void)
   // Ein und Ausgaenge
 	// PE4, INT4 ist VCC Kontrolle			-> Eingang
 	// PE7, INT7 ist 1. Port Expander		-> Eingang
+	// PE6, INT6 ist 2. Port Expander		-> Eingang
  	// PE5, INT5 ist Taster 1, Ein/Aus	-> Eingang
   // PA4 ist Latch PLL      					-> Ausgang		PIN10 vom Mainboard     
   // PA6 ist Latch Treiber  					-> Ausgang		PIN7 vom Mainboard     
@@ -661,6 +696,9 @@ int main(void)
 	// PE7
 	DDRE &= ~(1<<PE7);	// Eingang
   PORTE |= (1<<PE7);	// internen Pullup aktivieren
+	// PE6
+	DDRE &= ~(1<<PE6);	// Eingang
+  PORTE |= (1<<PE6);	// internen Pullup aktivieren
 	// PE5
   DDRE &= ~(1<<PE5);	// Eingang
   PORTE |= (1<<PE5);	// internen Pullup aktivieren
@@ -686,10 +724,11 @@ int main(void)
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
 
-	EICRB |= (1<< ISC70);    // jede Änderung
+	EICRB |= (1<< ISC70);    								// jede Änderung
+	EICRB |= (1<< ISC60);    								// jede Änderung
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
-	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5);
+	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
 	// EEPROM
 	unsigned char IOReg;
