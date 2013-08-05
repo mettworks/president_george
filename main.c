@@ -28,7 +28,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #endif
 
 unsigned int wert;
-
+unsigned long keys;
 int mod = 1;
 unsigned int freq = 27000;
 unsigned int step = 1;
@@ -519,75 +519,12 @@ ISR (INT5_vect)
 
 ISR (INT6_vect)
 {
-	// 
-	// es werden gleich wieder Interrupts aktiviert, weil:
-	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
-	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
-	// ABER ERST WENN I2C FERTIG IST!
-	
-	i2c_init();
-
-	i2c_start_wait(0x42);
-	i2c_write(0x0);
-	i2c_rep_start(0x43);
-	unsigned char byte0=i2c_readAck();
-	i2c_stop();
-
-	cli();
-	
-	
-	if(byte0 == 255)
-	{
-	}
-	else
-	{
-		#ifdef debug
-		uint8_t string[20];
-		uart_puts("1. Byte: ");
-		sprintf(string,"%u",byte0);
-		uart_puts(string);
-		uart_puts("\r\n");
-		#endif
-	}
+	keycheck();
 }
 
 ISR (INT7_vect)
 {
-	uart_puts("INT7\r\n");
 	/*
-	// 
-	// es werden gleich wieder Interrupts aktiviert, weil:
-	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
-	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
-	// ABER ERST WENN I2C FERTIG IST!
-	
-	i2c_init();
-
-	i2c_start_wait(0x40);
-	i2c_write(0x0);
-	i2c_rep_start(0x41);
-	unsigned char byte0=i2c_readAck();
-	i2c_stop();
-
-	cli();
-	
-	
-	if(byte0 == 254)
-	{
-		#ifdef debug
-		uart_puts("+\r\n");
-		#endif
-		freq=freq+step;
-    tune(freq,step);
-	}
-	else if(byte0 == 253)
-	{
-		#ifdef debug
-		uart_puts("-\r\n");
-		#endif
-		freq=freq-step;
-    tune(freq,step);
-	}
 	else if(byte0 == 251)
 	{
 		#ifdef debug
@@ -642,27 +579,13 @@ ISR (INT7_vect)
     }
     tune(freq,step);
 	}
-	else if(byte0 == 255)
-	{
-	}
-	else
-	{
-		#ifdef debug
-		uint8_t string[20];
-		uart_puts("1. Byte: ");
-		sprintf(string,"%u",byte0);
-		uart_puts(string);
-		uart_puts("\r\n");
-		#endif
-	}
+
 	*/
 	keycheck();
-	//TIMSK |= (1<<TOIE0);
 }
 
 ISR (TIMER0_OVF_vect)
 {
-	uart_puts("Timer0!\r\n");
 	keycheck();
 }
 
@@ -678,35 +601,97 @@ ISR(BADISR_vect)
 	}
 }
 
+// 2 Byte zurück
+unsigned short keysauslesendirekt(unsigned char destaddr)
+{
+	unsigned char byte0;
+	unsigned char byte1;
+	unsigned short alles;
+	i2c_start_wait(destaddr);
+	i2c_write(0x0);
+	i2c_rep_start(destaddr + 1);
+	byte0=i2c_readAck();
+	byte1=i2c_readAck();
+	alles = byte1 + (byte0 << 8);
+	return alles;
+}
+
+unsigned long keysauslesen()
+{
+	// 
+	// es werden gleich wieder Interrupts aktiviert, weil:
+	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
+	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
+	// ABER ERST WENN I2C FERTIG IST!
+	unsigned short blubb1;
+	unsigned short blubb2;
+	i2c_init();
+	blubb1=keysauslesendirekt(0x40);
+	blubb2=keysauslesendirekt(0x42);
+	i2c_stop();
+	cli();
+	keys=(uint32_t)blubb2 + ((uint32_t)blubb1 << 16);
+	return keys;
+}
+
 int keycheck(void)
 {
-	i2c_init();
-
-	i2c_start_wait(0x40);
-	i2c_write(0x0);
-	i2c_rep_start(0x41);
-	unsigned char byte0=i2c_readAck();
-	i2c_stop();
-
-	cli();
+	keys=keysauslesen();
 	
-	if(byte0 != 255)
+	uint8_t string[20];
+	uart_puts("1. Byte: ");
+	sprintf(string,"%lX",keys);
+	uart_puts(string);
+	uart_puts("\r\n");
+	
+	if ((keys & 0x1000000) == 0)
 	{
+		uart_puts("1. Taste\r\n");
+	}
+	// 10. Bit
+	// TX Anfang, PTT Taste ist gedrückt
+	else if((keys & 0x200) == 0)
+	{
+		uart_puts("10.Bit\r\n");
+    uart_puts("TX\r\n");
+    wert |= (1 << TREIBER_TR);
+    treiber(wert);
+	}
 	
-		#ifdef debug
-		uint8_t string[20];
-		uart_puts("1. Byte: ");
-		sprintf(string,"%u",byte0);
-		uart_puts(string);
-		uart_puts("\r\n");
-		#endif
+	// + Taste am Mikrofon
+	// 31. Bit
+	else if((keys & 0x40000000) == 0)
+	{
+		freq=freq+step;
+    tune(freq,step);
+	}
+	// - Taste am Mikrofon
+	// 30. Bit
+	else if((keys & 0x20000000) == 0)
+	{
+		freq=freq-step;
+    tune(freq,step);
+	}
+	// AM ENDE LASSEN!
+	// TX Ende, PTT Taste ist losgelassen
+	else if(keys & 0x200)
+	{
+		uart_puts("10.Bit\r\n");
+    uart_puts("RX\r\n");
+    wert &= ~(1 << TREIBER_TR);
+    treiber(wert);
+	}	
+
+	if(keys != 0xffffffff)
+	{
+		// Taste/Tasten sind immer noch gedrückt, also nochmal... :-)
 		TIMSK |= (1<<TOIE0);
 	}
 	else
 	{
-		uart_puts("keine Taste erkannt!\r\n");
+		// keine Taste/Tasten mehr gedrückt, Timer stoppen
 		TIMSK &= ~(1<<TOIE0);
-
+		
 	}
 }
 
@@ -765,23 +750,18 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
-
 	EICRB |= (1<< ISC70);    								// jede Änderung
 	EICRB |= (1<< ISC60);    								// jede Änderung
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
 	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
-	// Timer
-	  // Timer 0 konfigurieren
+	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
+  // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
- 
-  // Overflow Interrupt erlauben
-  //TIMSK |= (1<<TOIE0);
-	
+
 	// EEPROM
 	unsigned char IOReg;
-	
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
 	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
 	IOReg   = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
@@ -869,24 +849,13 @@ int main(void)
 
 	led_color(1);
 	
-	/*
-    //delay_ms(2000);
-    #ifdef debug
-    uart_puts("Ende\r\n");
-    #endif
-    while(1)
-    {
-    }
-  }
-  */
   wert=0;
-  //wert |= (1 << TREIBER_FM);
-  //
+
   // Achtung, MUTE muss auf 1 stehen!!
   wert |= (1 << TREIBER_MUTE);
   // TEST
 	
-  wert |= (0 << TREIBER_ECHO);
+  wert |= (1 << TREIBER_ECHO);
 
   treiber(wert); 
 
@@ -906,49 +875,7 @@ int main(void)
 	#endif
 	while(1)
 	{
-		/*
-		_delay_ms(2000);
-		while(1)
-		{
-			freq=freq-step;
-			tune(freq,step);
-		}
-		*/
-		//uart_puts("bla\r\n");
-		
-	}
-	//uart_puts(blubb);
-
 	
-	/*
-  //
-  // Endlos Schleife fuer die Taster
-  while(1)
-  {
- 
-    if(!(PINE & (1 << PINE3)))
-    {
-      _delay_ms(100);
-      #ifdef debug
-      uart_puts("TX\r\n");
-      #endif
-      wert |= (1 << TREIBER_TR);
-      treiber(wert); 
-      while(1)
-      { 
-	if(PINE & (1 << PINE3))
-	{    
-	  _delay_ms(100); 
-	  #ifdef debug
-	  uart_puts("RX\r\n");
-	  #endif
-	  wert &= ~(1 << TREIBER_TR);
-	  treiber(wert); 
-	  break;
 	}
-      }
-    }
-  } 
-	*/
   return 0;
 } 
