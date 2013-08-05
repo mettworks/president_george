@@ -553,6 +553,8 @@ ISR (INT6_vect)
 
 ISR (INT7_vect)
 {
+	uart_puts("INT7\r\n");
+	/*
 	// 
 	// es werden gleich wieder Interrupts aktiviert, weil:
 	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
@@ -653,8 +655,16 @@ ISR (INT7_vect)
 		uart_puts("\r\n");
 		#endif
 	}
+	*/
+	keycheck();
+	//TIMSK |= (1<<TOIE0);
 }
 
+ISR (TIMER0_OVF_vect)
+{
+	uart_puts("Timer0!\r\n");
+	keycheck();
+}
 
 ISR(BADISR_vect)
 {
@@ -665,6 +675,38 @@ ISR(BADISR_vect)
 	#endif
 	while(1)
 	{
+	}
+}
+
+int keycheck(void)
+{
+	i2c_init();
+
+	i2c_start_wait(0x40);
+	i2c_write(0x0);
+	i2c_rep_start(0x41);
+	unsigned char byte0=i2c_readAck();
+	i2c_stop();
+
+	cli();
+	
+	if(byte0 != 255)
+	{
+	
+		#ifdef debug
+		uint8_t string[20];
+		uart_puts("1. Byte: ");
+		sprintf(string,"%u",byte0);
+		uart_puts(string);
+		uart_puts("\r\n");
+		#endif
+		TIMSK |= (1<<TOIE0);
+	}
+	else
+	{
+		uart_puts("keine Taste erkannt!\r\n");
+		TIMSK &= ~(1<<TOIE0);
+
 	}
 }
 
@@ -729,6 +771,13 @@ int main(void)
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
 	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+	
+	// Timer
+	  // Timer 0 konfigurieren
+  TCCR0 = (1<<CS01); // Prescaler 8
+ 
+  // Overflow Interrupt erlauben
+  //TIMSK |= (1<<TOIE0);
 	
 	// EEPROM
 	unsigned char IOReg;
