@@ -647,6 +647,8 @@ int keycheck(void)
 	if ((keys & 0x1000000) == 0)
 	{
 		uart_puts("1. Taste\r\n");
+		uart_puts("SCAN\r\n");
+		scan();
 	}
 	// 10. Bit
 	// TX Anfang, PTT Taste ist gedrückt
@@ -696,21 +698,36 @@ int keycheck(void)
 	}
 }
 
+//
+// sehr unelegant, muss mit einem Timer gemacht werden
+// erstmal geht es nur um den HW Test ... ^^
+int scan(void)
+{
+	while(1)
+	{
+		freq=freq+step;
+		tune(freq,step);
+		_delay_ms(250);
+		if ( !(PINA & (1<<PINA2)) )
+		{
+			uart_puts("Treffer\r\n");
+			break;
+		}
+	}
+}
+
 int rogerbeep(void)
 {
-	DDRB |= (1<<PB5); // Port OC1A mit angeschlossener LED als Ausgang
-	TCCR1A = (1<<WGM10) | (1<<COM1A1); // PWM, phase correct, 8 bit.
-	//TCCR1B = (1<<CS11) | (1<<CS10); // Prescaler 64 = Enable counter
+	//
+	// 2 Töne
+	DDRB |= (1<<PB5); 
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	TCCR1B = (1<<CS11) | (1<<CS10);
-	OCR1A = 128-1; // Duty cycle 50% (Anm. ob 128 oder 127 bitte prüfen)
+	OCR1A = 128-1; 
 	_delay_ms(250);
 	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
 	_delay_ms(100);
-	//	DDRB |= (1<<PB5); // Port OC1A mit angeschlossener LED als Ausgang
-	TCCR1A = (1<<WGM10) | (1<<COM1A1); // PWM, phase correct, 8 bit.
-	//TCCR1B = (1<<CS11) | (1<<CS10); // Prescaler 64 = Enable counter
-	//TCCR1B = (1<<CS11) | (1<<CS10);
-	//OCR1A = 128-1; // Duty cycle 50% (Anm. ob 128 oder 127 bitte prüfen)
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	_delay_ms(250);
 	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
 }
@@ -726,17 +743,18 @@ int main(void)
 
   //
   // Ein und Ausgaenge
-	// PE4, INT4 ist VCC Kontrolle			-> Eingang
-	// PE7, INT7 ist 1. Port Expander		-> Eingang
-	// PE6, INT6 ist 2. Port Expander		-> Eingang
- 	// PE5, INT5 ist Taster 1, Ein/Aus	-> Eingang
-  // PA4 ist Latch PLL      					-> Ausgang		PIN10 vom Mainboard     
-  // PA6 ist Latch Treiber  					-> Ausgang		PIN7 vom Mainboard     
-  // PA5 ist Data	    								-> Ausgang		PIN9 vom Mainboard   
-  // PA3 ist Clock	    							-> Ausgang		PIN8 vom Mainboard     
-	// PC0 ist LED Rot									-> Ausgang
-	// PC1 ist LED Grün 								-> Ausgang
-	// PA7 ist Ein/Aus									-> Ausgang
+	// PE4, INT4 ist VCC Kontrolle					-> Eingang
+	// PE7, INT7 ist 1. Port Expander				-> Eingang
+	// PE6, INT6 ist 2. Port Expander				-> Eingang
+ 	// PE5, INT5 ist Taster 1, Ein/Aus			-> Eingang
+  // PA4 ist Latch PLL      							-> Ausgang		PIN10 vom Mainboard     
+  // PA6 ist Latch Treiber  							-> Ausgang		PIN7 vom Mainboard     
+  // PA5 ist Data	    										-> Ausgang		PIN9 vom Mainboard   
+  // PA3 ist Clock	    									-> Ausgang		PIN8 vom Mainboard     
+	// PC0 ist LED Rot											-> Ausgang
+	// PC1 ist LED Grün 										-> Ausgang
+	// PA7 ist Ein/Aus											-> Ausgang
+	// PA2 ist "Busy" (Rauschsperre offen)	-> Eingang
 	
 	// PE4
 	DDRE &= ~(1<<PE4);	// Eingang
@@ -764,6 +782,8 @@ int main(void)
 	// PA7
 	DDRA |= (1<<PA7);
   PORTA |= (1<<PA7);	// einschalten
+	// PA2
+	DDRA &= ~(1<<PA2);	// Eingang
 	
 	//
 	// Interrupts
