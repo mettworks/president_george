@@ -676,6 +676,7 @@ int keycheck(void)
 	// TX Ende, PTT Taste ist losgelassen
 	else if(keys & 0x200)
 	{
+		rogerbeep();
 		uart_puts("10.Bit\r\n");
     uart_puts("RX\r\n");
     wert &= ~(1 << TREIBER_TR);
@@ -693,6 +694,25 @@ int keycheck(void)
 		TIMSK &= ~(1<<TOIE0);
 		
 	}
+}
+
+int rogerbeep(void)
+{
+	DDRB |= (1<<PB5); // Port OC1A mit angeschlossener LED als Ausgang
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); // PWM, phase correct, 8 bit.
+	//TCCR1B = (1<<CS11) | (1<<CS10); // Prescaler 64 = Enable counter
+	TCCR1B = (1<<CS11) | (1<<CS10);
+	OCR1A = 128-1; // Duty cycle 50% (Anm. ob 128 oder 127 bitte prüfen)
+	_delay_ms(250);
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
+	_delay_ms(100);
+	//	DDRB |= (1<<PB5); // Port OC1A mit angeschlossener LED als Ausgang
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); // PWM, phase correct, 8 bit.
+	//TCCR1B = (1<<CS11) | (1<<CS10); // Prescaler 64 = Enable counter
+	//TCCR1B = (1<<CS11) | (1<<CS10);
+	//OCR1A = 128-1; // Duty cycle 50% (Anm. ob 128 oder 127 bitte prüfen)
+	_delay_ms(250);
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
 }
 
 int main(void) 
@@ -869,13 +889,17 @@ int main(void)
   tune(freq,step);
 	_delay_ms(500);
 	
+	
+	
+	
+	
   sei();
 	#ifdef debug
 	uart_puts("fertig\r\n");
 	#endif
 	while(1)
 	{
-	
+
 	}
   return 0;
 } 
