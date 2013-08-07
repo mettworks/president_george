@@ -497,6 +497,7 @@ int save2memory()
 
 ISR (INT5_vect)
 {
+	uart_puts("INT5\r\n");
 	save2memory();
 	
 	PORTA &= ~(1<<PA7);	// ausschalten...
@@ -519,11 +520,13 @@ ISR (INT5_vect)
 
 ISR (INT6_vect)
 {
+	uart_puts("INT6\r\n");
 	keycheck();
 }
 
 ISR (INT7_vect)
 {
+	uart_puts("INT7\r\n");
 	/*
 	else if(byte0 == 251)
 	{
@@ -698,24 +701,6 @@ int keycheck(void)
 	}
 }
 
-void ADC_init()
-{
-  ADMUX = 0x40;     //AVCC  internal , PC0 Input , Right Adjusted
-  ADCSRA = 0x86;     //ADC enable , Prescaler = 64
-}
-
-unsigned int ADC_GET()
-{
-  ADCSRA |= 0x40;     //Startb ADC Conversion
-
-  while ( ADCSRA & (1<<ADSC) )  //warten bis ADSC Bit gelöscht wird
-  {
-    ;
-  }
-
-  unsigned int ADC_Erg = ADCW;
-  return(ADC_Erg);
-}
 
 //
 // sehr unelegant, muss mit einem Timer gemacht werden
@@ -749,6 +734,20 @@ int rogerbeep(void)
 	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	_delay_ms(250);
 	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
+}
+
+ISR(ADC_vect)
+{
+	uint16_t x;
+	//x += (ADCH<<8);
+	// oder besser
+	x = ADCW;
+	char s[7];
+	
+	uart_puts("Messwert: ");
+	uart_puts( itoa( x, s, 10 ) );
+	uart_puts("\r\n");
+	
 }
 
 int main(void) 
@@ -927,28 +926,37 @@ int main(void)
   //unsigned int step = 5;
   tune(freq,step);
 	_delay_ms(500);
+
+	//
+	// Gemessen wird an ADC1, es kann "Gain" (10x) genutzt werden, dazu liegt ADC0 auf GND
+	// dann muss ADMUX |= (1 << MUX3) | (1<<MUX0); gesetzt sein
+
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
+
+  ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
+
 	
+	// ADC1 auswählen
+	ADMUX |= (1<<MUX0);
 	
-	 uint16_t adcval;
-  ADC_init();
+
+	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
+  ADCSRA |= (1 << ADEN);  // Enable ADC
+	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
+  sei();   // Enable Global Interrupts
+	ADCSRA |= (1 << ADSC);  // Start A2D Conversions
+
+  for(;;)  // Loop Forever
+  {
+  }
+
  
 
 
-	
-  //sei();
-	cli();
+	//cli();
 	#ifdef debug
 	uart_puts("fertig\r\n");
 	#endif
-	while(1)
-	{
-    adcval = ADC_GET();
-		uint8_t string[20];
-		uart_puts("Messwert: ");
-		sprintf(string,"%i",adcval);
-		uart_puts(string);
-		uart_puts("\r\n");
-		_delay_ms(1000);
-	}
+
   return 0;
 } 
