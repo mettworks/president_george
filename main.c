@@ -808,8 +808,8 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
-	EICRB |= (1<< ISC70);    								// jede Änderung
-	EICRB |= (1<< ISC60);    								// jede Änderung
+	EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
+	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
 	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
@@ -890,6 +890,7 @@ int main(void)
 
   i2c_stop();
 */
+/*
 	i2c_init();
 	init_led();
 	led_pwm(1,255);
@@ -906,7 +907,7 @@ int main(void)
 	led_pwm(12,255);
 
 	led_color(1);
-	
+*/
   wert=0;
 
   // Achtung, MUTE muss auf 1 stehen!!
