@@ -110,19 +110,21 @@ int wait(void)
 int data0(void)
 {
   PORTA &= ~(1<<PA5);	  // Data 0
-  _delay_us(14);
+  _delay_us(6);
   PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(14);
+  _delay_us(6);
   PORTA &= ~(1<<PA3);	  // Clock 0
+	_delay_us(10);
   return 0;
 }
 int data1(void)
 {
   PORTA |= (1<<PA5);	  // Data 1
-  _delay_us(14); 
+  _delay_us(6); 
   PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(14);
+  _delay_us(6);
   PORTA &= ~(1<<PA3);     // Clock 0
+	_delay_us(10);
   PORTA &= ~(1<<PA5);	  // Data 0
   return 0;
 }
@@ -138,10 +140,11 @@ int begin0(void)
 }
 int end0(void)
 {
+	_delay_us(6);
   PORTA &= ~(1<<PA3);    // Clock 1
-  PORTA |= (1<<PA6);	// LE1
-  _delay_us(14);
-  PORTA &= ~(1<<PA6);
+  PORTA |= (1<<PA6);	// LE1 1
+  _delay_us(6);
+  PORTA &= ~(1<<PA6);	//LE1 0
   return 0;
 }
 //
@@ -156,10 +159,11 @@ int begin1(void)
 }
 int end1(void)
 {
+	_delay_us(6);
   PORTA &= ~(1<<PA3);    // Clock 1
-  PORTA |= (1<<PA4);	// LE1
-  _delay_us(14);
-  PORTA &= ~(1<<PA4);
+  PORTA |= (1<<PA4);			// LE1	1
+  _delay_us(6);
+  PORTA &= ~(1<<PA4);			// LE1 0
   return 0;
 }
 
@@ -269,8 +273,8 @@ int modulation(unsigned int mod)
   }
   #ifdef debug 
   uart_puts("\r\n");
-  treiber(wert);
   #endif
+  treiber(wert);
 	return 0;
 }
 
@@ -950,7 +954,7 @@ int main(void)
   wert=0;
 
   // Achtung, MUTE muss auf 1 stehen!!
-  //wert |= (1 << TREIBER_MUTE);
+  wert |= (1 << TREIBER_MUTE);
   // TEST
 	
   //wert |= (1 << TREIBER_ECHO);
