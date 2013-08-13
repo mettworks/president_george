@@ -4,7 +4,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 #define F_CPU 18432000UL
 #define BAUD 9600UL
-#define debug
+//#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -42,6 +42,7 @@ static unsigned char memory[6];
 
 //
 // Bits fuer den Treiberbaustein
+// IC406 beginnend bei PIN 16 bis 9
 #define TREIBER_MOD 0  
 #define TREIBER_FM 1
 #define TREIBER_AM 2
@@ -51,6 +52,7 @@ static unsigned char memory[6];
 #define TREIBER_HICUT 6
 #define TREIBER_ECHO 7
 
+// IC405 beginnend bei PIN16 bis 9
 #define TREIBER_DIM 8
 #define TREIBER_BIT9 9
 #define TREIBER_TR 10
@@ -182,6 +184,12 @@ int treiber(unsigned int wert)
 
   for (; i > 0; i--)
   {
+		if(i == 8)
+		{
+			#ifdef debug
+			uart_puts(" ");
+			#endif
+		}
     if(index[i-1] == 0)
     {
       #ifdef debug
@@ -390,9 +398,10 @@ int tune(unsigned int freq,unsigned int step)
 
 int init_led()
 {
+	#ifdef debug
 	uart_puts("init_led(): Anfang\r\n");
+	#endif
 	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
-	uart_puts("bla\r\n");
   i2c_write(0x80);  // autoincrement ab Register 0h
 
   i2c_write(0x00);  // Register 00 /  Mode1  
@@ -497,7 +506,9 @@ int save2memory()
 
 ISR (INT5_vect)
 {
+	#ifdef debug
 	uart_puts("INT5\r\n");
+	#endif
 	save2memory();
 	
 	PORTA &= ~(1<<PA7);	// ausschalten...
@@ -520,13 +531,17 @@ ISR (INT5_vect)
 
 ISR (INT6_vect)
 {
+	#ifdef debug
 	uart_puts("INT6\r\n");
+	#endif
 	keycheck();
 }
 
 ISR (INT7_vect)
 {
+	#ifdef debug
 	uart_puts("INT7\r\n");
+	#endif
 	/*
 	else if(byte0 == 251)
 	{
@@ -556,31 +571,7 @@ ISR (INT7_vect)
 		#ifdef debug
 		uart_puts("step\r\n");
 		#endif
-    if(step == 1)
-    {
-			step=5;
-    }
-    else if(step == 5)
-    {
-			step=10;
-    }
-		else if(step == 10)
-		{
-			step=25;
-		}
-		else if(step == 25)
-		{
-			step=100;
-		}
-		else if(step == 100)
-		{
-			step=1000;
-		}
-    else
-    {
-			step=1;
-    }
-    tune(freq,step);
+
 	}
 
 	*/
@@ -640,27 +631,67 @@ unsigned long keysauslesen()
 int keycheck(void)
 {
 	keys=keysauslesen();
-	
+	#ifdef debug
 	uint8_t string[20];
 	uart_puts("1. Byte: ");
 	sprintf(string,"%lX",keys);
 	uart_puts(string);
 	uart_puts("\r\n");
+	#endif
 	
 	if ((keys & 0x1000000) == 0)
 	{
+		#ifdef debug
 		uart_puts("1. Taste\r\n");
-		uart_puts("SCAN\r\n");
-		scan();
+		uart_puts("Step\r\n");
+		#endif
+		if(step == 1)
+    {
+			step=5;
+    }
+    else if(step == 5)
+    {
+			step=10;
+    }
+		else if(step == 10)
+		{
+			step=25;
+		}
+		else if(step == 25)
+		{
+			step=100;
+		}
+		else if(step == 100)
+		{
+			step=1000;
+		}
+    else
+    {
+			step=1;
+    }
+    tune(freq,step);
 	}
 	// 10. Bit
 	// TX Anfang, PTT Taste ist gedrückt
 	else if((keys & 0x200) == 0)
 	{
+		#ifdef debug
 		uart_puts("10.Bit\r\n");
     uart_puts("TX\r\n");
+		#endif
+		
+		//
+		// zum Senden wird zuerst "S/RF" und "" aktiviert, beide IC405
+		wert |= (1 << TREIBER_BIT9);
+		wert |= (1 << TREIBER_SRF);
+		treiber(wert);
+		_delay_ms(7);
+		//
+		// jetzt wird auf TX geschaltet
     wert |= (1 << TREIBER_TR);
-    treiber(wert);
+	  //wert |= (1 << TREIBER_PA);
+		treiber(wert);
+		_delay_ms(5000);
 	}
 	
 	// + Taste am Mikrofon
@@ -682,9 +713,13 @@ int keycheck(void)
 	else if(keys & 0x200)
 	{
 		rogerbeep();
+		#ifdef debug
 		uart_puts("10.Bit\r\n");
     uart_puts("RX\r\n");
+		#endif
     wert &= ~(1 << TREIBER_TR);
+	  //wert |= (1 << TREIBER_MUTE);
+
     treiber(wert);
 	}	
 
@@ -714,7 +749,9 @@ int scan(void)
 		_delay_ms(250);
 		if ( !(PINA & (1<<PINA2)) )
 		{
+			#ifdef debug
 			uart_puts("Treffer\r\n");
+			#endif
 			break;
 		}
 	}
@@ -743,11 +780,11 @@ ISR(ADC_vect)
 	// oder besser
 	x = ADCW;
 	char s[7];
-	
+	/*
 	uart_puts("Messwert: ");
 	uart_puts( itoa( x, s, 10 ) );
 	uart_puts("\r\n");
-	
+	*/
 }
 
 int main(void) 
@@ -840,7 +877,9 @@ int main(void)
 
 	if(freq == 0)
 	{
+		#ifdef debug
 		uart_puts("ICH HABE ALZHEIMER!\r\n");
+		#endif
 		freq=27000;
 	}
 
@@ -911,10 +950,10 @@ int main(void)
   wert=0;
 
   // Achtung, MUTE muss auf 1 stehen!!
-  wert |= (1 << TREIBER_MUTE);
+  //wert |= (1 << TREIBER_MUTE);
   // TEST
 	
-  wert |= (1 << TREIBER_ECHO);
+  //wert |= (1 << TREIBER_ECHO);
 
   treiber(wert); 
 
