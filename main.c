@@ -4,7 +4,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 #define F_CPU 18432000UL
 #define BAUD 9600UL
-//#define debug
+#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -793,6 +793,10 @@ ISR(ADC_vect)
 
 int main(void) 
 {
+	//
+	// AAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHTTTTTTTTTTTTTTTTUUUUUUUUUUUUUUUUNNNNNNNNNNNNNNGGGGGGGGGGGGGGGGGG!!!!!!!!!!!!!!!!!!
+	// 
+	sei();
 	_delay_ms(1000);
   #ifdef debug
   inituart();
@@ -849,15 +853,18 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
+	/*
 	EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
 	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
+	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
+	*/
 
 	// EEPROM
 	unsigned char IOReg;
@@ -951,15 +958,46 @@ int main(void)
 
 	led_color(1);
 */
+
+
   wert=0;
 
-  // Achtung, MUTE muss auf 1 stehen!!
-  wert |= (1 << TREIBER_MUTE);
-  // TEST
+	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
+	//
+	// Init:
+	// 0100 0001  0100 0000
+	// Pause, 28ms
+	// 0100 1001  0100 0000
+	// Pause, 28ms
 	
-  //wert |= (1 << TREIBER_ECHO);
+	// Senden:
+	// 0100 0001  0100 0000
+	// Pause, 7ms
+	// 0110 0001  0100 0000
+	
+  // Achtung, MUTE muss auf 1 stehen!!
+  wert |= (1 << TREIBER_BIT9);
+	wert |= (1 << TREIBER_SRF);
+	wert |= (1 << TREIBER_FM);
+	treiber(wert); 
+	
+	_delay_ms(28);
+	
+	wert |= (1 << TREIBER_MUTE);
+	tune(freq,step);
+	_delay_ms(28);
+	
 
-  treiber(wert); 
+	wert &= ~(1 << TREIBER_MUTE);
+	_delay_ms(7);
+	treiber(wert);
+	wert |= (1 << TREIBER_TR);
+	treiber(wert);
+	while(1)
+	{
+	}
+
+	
 
   //
   // initial auf FM
