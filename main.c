@@ -27,7 +27,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
 #endif
 
-unsigned int wert;
+unsigned int wert = 0;
 unsigned long keys;
 int mod = 1;
 unsigned int freq = 27000;
@@ -683,19 +683,7 @@ int keycheck(void)
 		uart_puts("10.Bit\r\n");
     uart_puts("TX\r\n");
 		#endif
-		
-		//
-		// zum Senden wird zuerst "S/RF" und "" aktiviert, beide IC405
-		wert |= (1 << TREIBER_BIT9);
-		wert |= (1 << TREIBER_SRF);
-		treiber(wert);
-		_delay_ms(7);
-		//
-		// jetzt wird auf TX geschaltet
-    wert |= (1 << TREIBER_TR);
-	  //wert |= (1 << TREIBER_PA);
-		treiber(wert);
-		_delay_ms(5000);
+		tx();
 	}
 	
 	// + Taste am Mikrofon
@@ -721,10 +709,7 @@ int keycheck(void)
 		uart_puts("10.Bit\r\n");
     uart_puts("RX\r\n");
 		#endif
-    wert &= ~(1 << TREIBER_TR);
-	  //wert |= (1 << TREIBER_MUTE);
-
-    treiber(wert);
+    rx();
 	}	
 
 	if(keys != 0xffffffff)
@@ -736,7 +721,6 @@ int keycheck(void)
 	{
 		// keine Taste/Tasten mehr gedrückt, Timer stoppen
 		TIMSK &= ~(1<<TOIE0);
-		
 	}
 }
 
@@ -761,7 +745,7 @@ int scan(void)
 	}
 }
 
-int rogerbeep(void)
+int rogerbeep()
 {
 	//
 	// 2 Töne
@@ -774,7 +758,8 @@ int rogerbeep(void)
 	_delay_ms(100);
 	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	_delay_ms(250);
-	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
+	return 0;
 }
 
 ISR(ADC_vect)
@@ -791,12 +776,66 @@ ISR(ADC_vect)
 	*/
 }
 
+int tx()
+{
+	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
+	//
+	// Senden:
+	// 0100 0001  0100 0000
+	// Pause, 7ms
+	// 0110 0001  0100 0000
+	wert &= ~(1 << TREIBER_MUTE);
+	_delay_ms(7);
+	treiber(wert);
+	wert |= (1 << TREIBER_TR);
+	treiber(wert);
+	_delay_ms(7);
+	return 0;
+}
+
+int rx()
+{
+	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
+	//
+	// Empfangen:
+	// 0100 0001  0100 0000
+	// Pause, 4ms
+	// 0100 1001  0100 0000
+	// Pause, 4ms
+	wert &= ~(1 << TREIBER_TR);
+	treiber(wert);
+	_delay_ms(4);
+	wert |= (1 << TREIBER_MUTE);
+	treiber(wert);
+	_delay_ms(4);
+	return 0;
+}
+
+int init_geraet()
+{
+	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
+	//
+	// Init:
+	// 0100 0001  0100 0000
+	// Pause, 28ms
+	// 0100 1001  0100 0000
+	// Pause, 28ms
+	wert |= (1 << TREIBER_BIT9);
+	wert |= (1 << TREIBER_SRF);
+	wert |= (1 << TREIBER_FM);
+	treiber(wert); 
+	_delay_ms(28);
+	wert |= (1 << TREIBER_MUTE);
+	treiber(wert);
+	_delay_ms(28);
+	tune(freq,step);
+	_delay_ms(28);
+	modulation(mod);
+	return 0;
+}
+
 int main(void) 
 {
-	//
-	// AAAAAAAAAAAAAAAAAAAAAAAAAAAACCCCCCCCCCCCCCCCCCCCCCCCCCCHHHHHHHHHHHHHHHHHHHHTTTTTTTTTTTTTTTTUUUUUUUUUUUUUUUUNNNNNNNNNNNNNNGGGGGGGGGGGGGGGGGG!!!!!!!!!!!!!!!!!!
-	// 
-	sei();
 	_delay_ms(1000);
   #ifdef debug
   inituart();
@@ -853,7 +892,6 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
-	/*
 	EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
@@ -864,7 +902,7 @@ int main(void)
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
-	*/
+	
 
 	// EEPROM
 	unsigned char IOReg;
@@ -874,7 +912,6 @@ int main(void)
 	IOReg   = SPDR;
 	PORTB |= (1<<PB0);                         	//ChipSelect aus
 	
-	//unsigned char out;
 	unsigned char H_Add=0b00000000;    						// Adresse
   unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000000;
@@ -958,57 +995,14 @@ int main(void)
 
 	led_color(1);
 */
-
-
-  wert=0;
-
-	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
-	//
-	// Init:
-	// 0100 0001  0100 0000
-	// Pause, 28ms
-	// 0100 1001  0100 0000
-	// Pause, 28ms
-	
-	// Senden:
-	// 0100 0001  0100 0000
-	// Pause, 7ms
-	// 0110 0001  0100 0000
-	
-  // Achtung, MUTE muss auf 1 stehen!!
-  wert |= (1 << TREIBER_BIT9);
-	wert |= (1 << TREIBER_SRF);
-	wert |= (1 << TREIBER_FM);
-	treiber(wert); 
-	
-	_delay_ms(28);
-	
-	wert |= (1 << TREIBER_MUTE);
-	tune(freq,step);
-	_delay_ms(28);
-	
-
-	wert &= ~(1 << TREIBER_MUTE);
-	_delay_ms(7);
-	treiber(wert);
-	wert |= (1 << TREIBER_TR);
-	treiber(wert);
-	while(1)
-	{
-	}
-
-	
-
-  //
-  // initial auf FM
-  //int mod = 1;
-  modulation(mod);
-  
-  //unsigned int freq = 28100;
-  //unsigned int step = 5;
-  tune(freq,step);
+	init_geraet();
+ 
 	_delay_ms(500);
-
+	
+	
+	
+	
+	
 	//
 	// Gemessen wird an ADC1, es kann "Gain" (10x) genutzt werden, dazu liegt ADC0 auf GND
 	// dann muss ADMUX |= (1 << MUX3) | (1<<MUX0); gesetzt sein
@@ -1020,25 +1014,18 @@ int main(void)
 	
 	// ADC1 auswählen
 	ADMUX |= (1<<MUX0);
-	
-
 	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
   ADCSRA |= (1 << ADEN);  // Enable ADC
 	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
   sei();   // Enable Global Interrupts
 	ADCSRA |= (1 << ADSC);  // Start A2D Conversions
 
-  for(;;)  // Loop Forever
+	for(;;)  // Loop Forever
   {
   }
 
- 
-
-
-	//cli();
-	#ifdef debug
+ 	#ifdef debug
 	uart_puts("fertig\r\n");
 	#endif
-
-  return 0;
+	return 0;
 } 
