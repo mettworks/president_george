@@ -892,6 +892,7 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
+	/*
 	EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
@@ -902,7 +903,7 @@ int main(void)
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
-	
+	*/
 
 	// EEPROM
 	unsigned char IOReg;
@@ -996,6 +997,14 @@ int main(void)
 	led_color(1);
 */
 	init_geraet();
+ 
+	while(1)
+	{
+		tx();
+		_delay_ms(3000);
+		rx();
+		_delay_ms(3000);
+	}
  
 	_delay_ms(500);
 	
