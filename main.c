@@ -4,7 +4,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 #define F_CPU 18432000UL
 #define BAUD 9600UL
-#define debug
+//#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -101,31 +101,39 @@ unsigned char inttochar(unsigned int rein)
 	
 }
 #endif
-
+/*
 int wait(void)
 {
   _delay_us(40);
   return 0;
 }
+*/
 int data0(void)
 {
   PORTA &= ~(1<<PA5);	  // Data 0
-  _delay_us(6);
-  PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(6);
-  PORTA &= ~(1<<PA3);	  // Clock 0
-	_delay_us(10);
+	//_delay_us(6);
+	_delay_us(30);
+	PORTA |= (1<<PA3);	  // Clock 1
+  //_delay_us(20);
+	_delay_us(30);
+	PORTA &= ~(1<<PA3);	  // Clock 0
+	//_delay_us(10);
+	//_delay_us(10);
   return 0;
 }
 int data1(void)
 {
   PORTA |= (1<<PA5);	  // Data 1
-  _delay_us(6); 
+  //_delay_us(6); 
+	_delay_us(30);
   PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(6);
+  //_delay_us(30);
+	_delay_us(30);
+	PORTA &= ~(1<<PA5);	  // Data 0
   PORTA &= ~(1<<PA3);     // Clock 0
-	_delay_us(10);
-  PORTA &= ~(1<<PA5);	  // Data 0
+	//_delay_us(10);
+	//_delay_us(10);
+  
   return 0;
 }
 //
@@ -133,17 +141,22 @@ int data1(void)
 int begin0(void)
 {
   PORTA &= ~(1<<PA3);	// Clock 0
+	//_delay_us(20);
+	_delay_us(60);
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA6);   // LE 0
-  _delay_us(56);
+  //_delay_us(56);
+	_delay_us(168);
   return 0;
 }
 int end0(void)
 {
-	_delay_us(6);
-  PORTA &= ~(1<<PA3);    // Clock 1
+	//_delay_us(6);
+	_delay_us(18);
+  PORTA &= ~(1<<PA3);    // Clock 0
   PORTA |= (1<<PA6);	// LE1 1
-  _delay_us(6);
+  //_delay_us(6);
+	_delay_us(18);
   PORTA &= ~(1<<PA6);	//LE1 0
   return 0;
 }
@@ -154,15 +167,18 @@ int begin1(void)
   PORTA &= ~(1<<PA3);	// Clock 0
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA4);   // LE 0
-  _delay_us(56);
+  //_delay_us(56);
+	_delay_us(168);
   return 0;
 }
 int end1(void)
 {
-	_delay_us(6);
-  PORTA &= ~(1<<PA3);    // Clock 1
+	//_delay_us(6);
+	_delay_us(20);
+  //PORTA &= ~(1<<PA3);    // Clock 1
   PORTA |= (1<<PA4);			// LE1	1
-  _delay_us(6);
+  //_delay_us(6);
+	_delay_us(20);
   PORTA &= ~(1<<PA4);			// LE1 0
   return 0;
 }
@@ -478,6 +494,9 @@ int led_color(int color)
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+	#ifdef debug
+	uart_puts("INT4\r\n");
+	#endif
 	save2memory();
 	while(1)
 	{
@@ -584,6 +603,9 @@ ISR (INT7_vect)
 
 ISR (TIMER0_OVF_vect)
 {
+	#ifdef debug
+	uart_puts("INT Timer0\r\n");
+	#endif
 	keycheck();
 }
 
@@ -785,11 +807,10 @@ int tx()
 	// Pause, 7ms
 	// 0110 0001  0100 0000
 	wert &= ~(1 << TREIBER_MUTE);
-	_delay_ms(7);
 	treiber(wert);
+	_delay_ms(7);
 	wert |= (1 << TREIBER_TR);
 	treiber(wert);
-	_delay_ms(7);
 	return 0;
 }
 
@@ -813,6 +834,7 @@ int rx()
 
 int init_geraet()
 {
+
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 	//
 	// Init:
@@ -823,20 +845,36 @@ int init_geraet()
 	wert |= (1 << TREIBER_BIT9);
 	wert |= (1 << TREIBER_SRF);
 	wert |= (1 << TREIBER_FM);
+	  // PA4
+  DDRA |= (1<<PA4);	// Bitbanging SPI
+  // PA6
+  DDRA |= (1<<PA6);	// Bitbanging SPI
+  // PA5
+  DDRA |= (1<<PA5);	// Bitbanging SPI
+  // PA3
+  DDRA |= (1<<PA3);	// Bitbanging SPI
+	PORTA &= ~(1<<PA3);	
+	PORTA &= ~(1<<PA4);	
+	PORTA &= ~(1<<PA5);
+	PORTA &= ~(1<<PA6);
+	//_delay_ms(500);
 	treiber(wert); 
 	_delay_ms(28);
 	wert |= (1 << TREIBER_MUTE);
 	treiber(wert);
-	_delay_ms(28);
+	//_delay_ms(28);
 	tune(freq,step);
 	_delay_ms(28);
-	modulation(mod);
+	//modulation(mod);
+	//_delay_ms(28);
+	_delay_ms(1000);
 	return 0;
 }
 
 int main(void) 
 {
-	_delay_ms(1000);
+	//cli();
+	//_delay_ms(1000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -857,7 +895,7 @@ int main(void)
 	// PC1 ist LED Grün 										-> Ausgang
 	// PA7 ist Ein/Aus											-> Ausgang
 	// PA2 ist "Busy" (Rauschsperre offen)	-> Eingang
-	
+	/*
 	// PE4
 	DDRE &= ~(1<<PE4);	// Eingang
 	// PE7
@@ -869,14 +907,7 @@ int main(void)
 	// PE5
   DDRE &= ~(1<<PE5);	// Eingang
   PORTE |= (1<<PE5);	// internen Pullup aktivieren
-  // PA4
-  DDRA |= (1<<PA4);
-  // PA6
-  DDRA |= (1<<PA6);
-  // PA5
-  DDRA |= (1<<PA5);
-  // PA3
-  DDRA |= (1<<PA3);
+
 	// PC0
 	DDRC |= (1<<PC0);
 	// PC1
@@ -886,7 +917,7 @@ int main(void)
   PORTA |= (1<<PA7);	// einschalten
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
-	
+		*/
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -904,7 +935,7 @@ int main(void)
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
 	*/
-
+/*
 	// EEPROM
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
@@ -931,7 +962,7 @@ int main(void)
 		#endif
 		freq=27000;
 	}
-
+*/
 	/*
 	i2c_init();
 	i2c_start_wait(0x20);
@@ -996,8 +1027,13 @@ int main(void)
 
 	led_color(1);
 */
+	freq=27000;
 	init_geraet();
- 
+/*
+	while(1)
+	{
+	}
+	*/
 	while(1)
 	{
 		tx();
@@ -1006,7 +1042,7 @@ int main(void)
 		_delay_ms(3000);
 	}
  
-	_delay_ms(500);
+	_delay_ms(2000);
 	
 	
 	
