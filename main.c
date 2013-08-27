@@ -4,7 +4,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 #define F_CPU 18432000UL
 #define BAUD 9600UL
-//#define debug
+#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -111,29 +111,23 @@ int wait(void)
 int data0(void)
 {
   PORTA &= ~(1<<PA5);	  // Data 0
-	//_delay_us(6);
-	_delay_us(30);
+	_delay_us(6);
 	PORTA |= (1<<PA3);	  // Clock 1
-  //_delay_us(20);
-	_delay_us(30);
+  _delay_us(6);
 	PORTA &= ~(1<<PA3);	  // Clock 0
-	//_delay_us(10);
-	//_delay_us(10);
+	_delay_us(10);
   return 0;
 }
 int data1(void)
 {
   PORTA |= (1<<PA5);	  // Data 1
-  //_delay_us(6); 
+  _delay_us(6); 
 	_delay_us(30);
   PORTA |= (1<<PA3);	  // Clock 1
-  //_delay_us(30);
-	_delay_us(30);
+  _delay_us(6);
 	PORTA &= ~(1<<PA5);	  // Data 0
   PORTA &= ~(1<<PA3);     // Clock 0
-	//_delay_us(10);
-	//_delay_us(10);
-  
+	_delay_us(10);
   return 0;
 }
 //
@@ -141,22 +135,17 @@ int data1(void)
 int begin0(void)
 {
   PORTA &= ~(1<<PA3);	// Clock 0
-	//_delay_us(20);
-	_delay_us(60);
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA6);   // LE 0
-  //_delay_us(56);
-	_delay_us(168);
+  _delay_us(56);
   return 0;
 }
 int end0(void)
 {
-	//_delay_us(6);
-	_delay_us(18);
+	_delay_us(6);
   PORTA &= ~(1<<PA3);    // Clock 0
   PORTA |= (1<<PA6);	// LE1 1
-  //_delay_us(6);
-	_delay_us(18);
+  _delay_us(6);
   PORTA &= ~(1<<PA6);	//LE1 0
   return 0;
 }
@@ -167,18 +156,15 @@ int begin1(void)
   PORTA &= ~(1<<PA3);	// Clock 0
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA4);   // LE 0
-  //_delay_us(56);
-	_delay_us(168);
+  _delay_us(56);
   return 0;
 }
 int end1(void)
 {
-	//_delay_us(6);
-	_delay_us(20);
+	_delay_us(6);
   //PORTA &= ~(1<<PA3);    // Clock 1
   PORTA |= (1<<PA4);			// LE1	1
-  //_delay_us(6);
-	_delay_us(20);
+  _delay_us(6);
   PORTA &= ~(1<<PA4);			// LE1 0
   return 0;
 }
@@ -862,10 +848,10 @@ int init_geraet()
 	_delay_ms(28);
 	wert |= (1 << TREIBER_MUTE);
 	treiber(wert);
-	//_delay_ms(28);
+	_delay_ms(28);
 	tune(freq,step);
 	_delay_ms(28);
-	//modulation(mod);
+	modulation(mod);
 	//_delay_ms(28);
 	_delay_ms(1000);
 	return 0;
@@ -895,7 +881,7 @@ int main(void)
 	// PC1 ist LED Grün 										-> Ausgang
 	// PA7 ist Ein/Aus											-> Ausgang
 	// PA2 ist "Busy" (Rauschsperre offen)	-> Eingang
-	/*
+	
 	// PE4
 	DDRE &= ~(1<<PE4);	// Eingang
 	// PE7
@@ -917,7 +903,7 @@ int main(void)
   PORTA |= (1<<PA7);	// einschalten
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
-		*/
+	
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -1028,21 +1014,13 @@ int main(void)
 	led_color(1);
 */
 	freq=27000;
+	mod=1;
 	init_geraet();
-/*
+
 	while(1)
 	{
 	}
-	*/
-	while(1)
-	{
-		tx();
-		_delay_ms(3000);
-		rx();
-		_delay_ms(3000);
-	}
- 
-	_delay_ms(2000);
+	
 	
 	
 	
