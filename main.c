@@ -32,6 +32,8 @@ unsigned long keys;
 int mod = 1;
 unsigned int freq = 27000;
 unsigned int step = 1;
+int ichsende=0;
+int ichbinaus=0;
 
 //
 // Speicherarray für das EEPROM
@@ -515,26 +517,47 @@ int save2memory()
 
 ISR (INT5_vect)
 {
-	#ifdef debug
-	uart_puts("INT5\r\n");
-	#endif
-	save2memory();
-	
-	PORTA &= ~(1<<PA7);	// ausschalten...
-	led_pwm(1,0);
-	led_pwm(2,0);
-	led_pwm(3,0);
-	led_pwm(4,0);
-	led_pwm(5,0);
-	led_pwm(6,0);
-	led_pwm(7,0);
-	led_pwm(8,0);
-	led_pwm(9,0);
-	led_pwm(10,0);
-	led_pwm(11,0);
-	led_pwm(12,0);
-	while(1)
+	if(ichbinaus == 1)
 	{
+		#ifdef debug
+		uart_puts("AN\r\n");
+		#endif
+	  PORTA |= (1<<PA7);	// einschalten
+		led_pwm(1,0);
+		led_pwm(2,0);
+		led_pwm(3,0);
+		led_pwm(4,0);
+		led_pwm(5,0);
+		led_pwm(6,0);
+		led_pwm(7,0);
+		led_pwm(8,0);
+		led_pwm(9,0);
+		led_pwm(10,0);
+		led_pwm(11,0);
+		led_pwm(12,0);
+		init_geraet();
+		ichbinaus=0;
+	}
+	else
+	{
+		ichbinaus=1;
+		#ifdef debug
+		uart_puts("AUS\r\n");
+		#endif
+		save2memory();
+		PORTA &= ~(1<<PA7);	// ausschalten...
+		led_pwm(1,0);
+		led_pwm(2,0);
+		led_pwm(3,0);
+		led_pwm(4,0);
+		led_pwm(5,0);
+		led_pwm(6,0);
+		led_pwm(7,0);
+		led_pwm(8,0);
+		led_pwm(9,0);
+		led_pwm(10,0);
+		led_pwm(11,0);
+		led_pwm(12,0);
 	}
 }
 
@@ -786,22 +809,27 @@ ISR(ADC_vect)
 
 int tx()
 {
-	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
-	//
-	// Senden:
-	// 0100 0001  0100 0000
-	// Pause, 7ms
-	// 0110 0001  0100 0000
-	wert &= ~(1 << TREIBER_MUTE);
-	treiber(wert);
-	_delay_ms(7);
-	wert |= (1 << TREIBER_TR);
-	treiber(wert);
+	if(ichsende != 1)
+	{
+		ichsende=1;
+		// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
+		//
+		// Senden:
+		// 0100 0001  0100 0000
+		// Pause, 7ms
+		// 0110 0001  0100 0000
+		wert &= ~(1 << TREIBER_MUTE);
+		treiber(wert);
+		_delay_ms(7);
+		wert |= (1 << TREIBER_TR);
+		treiber(wert);
+	}
 	return 0;
 }
 
 int rx()
 {
+	ichsende=0;
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 	//
 	// Empfangen:
@@ -909,7 +937,7 @@ int main(void)
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
 	// INT7 wird für den 1. i2c Port Expander genutzt
 	// (warum nicht bei fallender Flanke? Hmmm!)
-	/*
+	
 	EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
@@ -920,8 +948,8 @@ int main(void)
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
-	*/
-/*
+	
+
 	// EEPROM
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
@@ -948,7 +976,7 @@ int main(void)
 		#endif
 		freq=27000;
 	}
-*/
+
 	/*
 	i2c_init();
 	i2c_start_wait(0x20);
@@ -995,7 +1023,7 @@ int main(void)
 
   i2c_stop();
 */
-/*
+
 	i2c_init();
 	init_led();
 	led_pwm(1,255);
@@ -1012,8 +1040,7 @@ int main(void)
 	led_pwm(12,255);
 
 	led_color(1);
-*/
-	freq=27000;
+
 	mod=1;
 	init_geraet();
 
