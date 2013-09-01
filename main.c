@@ -800,11 +800,10 @@ ISR(ADC_vect)
 	// oder besser
 	x = ADCW;
 	char s[7];
-	/*
+	
 	uart_puts("Messwert: ");
 	uart_puts( itoa( x, s, 10 ) );
 	uart_puts("\r\n");
-	*/
 }
 
 int tx()
@@ -1070,16 +1069,7 @@ int main(void)
 	led_color(1);
 
 	mod=1;
-	init_geraet();
-
-	while(1)
-	{
-	}
-	
-	
-	
-	
-	
+	init_geraet();	
 	
 	//
 	// Gemessen wird an ADC1, es kann "Gain" (10x) genutzt werden, dazu liegt ADC0 auf GND
@@ -1092,6 +1082,7 @@ int main(void)
 	
 	// ADC1 auswählen
 	ADMUX |= (1<<MUX0);
+	//ADMUX |= (1 << MUX3) | (1<<MUX0);
 	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
   ADCSRA |= (1 << ADEN);  // Enable ADC
 	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
