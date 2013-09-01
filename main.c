@@ -986,7 +986,7 @@ int main(void)
 	{
 	}
  */
-/*
+
   i2c_init();
 
     
@@ -1022,7 +1022,35 @@ int main(void)
   i2c_write(0xff);
 
   i2c_stop();
-*/
+
+  i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
+  i2c_write(0xe0);  // ??   // IMHO Device Select 0
+	i2c_write(1);
+
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+  i2c_write(0xff);
+	i2c_stop();
 
 	i2c_init();
 	init_led();
