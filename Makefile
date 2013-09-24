@@ -52,7 +52,7 @@ TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c twimaster.c eeprom.c
+SRC = $(TARGET).c twimaster.c eeprom.c display.c
 
 
 # List Assembler source files here.

@@ -908,7 +908,7 @@ int main(void)
 	// PC1 ist LED Grün 										-> Ausgang
 	// PA7 ist Ein/Aus											-> Ausgang
 	// PA2 ist "Busy" (Rauschsperre offen)	-> Eingang
-	
+	/*
 	// PE4
 	DDRE &= ~(1<<PE4);	// Eingang
 	// PE7
@@ -947,8 +947,8 @@ int main(void)
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
-	
-
+	*/
+/*
 	// EEPROM
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
@@ -975,7 +975,7 @@ int main(void)
 		#endif
 		freq=27000;
 	}
-
+*/
 	/*
 	i2c_init();
 	i2c_start_wait(0x20);
@@ -987,6 +987,9 @@ int main(void)
  */
 
   i2c_init();
+	display_init();
+	display_send();
+/*
 
     
   i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
@@ -1050,7 +1053,7 @@ int main(void)
   i2c_write(0xff);
   i2c_write(0xff);
 	i2c_stop();
-
+*/
 	i2c_init();
 	init_led();
 	led_pwm(1,255);
