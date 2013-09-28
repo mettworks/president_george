@@ -988,7 +988,8 @@ int main(void)
 
   i2c_init();
 	display_init();
-	display_send();
+	//display_send();
+	display_write_channel('56');
 /*
 
     

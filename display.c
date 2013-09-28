@@ -9,24 +9,6 @@
 //#include <avr/interrupt.h>
 #include <i2cmaster.h>
 //#include "eeprom.h"
-
-
-// es werden 99 Bits (3x33 Segmente) benötigt
-
-unsigned char d_byte00=0;
-unsigned char d_byte01=0;
-unsigned char d_byte02=0;
-unsigned char d_byte03=0;
-unsigned char d_byte04=0;
-unsigned char d_byte05=0;
-unsigned char d_byte06=0;
-unsigned char d_byte07=0;
-unsigned char d_byte08=0;
-unsigned char d_byte09=0;
-unsigned char d_byte10=0;
-unsigned char d_byte11=0;
-unsigned char d_byte12=0;
-
 //
 // Speicherorganisation:
 // waagerecht sind die Segmente
@@ -49,75 +31,38 @@ unsigned char d_byte12=0;
 //	2	3 6 ! 3 6 !
 //	3
 
+unsigned char daten[13];
 
+display_write_channel(unsigned char channel)
+{
+	daten[0]=0xff;
+	display_send();
+}
 
 
 display_init()
 {
+	uart_puts("display_init()\r\n");
+	uart_puts("\r\n");
   i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
   i2c_write(0xe0);  // ??   // IMHO Device Select 0
   i2c_write(0xcf);	  // multiplex 1100 1111
   i2c_write(0xFB);   // Bank select 2	    11111011 
   i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
-  /*
-	i2c_write(0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	
-	i2c_write(0x0);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0x0);
-	i2c_write(0xff);
-	
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	i2c_write(0xff);
-	*/
 	i2c_stop();
 }
 
 display_send()
 {
+  char Buffer[7];	
 	i2c_start_wait(0x70);
+	itoa(daten[0], Buffer, 10 );
 
-	// Adresse setzen
+	// Speicher Adresse setzen
 	i2c_write(0);
-	
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x1);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	i2c_write(0x0);
-	
-	i2c_write(0x00);
-	i2c_write(0x00);
-	i2c_write(0x00);
-	i2c_write(0x00);
-	i2c_write(0x00);
-	
+	uart_puts("1. Byte: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	i2c_write(daten[0]);
 	i2c_stop();
 }
