@@ -987,11 +987,12 @@ int main(void)
  */
 
   i2c_init();
-	display_init();
+	//display_init();
+	//_delay_ms(1000);
 	//display_send();
 	display_write_channel('56');
-/*
 
+/*
     
   i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
   i2c_write(0xe0);  // ??   // IMHO Device Select 0
@@ -1000,32 +1001,33 @@ int main(void)
   i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
   i2c_write(0);
 
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
+  i2c_write(0x01);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
 
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
 
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
 
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
+  i2c_write(0x00);
 
   i2c_stop();
-
+	*/
+/*
   i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
   i2c_write(0xe0);  // ??   // IMHO Device Select 0
 	i2c_write(1);
@@ -1055,6 +1057,11 @@ int main(void)
   i2c_write(0xff);
 	i2c_stop();
 */
+
+	while(1)
+	{
+	}
+
 	i2c_init();
 	init_led();
 	led_pwm(1,255);
