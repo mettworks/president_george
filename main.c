@@ -887,7 +887,7 @@ int init_geraet()
 int main(void) 
 {
 	//cli();
-	//_delay_ms(1000);
+	_delay_ms(1000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
