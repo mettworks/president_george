@@ -72,7 +72,7 @@ display_write_channel(unsigned char channel)
 {
 	daten[0]=0x00;
 	daten[1]=0x00;
-	daten[2]=0x01;
+	daten[2]=0x00;
 	daten[3]=0x00;
 	daten[4]=0x00;
 	daten[5]=0x00;
@@ -202,47 +202,36 @@ display_send()
 		if(daten[y] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x00);
+			daten2send |= (1<<0x07);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x00);
+			daten2send &= ~(1<<0x07);
 		}
 		
 		if(daten[y+1] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x01);
+			daten2send |= (1<<0x06);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x01);
+			daten2send &= ~(1<<0x06);
 		}
 		if(daten[y+2] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x02);
+			daten2send |= (1<<0x05);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x02);
+			daten2send &= ~(1<<0x05);
 		}
 		
 		if(daten[y+3] & (1<<0x00)) 
-		{
-			uart_puts("1");
-			daten2send |= (1<<0x03);
-		}
-		else
-		{
-			uart_puts("0");
-			daten2send &= ~(1<<0x03);
-		}
-
-		if(daten[y+4] & (1<<0x00)) 
 		{
 			uart_puts("1");
 			daten2send |= (1<<0x04);
@@ -252,35 +241,46 @@ display_send()
 			uart_puts("0");
 			daten2send &= ~(1<<0x04);
 		}
-		if(daten[y+5] & (1<<0x00)) 
+
+		if(daten[y+4] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x05);
+			daten2send |= (1<<0x03);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x05);
+			daten2send &= ~(1<<0x03);
+		}
+		if(daten[y+5] & (1<<0x00)) 
+		{
+			uart_puts("1");
+			daten2send |= (1<<0x02);
+		}
+		else
+		{
+			uart_puts("0");
+			daten2send &= ~(1<<0x02);
 		}				
 		if(daten[y+6] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x06);
+			daten2send |= (1<<0x01);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x06);
+			daten2send &= ~(1<<0x01);
 		}				
 		if(daten[y+7] & (1<<0x00)) 
 		{
 			uart_puts("1");
-			daten2send |= (1<<0x07);
+			daten2send |= (1<<0x00);
 		}
 		else
 		{
 			uart_puts("0");
-			daten2send &= ~(1<<0x07);
+			daten2send &= ~(1<<0x00);
 		}				
 
 		i2c_start_wait(0x70);
