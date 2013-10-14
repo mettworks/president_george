@@ -3,7 +3,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 */
 
 #define F_CPU 18432000UL
-#define BAUD 9600UL
+#define BAUD 115800UL
 #define debug
 
 #include <avr/io.h>
@@ -987,10 +987,25 @@ int main(void)
  */
 
   i2c_init();
-	//display_init();
+	display_init();
 	//_delay_ms(1000);
 	//display_send();
-	display_write_channel('56');
+	
+	
+	unsigned char channel;
+	while(1)
+	{
+		channel=0;
+		while(channel < 99)
+		{
+			display_write_channel(channel);
+			channel++;
+			_delay_ms(2);
+		}
+	}
+	
+	//display_write_channel(12);
+	
 
 /*
     
