@@ -991,7 +991,7 @@ int main(void)
 	//_delay_ms(1000);
 	//display_send();
 	
-	
+	/*
 	unsigned char channel;
 	while(1)
 	{
@@ -1005,8 +1005,41 @@ int main(void)
 	}
 	
 	//display_write_channel(12);
-	
+	*/
+	/*
+	display_write_frequenz(12345);
+	while(1)
+	{
+	}
 
+*/
+	display_write_frequenz(26955);
+	display_write_channel(80);
+	display_write_modus(0);
+	while(1)
+	{
+	}
+
+	unsigned int frequenz;
+	while(1)
+	{
+		frequenz=0;
+		while(frequenz < 99999)
+		{
+			display_write_frequenz(frequenz);
+			frequenz++;
+			_delay_ms(2);
+		}
+	}
+
+
+/*
+
+	display_write_mod(4);
+	while(1)
+	{
+	}
+	*/
 /*
     
   i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!

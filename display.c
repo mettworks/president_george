@@ -9,7 +9,6 @@
 //#include <avr/interrupt.h>
 #include <i2cmaster.h>
 //#include "eeprom.h"
-#include "display_charset.h"
 //
 // Das Display wird erstmal mit 4BP's betrieben, mit 3 gab es Probleme... :-(
 // Nach meinem Verständniss sollte der Init Kram nicht immer mitgesendet werden?
@@ -156,6 +155,212 @@ display_convert_number(unsigned char number,unsigned char segmente[6])
 	}
 }
 
+display_write_modus(unsigned char modus)
+{
+	uart_puts("Beginn display_write_modus()");
+	uart_puts("\r\n");
+	// RX 3
+	// TX 1
+	if(modus == 0)
+	{
+		uart_puts("RX");
+		daten[3]=0x01;
+		daten[1]=0x0;
+	}
+	else
+	{
+		uart_puts("TX");
+		daten[3]=0x0;
+		daten[1]=0x01;
+	}
+	uart_puts("\r\n");
+	display_send();
+}
+
+display_write_mod(unsigned char mod)
+{
+	uart_puts("Beginn display_write_mod()");
+	uart_puts("\r\n");
+
+	// 1 FM 21
+	// 2 AM 12
+	// 3 USB 39
+	// 4 LSB 30
+	
+	if(mod == 1)
+	{
+		uart_puts("FM");
+		daten[12]=0x0;
+		daten[21]=0x01;
+		daten[30]=0x0;
+		daten[39]=0x0;
+	}
+	else if(mod == 2)
+	{
+		uart_puts("AM");
+		daten[12]=0x01;
+		daten[21]=0x0;
+		daten[30]=0x0;
+		daten[39]=0x0;
+	}
+	else if(mod == 3)
+	{
+		uart_puts("USB");	
+		daten[12]=0x0;
+		daten[21]=0x0;
+		daten[30]=0x0;
+		daten[39]=0x01;
+	}
+	else if(mod == 4)
+	{
+		uart_puts("LSB");
+		daten[12]=0x0;
+		daten[21]=0x0;
+		daten[30]=0x01;
+		daten[39]=0x0;
+	}
+	uart_puts("\r\n");
+	display_send();
+}
+
+display_write_frequenz(unsigned int frequenz)
+{
+	uart_puts("Beginn display_write_frequenz()");
+	uart_puts("\r\n");
+	itoa(frequenz, Buffer, 10);
+	uart_puts(" frequenz: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+
+	/*
+		1. Ziffer
+		a 24
+		b 27
+		c 28
+		d 26
+		e 23
+		f 22
+		g 25
+	
+		2. Ziffer
+		a	33
+		b 36
+		c 37
+		d 35
+		e	32
+		f 31
+		g 34
+		
+		PUNKT ist die 38
+		
+		3. Ziffer
+		a 42
+		b 45
+		c 46
+		d 44
+		e 41
+		f 40
+		g 43
+		
+		4. Ziffer
+		a	51
+		b 54
+		c 55
+		d	53
+		e	50
+		f	49
+		g	52
+		
+		5. Ziffer
+		a	60
+		b	63
+		c	64
+		d	62
+		e	59
+		f	58
+		g	61
+		
+	*/
+
+	// Punkt anmachen
+	daten[38]=0x01;
+
+	// 
+	// zerlegen
+	unsigned char x;
+	
+	x = frequenz / 10000;
+	itoa(x, Buffer, 10);
+	uart_puts(" 1. Stelle: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	segmente[0]=24;
+	segmente[1]=27;
+	segmente[2]=28;
+	segmente[3]=26;
+	segmente[4]=23;
+	segmente[5]=22;
+	segmente[6]=25;
+	display_convert_number(x,segmente);
+	
+	x = frequenz % 10000 / 1000;
+	itoa(x, Buffer, 10);
+	uart_puts(" 2. Stelle: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	segmente[0]=33;
+	segmente[1]=36;
+	segmente[2]=37;
+	segmente[3]=35;
+	segmente[4]=32;
+	segmente[5]=31;
+	segmente[6]=34;
+	display_convert_number(x,segmente);
+	
+	x = frequenz % 1000 / 100;
+	itoa(x, Buffer, 10);
+	uart_puts(" 3. Stelle: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	segmente[0]=42;
+	segmente[1]=45;
+	segmente[2]=46;
+	segmente[3]=44;
+	segmente[4]=41;
+	segmente[5]=40;
+	segmente[6]=43;
+	display_convert_number(x,segmente);
+	
+	x = frequenz % 100 / 10;
+	itoa(x, Buffer, 10);
+	uart_puts(" 2. Stelle: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	segmente[0]=51;
+	segmente[1]=54;
+	segmente[2]=55;
+	segmente[3]=53;
+	segmente[4]=50;
+	segmente[5]=49;
+	segmente[6]=52;
+	display_convert_number(x,segmente);
+	
+	x = frequenz % 10;
+	itoa(x, Buffer, 10);
+	uart_puts(" 1. Stelle: ");
+	uart_puts(Buffer);
+	uart_puts("\r\n");
+	segmente[0]=60;
+	segmente[1]=63;
+	segmente[2]=64;
+	segmente[3]=62;
+	segmente[4]=59;
+	segmente[5]=58;
+	segmente[6]=61;
+	display_convert_number(x,segmente);
+	
+	display_send();
+}
 
 display_write_channel(unsigned char channel)
 {
@@ -229,6 +434,7 @@ display_init()
   i2c_write(0xF8);   				// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
   i2c_write(0xF0);   				// 1111 0000 = Blinken, alles abgeschaltet 
 	i2c_stop();
+	
 }
 display_send()
 {
