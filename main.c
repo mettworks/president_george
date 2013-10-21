@@ -3,7 +3,8 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 */
 
 #define F_CPU 18432000UL
-#define BAUD 115800UL
+//#define BAUD 115800UL
+#define BAUD 9600UL
 #define debug
 
 #include <avr/io.h>
@@ -34,7 +35,8 @@ unsigned int freq = 27000;
 unsigned int step = 1;
 int ichsende=0;
 int ichbinaus=0;
-
+int led_farbe=0;
+unsigned int led_dimm=255;
 //
 // Speicherarray für das EEPROM
 // 0-1 	Frequenz in kHz
@@ -404,12 +406,29 @@ int tune(unsigned int freq,unsigned int step)
   return 0;
 }
 
+int led_helligkeit(unsigned int led_dimm)
+{
+	led_pwm(1,led_dimm);
+	led_pwm(2,led_dimm);
+	led_pwm(3,led_dimm);
+	led_pwm(4,led_dimm);
+	led_pwm(5,led_dimm);
+	led_pwm(6,led_dimm);
+	led_pwm(7,led_dimm);
+	led_pwm(8,led_dimm);
+	led_pwm(9,led_dimm);
+	led_pwm(10,led_dimm);
+	led_pwm(11,led_dimm);
+	led_pwm(12,led_dimm);
+}
+
 int init_led()
 {
 	#ifdef debug
 	uart_puts("init_led(): Anfang\r\n");
 	#endif
 	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
+	uart_puts("init_led(): Start Wait Ende\r\n");
   i2c_write(0x80);  // autoincrement ab Register 0h
 
   i2c_write(0x00);  // Register 00 /  Mode1  
@@ -444,6 +463,9 @@ int init_led()
   i2c_write(0x00);  // Register 1B /  All Call I2C bus address
   i2c_write(0xFF);  // Register 1C /  IREF configuration  
   i2c_stop();  // I2C-Stop
+	#ifdef debug
+	uart_puts("init_led(): Ende\r\n");
+	#endif
 	return 0;
 }
 
@@ -461,18 +483,18 @@ int led_color(int color)
 	if (color == 0 )
 	{
 	  #ifdef debug
-		uart_puts("LED Farbe: Rot\r\n");
+		uart_puts("LED Farbe: Grün\r\n");
 		#endif
-		PORTC |= (1<<PC0);	  		// Rot 1
-		PORTC &= ~(1<<PC1);     	// Grün 0
+		PORTC |= (1<<PC0);	  		// Grün 1
+		PORTC &= ~(1<<PC1);     	// Rot 0
 	}
 	else if (color == 1)
 	{
 		#ifdef debug
-		uart_puts("LED Farbe: Gruen\r\n");
+		uart_puts("LED Farbe: Rot\r\n");
 		#endif
-		PORTC |= (1<<PC1);	  		// Grün 1
-		PORTC &= ~(1<<PC0);     	// Rot 0
+		PORTC |= (1<<PC1);	  		// Rot 1
+		PORTC &= ~(1<<PC0);     	// Grün 0
 	}
 	return 0;
 }
@@ -677,44 +699,42 @@ int keycheck(void)
 	if ((keys & 0x1000000) == 0)
 	{
 		#ifdef debug
-		uart_puts("1. Taste\r\n");
-		uart_puts("Step\r\n");
+		uart_puts("SW08\r\n");
+		uart_puts("LED Farbe\r\n");
 		#endif
-		if(step == 1)
-    {
-			step=5;
-    }
-    else if(step == 5)
-    {
-			step=10;
-    }
-		else if(step == 10)
+		if(led_farbe == 0)
 		{
-			step=25;
+			led_farbe=1;
 		}
-		else if(step == 25)
+		else
 		{
-			step=100;
+			led_farbe=0;
 		}
-		else if(step == 100)
-		{
-			step=1000;
-		}
-    else
-    {
-			step=1;
-    }
-    tune(freq,step);
+		led_color(led_farbe);
+			
 	}
 	// 10. Bit
 	// TX Anfang, PTT Taste ist gedrückt
-	else if((keys & 0x200) == 0)
+	else if((keys & 0x100) == 0)
 	{
 		#ifdef debug
-		uart_puts("10.Bit\r\n");
-    uart_puts("TX\r\n");
+		uart_puts("SW13\r\n");
+    uart_puts("Dimmer\r\n");
 		#endif
-		tx();
+		if(led_dimm == 255)
+		{
+			led_dimm=128;
+		}
+		else if(led_dimm == 128)
+		{
+			led_dimm=64;
+		}
+		else
+		{
+			led_dimm=255;
+		}
+		led_helligkeit(led_dimm);
+		
 	}
 	
 	// + Taste am Mikrofon
@@ -731,18 +751,19 @@ int keycheck(void)
 		freq=freq-step;
     tune(freq,step);
 	}
+	/*
 	// AM ENDE LASSEN!
 	// TX Ende, PTT Taste ist losgelassen
 	else if(keys & 0x200)
 	{
-		rogerbeep();
+
 		#ifdef debug
-		uart_puts("10.Bit\r\n");
-    uart_puts("RX\r\n");
+		uart_puts("SW13\r\n");
+    uart_puts("Dimmer\r\n");
 		#endif
     rx();
 	}	
-
+*/
 	if(keys != 0xffffffff)
 	{
 		// Taste/Tasten sind immer noch gedrückt, also nochmal... :-)
@@ -908,7 +929,7 @@ int main(void)
 	// PC1 ist LED Grün 										-> Ausgang
 	// PA7 ist Ein/Aus											-> Ausgang
 	// PA2 ist "Busy" (Rauschsperre offen)	-> Eingang
-	/*
+	
 	// PE4
 	DDRE &= ~(1<<PE4);	// Eingang
 	// PE7
@@ -931,6 +952,11 @@ int main(void)
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
 	
+	mod=1;
+	freq=27000;
+	init_geraet();
+	
+	
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -941,13 +967,14 @@ int main(void)
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
-	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+	//EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
+	EIMSK |= (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
-	*/
+	
 /*
 	// EEPROM
 	unsigned char IOReg;
@@ -986,8 +1013,8 @@ int main(void)
 	}
  */
 
-  i2c_init();
-	display_init();
+  //i2c_init();
+	//display_init();
 	//_delay_ms(1000);
 	//display_send();
 	
@@ -1013,6 +1040,7 @@ int main(void)
 	}
 
 */
+/*
 	display_write_frequenz(26955);
 	display_write_channel(80);
 	display_write_modus(0);
@@ -1031,7 +1059,7 @@ int main(void)
 			_delay_ms(2);
 		}
 	}
-
+*/
 
 /*
 
@@ -1106,26 +1134,44 @@ int main(void)
 	i2c_stop();
 */
 
+
+
+	i2c_init();
+	init_led();
+	
+	led_helligkeit(led_dimm);
+	
+
+
+	led_color(led_farbe);
+
+
+	while(1)
+	{
+		led_color(0);
+		led_dimm=0;
+		while(led_dimm < 255)
+		{
+			led_helligkeit(led_dimm);
+			led_dimm++;
+			_delay_ms(10);
+		}
+		led_color(1);
+		led_dimm=0;
+		while(led_dimm < 255)
+		{
+			led_helligkeit(led_dimm);
+			led_dimm++;
+			_delay_ms(10);
+		}
+	}
+
+	sei();
 	while(1)
 	{
 	}
 
-	i2c_init();
-	init_led();
-	led_pwm(1,255);
-	led_pwm(2,255);
-	led_pwm(3,255);
-	led_pwm(4,255);
-	led_pwm(5,255);
-	led_pwm(6,255);
-	led_pwm(7,255);
-	led_pwm(8,255);
-	led_pwm(9,255);
-	led_pwm(10,255);
-	led_pwm(11,255);
-	led_pwm(12,255);
-
-	led_color(1);
+/*
 
 	mod=1;
 	init_geraet();	
@@ -1156,4 +1202,5 @@ int main(void)
 	uart_puts("fertig\r\n");
 	#endif
 	return 0;
+	*/
 } 
