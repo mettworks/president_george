@@ -3,8 +3,8 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 */
 
 #define F_CPU 18432000UL
-//#define BAUD 115800UL
-#define BAUD 9600UL
+#define BAUD 115800UL
+//#define BAUD 9600UL
 #define debug
 
 #include <avr/io.h>
@@ -401,7 +401,6 @@ int tune(unsigned int freq,unsigned int step)
 	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
 	memory[0] = freq / 256;
 	memory[1] = freq % 256;
-
 	sei();
   return 0;
 }
@@ -510,6 +509,8 @@ ISR (INT4_vect)
 	save2memory();
 	while(1)
 	{
+		_delay_ms(1000);
+		uart_puts("1 Sekunde\r\n");
 	}
 }
 
@@ -679,7 +680,9 @@ unsigned long keysauslesen()
 	i2c_init();
 	blubb1=keysauslesendirekt(0x40);
 	blubb2=keysauslesendirekt(0x42);
-	i2c_stop();
+	// TODO: Wenn hier der i2c Transfer gestoppt wird hängt sich das Teil beim drücken der runter Taste am Mike auf?? 
+	//i2c_stop();
+	// INT's abschalten
 	cli();
 	keys=(uint32_t)blubb2 + ((uint32_t)blubb1 << 16);
 	return keys;
@@ -690,7 +693,7 @@ int keycheck(void)
 	keys=keysauslesen();
 	#ifdef debug
 	uint8_t string[20];
-	uart_puts("1. Byte: ");
+	uart_puts("Daten: ");
 	sprintf(string,"%lX",keys);
 	uart_puts(string);
 	uart_puts("\r\n");
@@ -751,6 +754,18 @@ int keycheck(void)
 		freq=freq-step;
     tune(freq,step);
 	}
+	// 
+	// Drehschalter +
+	else if((keys & 0x2) == 0)
+	{
+		#ifdef debug
+		uart_puts("Drehschalter +\r\n");
+		#endif
+		freq=freq+step;
+    tune(freq,step);
+	}	
+	
+	
 	/*
 	// AM ENDE LASSEN!
 	// TX Ende, PTT Taste ist losgelassen
@@ -907,7 +922,7 @@ int init_geraet()
 
 int main(void) 
 {
-	//cli();
+	cli();
 	_delay_ms(1000);
   #ifdef debug
   inituart();
@@ -952,11 +967,6 @@ int main(void)
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
 	
-	mod=1;
-	freq=27000;
-	init_geraet();
-	
-	
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -967,15 +977,13 @@ int main(void)
 	EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
 	EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
-	//EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
-	
-	EIMSK |= (1<< INT7) | (1<< INT5) | (1<< INT6);
+	EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
 	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
 	
-/*
+
 	// EEPROM
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
@@ -1002,16 +1010,9 @@ int main(void)
 		#endif
 		freq=27000;
 	}
-*/
-	/*
-	i2c_init();
-	i2c_start_wait(0x20);
-	i2c_write(0x0);
-	
-	while(1)
-	{
-	}
- */
+
+	mod=1;
+	init_geraet();
 
   //i2c_init();
 	//display_init();
@@ -1040,132 +1041,11 @@ int main(void)
 	}
 
 */
-/*
-	display_write_frequenz(26955);
-	display_write_channel(80);
-	display_write_modus(0);
-	while(1)
-	{
-	}
-
-	unsigned int frequenz;
-	while(1)
-	{
-		frequenz=0;
-		while(frequenz < 99999)
-		{
-			display_write_frequenz(frequenz);
-			frequenz++;
-			_delay_ms(2);
-		}
-	}
-*/
-
-/*
-
-	display_write_mod(4);
-	while(1)
-	{
-	}
-	*/
-/*
-    
-  i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
-  i2c_write(0xe0);  // ??   // IMHO Device Select 0
-  i2c_write(0xcf);	  // multiplex 1100 1111
-  i2c_write(0xFB);   // Bank select 2	    11111011 
-  i2c_write(0xF0);   // Blink select (0xF0= off/0xF2= on) 
-  i2c_write(0);
-
-  i2c_write(0x01);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-  i2c_write(0x00);
-
-  i2c_stop();
-	*/
-/*
-  i2c_start_wait(0x70);    // Adresse, alle Bits auf 0 UND das R/W Bit!
-  i2c_write(0xe0);  // ??   // IMHO Device Select 0
-	i2c_write(1);
-
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-  i2c_write(0xff);
-	i2c_stop();
-*/
-
-
 
 	i2c_init();
 	init_led();
-	
 	led_helligkeit(led_dimm);
-	
-
-
 	led_color(led_farbe);
-
-
-	while(1)
-	{
-		led_color(0);
-		led_dimm=0;
-		while(led_dimm < 255)
-		{
-			led_helligkeit(led_dimm);
-			led_dimm++;
-			_delay_ms(10);
-		}
-		led_color(1);
-		led_dimm=0;
-		while(led_dimm < 255)
-		{
-			led_helligkeit(led_dimm);
-			led_dimm++;
-			_delay_ms(10);
-		}
-	}
-
 	sei();
 	while(1)
 	{
