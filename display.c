@@ -225,6 +225,20 @@ display_write_mod(unsigned char mod)
 
 display_write_frequenz(unsigned int frequenz)
 {
+
+/*
+		daten[33]=0x01;
+		daten[36]=0x01;
+		daten[38]=0x01;
+		daten[34]=0x01;
+		daten[31]=0x01;
+		daten[32]=0x01;
+		daten[35]=0x01;
+	display_send();
+	while(1)
+	{
+	}
+*/
 	uart_puts("Beginn display_write_frequenz()");
 	uart_puts("\r\n");
 	itoa(frequenz, Buffer, 10);
@@ -236,22 +250,22 @@ display_write_frequenz(unsigned int frequenz)
 		1. Ziffer
 		a 24
 		b 27
-		c 28
-		d 26
-		e 23
-		f 22
-		g 25
+		c 29
+		d 25
+		e 22
+		f 23
+		g 26
 	
 		2. Ziffer
 		a	33
 		b 36
-		c 37
+		c 38
 		d 35
-		e	32
-		f 31
-		g 34
+		e	31
+		f 32
+		g 35
 		
-		PUNKT ist die 38
+		PUNKT ist die 37
 		
 		3. Ziffer
 		a 42
@@ -283,7 +297,7 @@ display_write_frequenz(unsigned int frequenz)
 	*/
 
 	// Punkt anmachen
-	daten[38]=0x01;
+	daten[37]=0x01;
 
 	// 
 	// zerlegen
@@ -296,11 +310,11 @@ display_write_frequenz(unsigned int frequenz)
 	uart_puts("\r\n");
 	segmente[0]=24;
 	segmente[1]=27;
-	segmente[2]=28;
-	segmente[3]=26;
-	segmente[4]=23;
-	segmente[5]=22;
-	segmente[6]=25;
+	segmente[2]=29;
+	segmente[3]=25;
+	segmente[4]=22;
+	segmente[5]=23;
+	segmente[6]=26;
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 10000 / 1000;
@@ -310,11 +324,11 @@ display_write_frequenz(unsigned int frequenz)
 	uart_puts("\r\n");
 	segmente[0]=33;
 	segmente[1]=36;
-	segmente[2]=37;
-	segmente[3]=35;
-	segmente[4]=32;
-	segmente[5]=31;
-	segmente[6]=34;
+	segmente[2]=38;
+	segmente[3]=34;
+	segmente[4]=31;
+	segmente[5]=32;
+	segmente[6]=35;
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 1000 / 100;
@@ -324,11 +338,11 @@ display_write_frequenz(unsigned int frequenz)
 	uart_puts("\r\n");
 	segmente[0]=42;
 	segmente[1]=45;
-	segmente[2]=46;
-	segmente[3]=44;
-	segmente[4]=41;
-	segmente[5]=40;
-	segmente[6]=43;
+	segmente[2]=47;
+	segmente[3]=43;
+	segmente[4]=40;
+	segmente[5]=41;
+	segmente[6]=44;
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 100 / 10;
@@ -338,11 +352,11 @@ display_write_frequenz(unsigned int frequenz)
 	uart_puts("\r\n");
 	segmente[0]=51;
 	segmente[1]=54;
-	segmente[2]=55;
-	segmente[3]=53;
-	segmente[4]=50;
-	segmente[5]=49;
-	segmente[6]=52;
+	segmente[2]=56;
+	segmente[3]=52;
+	segmente[4]=49;
+	segmente[5]=50;
+	segmente[6]=53;
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 10;
@@ -352,11 +366,11 @@ display_write_frequenz(unsigned int frequenz)
 	uart_puts("\r\n");
 	segmente[0]=60;
 	segmente[1]=63;
-	segmente[2]=64;
-	segmente[3]=62;
-	segmente[4]=59;
-	segmente[5]=58;
-	segmente[6]=61;
+	segmente[2]=65;
+	segmente[3]=61;
+	segmente[4]=58;
+	segmente[5]=59;
+	segmente[6]=62;
 	display_convert_number(x,segmente);
 	
 	display_send();
@@ -434,8 +448,10 @@ display_init()
   i2c_write(0xF8);   				// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
   i2c_write(0xF0);   				// 1111 0000 = Blinken, alles abgeschaltet 
 	i2c_stop();
-	
+	uart_puts("Ende display_init():");
+	uart_puts("\r\n");
 }
+
 display_send()
 {
 	display_init();

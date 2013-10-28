@@ -31,7 +31,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 unsigned int wert = 0;
 unsigned long keys;
 int mod = 1;
-unsigned int freq = 27000;
+unsigned int freq = 27205;
 unsigned int step = 1;
 int ichsende=0;
 int ichbinaus=0;
@@ -281,6 +281,7 @@ int modulation(unsigned int mod)
   uart_puts("\r\n");
   #endif
   treiber(wert);
+	display_write_mod(mod);
 	return 0;
 }
 
@@ -397,6 +398,8 @@ int tune(unsigned int freq,unsigned int step)
   uart_puts("\r\n");
   #endif
   end1();
+	
+	display_write_frequenz(freq);
 	
 	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
 	memory[0] = freq / 256;
@@ -699,26 +702,10 @@ int keycheck(void)
 	uart_puts("\r\n");
 	#endif
 	
-	if ((keys & 0x1000000) == 0)
-	{
-		#ifdef debug
-		uart_puts("SW08\r\n");
-		uart_puts("LED Farbe\r\n");
-		#endif
-		if(led_farbe == 0)
-		{
-			led_farbe=1;
-		}
-		else
-		{
-			led_farbe=0;
-		}
-		led_color(led_farbe);
-			
-	}
+
 	// 10. Bit
 	// TX Anfang, PTT Taste ist gedrückt
-	else if((keys & 0x100) == 0)
+	if((keys & 0x100) == 0)
 	{
 		#ifdef debug
 		uart_puts("SW13\r\n");
@@ -754,6 +741,45 @@ int keycheck(void)
 		freq=freq-step;
     tune(freq,step);
 	}
+	
+	
+	
+	// 
+	// M1
+	else if((keys & 0x4000000) == 0)
+	{
+		#ifdef debug
+		uart_puts("M1\r\n");
+		#endif
+		modulation(1);
+	}	
+	// 
+	// M2
+	else if((keys & 0x2000000) == 0)
+	{
+		#ifdef debug
+		uart_puts("M2\r\n");
+		#endif
+		modulation(2);
+	}	
+	// 
+	// M3
+	else if((keys & 0x1000000) == 0)
+	{
+		#ifdef debug
+		uart_puts("M3\r\n");
+		#endif
+		modulation(3);
+	}	
+	// 
+	// M4
+	else if((keys & 0x10000) == 0)
+	{
+		#ifdef debug
+		uart_puts("M4\r\n");
+		#endif
+		modulation(4);
+	}	
 	// 
 	// Drehschalter +
 	else if((keys & 0x2) == 0)
@@ -764,7 +790,16 @@ int keycheck(void)
 		freq=freq+step;
     tune(freq,step);
 	}	
-	
+	// 
+	// Drehschalter -
+	else if((keys & 0x4) == 0)
+	{
+		#ifdef debug
+		uart_puts("Drehschalter -\r\n");
+		#endif
+		freq=freq-step;
+    tune(freq,step);
+	}	
 	
 	/*
 	// AM ENDE LASSEN!
@@ -983,7 +1018,7 @@ int main(void)
   // Timer 0 konfigurieren
   TCCR0 = (1<<CS01); // Prescaler 8
 	
-
+/*
 	// EEPROM
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
@@ -1010,16 +1045,18 @@ int main(void)
 		#endif
 		freq=27000;
 	}
-
+*/
 	mod=1;
+	i2c_init();
 	init_geraet();
 
   //i2c_init();
 	//display_init();
+
 	//_delay_ms(1000);
 	//display_send();
+/*	
 	
-	/*
 	unsigned char channel;
 	while(1)
 	{
@@ -1033,19 +1070,19 @@ int main(void)
 	}
 	
 	//display_write_channel(12);
+	
 	*/
-	/*
-	display_write_frequenz(12345);
-	while(1)
-	{
-	}
 
-*/
+
+
 
 	i2c_init();
 	init_led();
 	led_helligkeit(led_dimm);
 	led_color(led_farbe);
+//		display_write_frequenz(freq);
+  display_write_mod(1);
+	display_write_modus(0);
 	sei();
 	while(1)
 	{
