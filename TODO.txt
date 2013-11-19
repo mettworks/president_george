@@ -9,3 +9,6 @@ Bugs/Verbesserungen auf Platine 0.1:
 - R4, D4 und R5 sind im Weg
 - Buchse für ISP und Seriell
 - Buchse für Goldcap und Mirkrofontasten
+- Spannungsregler für LED's raus ??
+- Widerstände für LED Farbauswahl anpassen ??
+- LED's Display Beleuchtung um 90° drehen

@@ -4,8 +4,14 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 #define F_CPU 18432000UL
 #define BAUD 115800UL
-//#define BAUD 9600UL
-#define debug
+//#define BAUD 150UL
+//#define debug
+
+
+unsigned char memory[6];
+int mod = 1;
+unsigned int freq = 27205;
+unsigned int step = 5;
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -13,11 +19,15 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <avr/interrupt.h>
 #include <i2cmaster.h>
 #include "eeprom.h"
+#include "display.h"
 
 #ifdef debug
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #endif
+
+
 
 
 // Berechnungen
@@ -28,44 +38,12 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
   #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
 #endif
 
-unsigned int wert = 0;
 unsigned long keys;
-int mod = 1;
-unsigned int freq = 27205;
-unsigned int step = 1;
-int ichsende=0;
+
 int ichbinaus=0;
 int led_farbe=0;
 unsigned int led_dimm=255;
 //
-// Speicherarray für das EEPROM
-// 0-1 	Frequenz in kHz
-// 2	 	Modulation
-// 3		Schrittweite
-static unsigned char memory[6];
-
-//
-// Bits fuer den Treiberbaustein
-// IC406 beginnend bei PIN 16 bis 9
-#define TREIBER_MOD 0  
-#define TREIBER_FM 1
-#define TREIBER_AM 2
-#define TREIBER_LSB 3
-#define TREIBER_USB 4
-#define TREIBER_NBANL 5
-#define TREIBER_HICUT 6
-#define TREIBER_ECHO 7
-
-// IC405 beginnend bei PIN16 bis 9
-#define TREIBER_DIM 8
-#define TREIBER_BIT9 9
-#define TREIBER_TR 10
-#define TREIBER_PA 11
-#define TREIBER_MUTE 12
-#define TREIBER_CAL 13
-#define TREIBER_SWR 14
-#define TREIBER_SRF 15
-
 
 #ifdef debug
 int uart_putc(unsigned char c)
@@ -86,7 +64,7 @@ void uart_puts (char *s)
   }
 }
 
-void inituart()
+int inituart(void)
 {
   //
   // Achtung, wir nutzen die 2. UART!
@@ -94,6 +72,7 @@ void inituart()
   UBRR1L = UBRR_VAL & 0xFF;
   UCSR1B |= (1<<TXEN);			  // UART TX einschalten
   UCSR1C =  (1 << UCSZ1) | (1 << UCSZ0);  // Asynchron 8N1 
+	return 0;
 }
 
 unsigned char inttochar(unsigned int rein)
@@ -105,401 +84,6 @@ unsigned char inttochar(unsigned int rein)
 	
 }
 #endif
-/*
-int wait(void)
-{
-  _delay_us(40);
-  return 0;
-}
-*/
-int data0(void)
-{
-  PORTA &= ~(1<<PA5);	  // Data 0
-	_delay_us(6);
-	PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(6);
-	PORTA &= ~(1<<PA3);	  // Clock 0
-	_delay_us(10);
-  return 0;
-}
-int data1(void)
-{
-  PORTA |= (1<<PA5);	  // Data 1
-  _delay_us(6); 
-	_delay_us(30);
-  PORTA |= (1<<PA3);	  // Clock 1
-  _delay_us(6);
-	PORTA &= ~(1<<PA5);	  // Data 0
-  PORTA &= ~(1<<PA3);     // Clock 0
-	_delay_us(10);
-  return 0;
-}
-//
-// Treiber
-int begin0(void)
-{
-  PORTA &= ~(1<<PA3);	// Clock 0
-  PORTA &= ~(1<<PA5);   // Data 0
-  PORTA &= ~(1<<PA6);   // LE 0
-  _delay_us(56);
-  return 0;
-}
-int end0(void)
-{
-	_delay_us(6);
-  PORTA &= ~(1<<PA3);    // Clock 0
-  PORTA |= (1<<PA6);	// LE1 1
-  _delay_us(6);
-  PORTA &= ~(1<<PA6);	//LE1 0
-  return 0;
-}
-//
-// PLL
-int begin1(void)
-{
-  PORTA &= ~(1<<PA3);	// Clock 0
-  PORTA &= ~(1<<PA5);   // Data 0
-  PORTA &= ~(1<<PA4);   // LE 0
-  _delay_us(56);
-  return 0;
-}
-int end1(void)
-{
-	_delay_us(6);
-  //PORTA &= ~(1<<PA3);    // Clock 1
-  PORTA |= (1<<PA4);			// LE1	1
-  _delay_us(6);
-  PORTA &= ~(1<<PA4);			// LE1 0
-  return 0;
-}
-
-int treiber(unsigned int wert)
-{
-  #ifdef debug 
-  uart_puts("Treiber\r\n");
-  uart_puts("Bitfolge fuer Treiberbaustein:\t");
-  #endif
-  begin0();
-  int index[16];
-  int i;
-  for(i=0; wert > 0; i++)
-  {
-    index[i]=wert%2;
-    wert=wert/2;
-  }
-  for(;i < 16; i++)
-  {
-    index[i]=0;
-  }
-
-  for (; i > 0; i--)
-  {
-		if(i == 8)
-		{
-			#ifdef debug
-			uart_puts(" ");
-			#endif
-		}
-    if(index[i-1] == 0)
-    {
-      #ifdef debug
-      uart_puts("0");
-      #endif
-      data0();
-    }
-    else
-    {
-      #ifdef debug
-      uart_puts("1");
-      #endif
-      data1();
-    }
-  }
-  end0();
-  #ifdef debug
-  uart_puts("\r\n");
-  #endif
-	return 0;
-} 
-
-int modulation(unsigned int mod)
-{
-  #ifdef debug 
-  uart_puts("Modulation: ");
-  #endif
-  if(mod == 1)
-  {
-    // 1 FM
-    #ifdef debug 
-    uart_puts("FM");
-    #endif 
-    wert |= (1 << TREIBER_FM);
-    wert &= ~(1 << TREIBER_AM);
-    wert &= ~(1 << TREIBER_USB);
-    wert &= ~(1 << TREIBER_LSB);
-  }
-  else if(mod == 2)
-  {
-    // 2 AM
-    #ifdef debug 
-    uart_puts("AM"); 
-    #endif
-    wert |= (1 << TREIBER_AM);
-    wert &= ~(1 << TREIBER_FM);
-    wert &= ~(1 << TREIBER_USB);
-    wert &= ~(1 << TREIBER_LSB);
-  }
-  else if(mod == 3)
-  {
-    // 3 USB
-    #ifdef debug 
-    uart_puts("USB");
-    #endif
-    wert |= (1 << TREIBER_USB);
-    wert &= ~(1 << TREIBER_FM);
-    wert &= ~(1 << TREIBER_AM);
-    wert &= ~(1 << TREIBER_LSB);
-  }
-  else if(mod == 4)
-  {
-    // 4 LSB
-    #ifdef debug 
-    uart_puts("LSB");
-    #endif
-    wert |= (1 << TREIBER_LSB);
-    wert &= ~(1 << TREIBER_FM);
-    wert &= ~(1 << TREIBER_AM);
-    wert &= ~(1 << TREIBER_USB);
-  }
-  else
-  {
-    #ifdef debug 
-    uart_puts("unbekannte modulation!");
-    #endif
-  }
-  #ifdef debug 
-  uart_puts("\r\n");
-  #endif
-  treiber(wert);
-	display_write_mod(mod);
-	return 0;
-}
-
-int tune(unsigned int freq,unsigned int step)
-{
-  //
-	// hier müssen Interrupts gesperrt werden!
-	// der Port Expander schickt noch Quatsch weil der Taster prellt, dann wird irgendwo abgebrochen
-	cli();
-  begin1();
-  //
-  // Festlegung Kanalraster
-  // Referenzquarz ist 10240kHz
-  // 10240 / 2048 = 5, also der Teiler von 2048 waere dann ein Kanalraster von 5khz
-  // 10240 / step = teiler
-  // die Bitfolge muss 17 Bits lang sein
-  #ifdef debug 
-  uart_puts("Tuning\r\n");
-  uart_puts("Frequenz: ");
-  char text[10];
-  utoa(freq,text,10);
-  uart_puts(text);
-  uart_puts("kHz\r\n");
-  uart_puts("Step: ");
-  utoa(step,text,10);
-  uart_puts(text);
-  uart_puts("kHz\r\n");
-  uart_puts("Bitfolge fuer Kanalraster bzw. Referenz:\t");
-  #endif
-  unsigned int teiler_ref; 
-  // TODO: define !
-  teiler_ref=10240/step;
-  int index[16];
-  int i;
-  for(i=0; teiler_ref > 0; i++)
-  {
-    index[i]=teiler_ref%2;
-    teiler_ref=teiler_ref/2;
-  }
-  for(;i < 16; i++)
-  {
-    index[i]=0;
-  }
-  for (; i > 0; i--)
-  {
-    if(index[i-1] == 0)
-    {
-      #ifdef debug
-      uart_puts("0");
-      #endif
-      data0();
-    }
-    else
-    {
-      #ifdef debug
-      uart_puts("1");
-      #endif
-      data1();
-    }
-  }
-  //
-  // Achtung, Abschlussbit!
-  data1();
-  #ifdef debug
-  uart_puts("1");
-  uart_puts("\r\n");
-  #endif
-  end1();
-  //
-  // Festlegen des Teilers fuer die andere Seite
-  // N Paket:
-  // stellt den Teiler von der Sollfrequenz ein. 
-  // (27255 + 10695) / 7590 = 5
-  #ifdef debug
-  uart_puts("Bitfolge fuer Teiler Sollfrequenz:\t\t");
-  #endif
-  begin1();
-  unsigned int teiler_soll; 
-  unsigned int teiler_soll_temp=freq+10695;
-  teiler_soll=teiler_soll_temp/step;
-  int index_soll[24];
-  int j;
-  for(j=0; teiler_soll > 0; j++)
-  {
-    index_soll[j]=teiler_soll%2;
-    teiler_soll=teiler_soll/2;
-  }
-  for(;j < 24; j++)
-  {
-    index_soll[j]=0;
-  }
-  for (; j > 0; j--)
-  {
-    if(index_soll[j-1] == 0)
-    {
-      #ifdef debug
-      uart_puts("0");
-      #endif
-      data0();
-    }
-    else
-    {
-      #ifdef debug
-      uart_puts("1");
-      #endif 
-      data1();
-    }
-  }
-  // 
-  // Achtung, Abschlussbit!
-  data0();
-  #ifdef debug
-  uart_puts("0");  
-  uart_puts("\r\n");
-  #endif
-  end1();
-	
-	display_write_frequenz(freq);
-	
-	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
-	memory[0] = freq / 256;
-	memory[1] = freq % 256;
-	sei();
-  return 0;
-}
-
-int led_helligkeit(unsigned int led_dimm)
-{
-	led_pwm(1,led_dimm);
-	led_pwm(2,led_dimm);
-	led_pwm(3,led_dimm);
-	led_pwm(4,led_dimm);
-	led_pwm(5,led_dimm);
-	led_pwm(6,led_dimm);
-	led_pwm(7,led_dimm);
-	led_pwm(8,led_dimm);
-	led_pwm(9,led_dimm);
-	led_pwm(10,led_dimm);
-	led_pwm(11,led_dimm);
-	led_pwm(12,led_dimm);
-}
-
-int init_led()
-{
-	#ifdef debug
-	uart_puts("init_led(): Anfang\r\n");
-	#endif
-	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
-	uart_puts("init_led(): Start Wait Ende\r\n");
-  i2c_write(0x80);  // autoincrement ab Register 0h
-
-  i2c_write(0x00);  // Register 00 /  Mode1  
-  i2c_write(0x00);  // Register 01 /  Mode2 
-
-  i2c_write(0x00);  // Register 02 /  PWM LED 1    // Default alle PWM auf 0
-  i2c_write(0x00);  // Register 03 /  PWM LED 2    
-  i2c_write(0x00);  // Register 04 /  PWM LED 3
-  i2c_write(0x00);  // Register 05 /  PWM LED 4
-  i2c_write(0x00);  // Register 06 /  PWM LED 5
-  i2c_write(0x00);  // Register 07 /  PWM LED 6
-  i2c_write(0x00);  // Register 08 /  PWM LED 7
-  i2c_write(0x00);  // Register 09 /  PWM LED 8
-  i2c_write(0x00);  // Register 0A /  PWM LED 9
-  i2c_write(0x00);  // Register 0B /  PWM LED 10
-  i2c_write(0x00);  // Register 0C /  PWM LED 11
-  i2c_write(0x00);  // Register 0D /  PWM LED 12
-  i2c_write(0x00);  // Register 0E /  PWM LED 13
-  i2c_write(0x00);  // Register 0F /  PWM LED 14
-  i2c_write(0x00);  // Register 10 /  PWM LED 15
-  i2c_write(0x00);  // Register 11 /  PWM LED 16  // Default alle PWM auf 0
-
-  i2c_write(0xFF);  // Register 12 /  Group duty cycle control
-  i2c_write(0x00);  // Register 13 /  Group frequency
-  i2c_write(0xAA);  // Register 14 /  LED output state 0  // Default alle LEDs auf PWM
-  i2c_write(0xAA);  // Register 15 /  LED output state 1  // Default alle LEDs auf PWM
-  i2c_write(0xAA);  // Register 16 /  LED output state 2  // Default alle LEDs auf PWM
-  i2c_write(0xAA);  // Register 17 /  LED output state 3  // Default alle LEDs auf PWM
-  i2c_write(0x00);  // Register 18 /  I2C bus subaddress 1
-  i2c_write(0x00);  // Register 19 /  I2C bus subaddress 2
-  i2c_write(0x00);  // Register 1A /  I2C bus subaddress 3
-  i2c_write(0x00);  // Register 1B /  All Call I2C bus address
-  i2c_write(0xFF);  // Register 1C /  IREF configuration  
-  i2c_stop();  // I2C-Stop
-	#ifdef debug
-	uart_puts("init_led(): Ende\r\n");
-	#endif
-	return 0;
-}
-
-int led_pwm(int led, int pwm)
-{
-	i2c_start_wait(0xc0);
-	i2c_write(0x01 + led);
-	i2c_write(pwm);
-	i2c_stop();
-	return 0;
-}
-
-int led_color(int color)
-{
-	if (color == 0 )
-	{
-	  #ifdef debug
-		uart_puts("LED Farbe: Grün\r\n");
-		#endif
-		PORTC |= (1<<PC0);	  		// Grün 1
-		PORTC &= ~(1<<PC1);     	// Rot 0
-	}
-	else if (color == 1)
-	{
-		#ifdef debug
-		uart_puts("LED Farbe: Rot\r\n");
-		#endif
-		PORTC |= (1<<PC1);	  		// Rot 1
-		PORTC &= ~(1<<PC0);     	// Grün 0
-	}
-	return 0;
-}
 
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
@@ -513,7 +97,9 @@ ISR (INT4_vect)
 	while(1)
 	{
 		_delay_ms(1000);
+		#ifdef debug
 		uart_puts("1 Sekunde\r\n");
+		#endif
 	}
 }
 
@@ -727,6 +313,7 @@ int keycheck(void)
 		
 	}
 	
+	/*
 	// + Taste am Mikrofon
 	// 31. Bit
 	else if((keys & 0x40000000) == 0)
@@ -741,7 +328,7 @@ int keycheck(void)
 		freq=freq-step;
     tune(freq,step);
 	}
-	
+	*/
 	
 	
 	// 
@@ -780,6 +367,7 @@ int keycheck(void)
 		#endif
 		modulation(4);
 	}	
+	/*
 	// 
 	// Drehschalter +
 	else if((keys & 0x2) == 0)
@@ -800,7 +388,7 @@ int keycheck(void)
 		freq=freq-step;
     tune(freq,step);
 	}	
-	
+	*/
 	/*
 	// AM ENDE LASSEN!
 	// TX Ende, PTT Taste ist losgelassen
@@ -830,6 +418,7 @@ int keycheck(void)
 //
 // sehr unelegant, muss mit einem Timer gemacht werden
 // erstmal geht es nur um den HW Test ... ^^
+/*
 int scan(void)
 {
 	while(1)
@@ -846,7 +435,7 @@ int scan(void)
 		}
 	}
 }
-
+*/
 int rogerbeep()
 {
 	//
@@ -871,94 +460,23 @@ ISR(ADC_vect)
 	// oder besser
 	x = ADCW;
 	char s[7];
-	
+	#ifdef debug
 	uart_puts("Messwert: ");
 	uart_puts( itoa( x, s, 10 ) );
 	uart_puts("\r\n");
+	#endif
 }
 
-int tx()
-{
-	if(ichsende != 1)
-	{
-		ichsende=1;
-		// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
-		//
-		// Senden:
-		// 0100 0001  0100 0000
-		// Pause, 7ms
-		// 0110 0001  0100 0000
-		wert &= ~(1 << TREIBER_MUTE);
-		treiber(wert);
-		_delay_ms(7);
-		wert |= (1 << TREIBER_TR);
-		treiber(wert);
-	}
-	return 0;
-}
 
-int rx()
-{
-	ichsende=0;
-	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
-	//
-	// Empfangen:
-	// 0100 0001  0100 0000
-	// Pause, 4ms
-	// 0100 1001  0100 0000
-	// Pause, 4ms
-	wert &= ~(1 << TREIBER_TR);
-	treiber(wert);
-	_delay_ms(4);
-	wert |= (1 << TREIBER_MUTE);
-	treiber(wert);
-	_delay_ms(4);
-	return 0;
-}
 
-int init_geraet()
-{
 
-	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
-	//
-	// Init:
-	// 0100 0001  0100 0000
-	// Pause, 28ms
-	// 0100 1001  0100 0000
-	// Pause, 28ms
-	wert |= (1 << TREIBER_BIT9);
-	wert |= (1 << TREIBER_SRF);
-	wert |= (1 << TREIBER_FM);
-	  // PA4
-  DDRA |= (1<<PA4);	// Bitbanging SPI
-  // PA6
-  DDRA |= (1<<PA6);	// Bitbanging SPI
-  // PA5
-  DDRA |= (1<<PA5);	// Bitbanging SPI
-  // PA3
-  DDRA |= (1<<PA3);	// Bitbanging SPI
-	PORTA &= ~(1<<PA3);	
-	PORTA &= ~(1<<PA4);	
-	PORTA &= ~(1<<PA5);
-	PORTA &= ~(1<<PA6);
-	//_delay_ms(500);
-	treiber(wert); 
-	_delay_ms(28);
-	wert |= (1 << TREIBER_MUTE);
-	treiber(wert);
-	_delay_ms(28);
-	tune(freq,step);
-	_delay_ms(28);
-	modulation(mod);
-	//_delay_ms(28);
-	_delay_ms(1000);
-	return 0;
-}
+
+
 
 int main(void) 
 {
 	cli();
-	_delay_ms(1000);
+	//_delay_ms(1000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -1016,7 +534,8 @@ int main(void)
 	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
-  TCCR0 = (1<<CS01); // Prescaler 8
+  //TCCR0 = (1<<CS01); // Prescaler 8
+	TCCR0|=(1<<CS00) | (1<<CS01);
 	
 /*
 	// EEPROM
@@ -1049,43 +568,16 @@ int main(void)
 	mod=1;
 	i2c_init();
 	init_geraet();
-
-  //i2c_init();
-	//display_init();
-
-	//_delay_ms(1000);
-	//display_send();
-/*	
-	
-	unsigned char channel;
-	while(1)
-	{
-		channel=0;
-		while(channel < 99)
-		{
-			display_write_channel(channel);
-			channel++;
-			_delay_ms(2);
-		}
-	}
-	
-	//display_write_channel(12);
-	
-	*/
-
-
-
-
-	i2c_init();
+	display_init();
 	init_led();
 	led_helligkeit(led_dimm);
 	led_color(led_farbe);
-//		display_write_frequenz(freq);
-  display_write_mod(1);
+
 	display_write_modus(0);
 	sei();
 	while(1)
 	{
+
 	}
 
 /*
@@ -1114,10 +606,5 @@ int main(void)
 	for(;;)  // Loop Forever
   {
   }
-
- 	#ifdef debug
-	uart_puts("fertig\r\n");
-	#endif
-	return 0;
 	*/
 } 

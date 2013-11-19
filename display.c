@@ -1,7 +1,7 @@
 
 #define F_CPU 18432000UL
 //#define BAUD 9600UL
-#define debug
+//#define debug
 
 #include <avr/io.h>
 #include <util/delay.h>
@@ -157,30 +157,40 @@ display_convert_number(unsigned char number,unsigned char segmente[6])
 
 display_write_modus(unsigned char modus)
 {
+	#ifdef debug
 	uart_puts("Beginn display_write_modus()");
 	uart_puts("\r\n");
+	#endif
 	// RX 3
 	// TX 1
 	if(modus == 0)
 	{
+		#ifdef debug
 		uart_puts("RX");
+		#endif
 		daten[3]=0x01;
 		daten[1]=0x0;
 	}
 	else
 	{
+		#ifdef debug
 		uart_puts("TX");
+		#endif
 		daten[3]=0x0;
 		daten[1]=0x01;
 	}
+	#ifdef debug
 	uart_puts("\r\n");
+	#endif
 	display_send();
 }
 
 display_write_mod(unsigned char mod)
 {
+	#ifdef debug
 	uart_puts("Beginn display_write_mod()");
 	uart_puts("\r\n");
+	#endif 
 
 	// 1 FM 21
 	// 2 AM 12
@@ -189,7 +199,9 @@ display_write_mod(unsigned char mod)
 	
 	if(mod == 1)
 	{
+		#ifdef debug
 		uart_puts("FM");
+		#endif
 		daten[12]=0x0;
 		daten[21]=0x01;
 		daten[30]=0x0;
@@ -197,7 +209,9 @@ display_write_mod(unsigned char mod)
 	}
 	else if(mod == 2)
 	{
+		#ifdef debug
 		uart_puts("AM");
+		#endif
 		daten[12]=0x01;
 		daten[21]=0x0;
 		daten[30]=0x0;
@@ -205,7 +219,9 @@ display_write_mod(unsigned char mod)
 	}
 	else if(mod == 3)
 	{
+		#ifdef debug
 		uart_puts("USB");	
+		#endif
 		daten[12]=0x0;
 		daten[21]=0x0;
 		daten[30]=0x0;
@@ -213,13 +229,17 @@ display_write_mod(unsigned char mod)
 	}
 	else if(mod == 4)
 	{
+		#ifdef debug
 		uart_puts("LSB");
+		#endif
 		daten[12]=0x0;
 		daten[21]=0x0;
 		daten[30]=0x01;
 		daten[39]=0x0;
 	}
+	#ifdef debug
 	uart_puts("\r\n");
+	#endif
 	display_send();
 }
 
@@ -239,13 +259,14 @@ display_write_frequenz(unsigned int frequenz)
 	{
 	}
 */
+	#ifdef debug
 	uart_puts("Beginn display_write_frequenz()");
 	uart_puts("\r\n");
 	itoa(frequenz, Buffer, 10);
 	uart_puts(" frequenz: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
-
+	#endif
 	/*
 		1. Ziffer
 		a 24
@@ -304,10 +325,12 @@ display_write_frequenz(unsigned int frequenz)
 	unsigned char x;
 	
 	x = frequenz / 10000;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 1. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=24;
 	segmente[1]=27;
 	segmente[2]=29;
@@ -318,10 +341,12 @@ display_write_frequenz(unsigned int frequenz)
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 10000 / 1000;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 2. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=33;
 	segmente[1]=36;
 	segmente[2]=38;
@@ -332,10 +357,12 @@ display_write_frequenz(unsigned int frequenz)
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 1000 / 100;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 3. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=42;
 	segmente[1]=45;
 	segmente[2]=47;
@@ -346,10 +373,12 @@ display_write_frequenz(unsigned int frequenz)
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 100 / 10;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 2. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=51;
 	segmente[1]=54;
 	segmente[2]=56;
@@ -360,10 +389,12 @@ display_write_frequenz(unsigned int frequenz)
 	display_convert_number(x,segmente);
 	
 	x = frequenz % 10;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 1. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=60;
 	segmente[1]=63;
 	segmente[2]=65;
@@ -378,12 +409,14 @@ display_write_frequenz(unsigned int frequenz)
 
 display_write_channel(unsigned char channel)
 {
+	#ifdef debug
 	uart_puts("Beginn display_write_channel()");
 	uart_puts("\r\n");
 	itoa(channel, Buffer, 10);
 	uart_puts(" channel: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	/* 1. Ziffer:
 		a	69
 		b	72
@@ -408,10 +441,12 @@ display_write_channel(unsigned char channel)
 	unsigned char x;
 	
 	x = channel / 10;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 1. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=69;
 	segmente[1]=72;
 	segmente[2]=73;
@@ -422,10 +457,12 @@ display_write_channel(unsigned char channel)
 	display_convert_number(x,segmente);
 	
 	x = channel % 10;
+	#ifdef debug
 	itoa(x, Buffer, 10);
 	uart_puts(" 2. Stelle: ");
 	uart_puts(Buffer);
 	uart_puts("\r\n");
+	#endif
 	segmente[0]=78;
 	segmente[1]=81;
 	segmente[2]=82;
@@ -438,29 +475,35 @@ display_write_channel(unsigned char channel)
 	display_send();
 }
 
-display_init()
+display_init(void)
 {
+	#ifdef debug
 	uart_puts("Beginn display_init():");
 	uart_puts("\r\n");
+	#endif
 	i2c_start_wait(0x70);
 	i2c_write(0xe0);     			// Device Select 0
   i2c_write(0xcf);	  	// multiplex 1100 1111 , 3 BP's
   i2c_write(0xF8);   				// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
   i2c_write(0xF0);   				// 1111 0000 = Blinken, alles abgeschaltet 
 	i2c_stop();
+	#ifdef debug
 	uart_puts("Ende display_init():");
 	uart_puts("\r\n");
+	#endif
 }
 
-display_send()
+display_send(void)
 {
 	display_init();
 	// die Daten die dann wirklich über den i2c Bus gehen
 	unsigned char daten2send;
 	char bits[7];
 	int y,addr;
+	#ifdef debug
 	uart_puts("Beginn display_send():");
 	uart_puts("\r\n");
+	#endif
 	y=0;
 	addr=0;
 
@@ -538,6 +581,7 @@ display_send()
 		i2c_write(addr);
 		i2c_write(daten2send);
 		i2c_stop();
+		#ifdef debug
 		itoa(addr, Buffer, 10);
 		uart_puts(" addr: ");
 		uart_puts(Buffer);
@@ -548,6 +592,7 @@ display_send()
 		uart_puts(" daten2send: ");
 		uart_puts(Buffer);
 		uart_puts("\r\n");
+		#endif
 		y=y+6;
 		addr=addr+2;
 	}

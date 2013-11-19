@@ -5,7 +5,7 @@
  *  Author: Stefan Wohlers
  * gefunden: http://www.mikrocontroller.net/topic/260261
  */ 
-#define debug
+//#define debug
 
 #define F_CPU 18432000UL
 #include <avr/io.h>
