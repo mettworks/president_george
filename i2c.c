@@ -8,9 +8,12 @@
 **************************************************************************/
 #include <inttypes.h>
 #include <compat/twi.h>
-
-#include <i2cmaster.h>
-
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
 /* define CPU frequency in Mhz here if not defined in Makefile */
 //#ifndef F_CPU

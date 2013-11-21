@@ -1,8 +1,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
-
-int data0(void)
+void data0(void)
 {
   PORTA &= ~(1<<PA5);	  // Data 0
 	_delay_us(6);
@@ -10,9 +15,8 @@ int data0(void)
   _delay_us(6);
 	PORTA &= ~(1<<PA3);	  // Clock 0
 	_delay_us(10);
-  return 0;
 }
-int data1(void)
+void data1(void)
 {
   PORTA |= (1<<PA5);	  // Data 1
   _delay_us(6); 
@@ -22,48 +26,43 @@ int data1(void)
 	PORTA &= ~(1<<PA5);	  // Data 0
   PORTA &= ~(1<<PA3);     // Clock 0
 	_delay_us(10);
-  return 0;
 }
 //
 // Treiber
-int begin0(void)
+void begin0(void)
 {
   PORTA &= ~(1<<PA3);	// Clock 0
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA6);   // LE 0
   _delay_us(56);
-  return 0;
 }
-int end0(void)
+void end0(void)
 {
 	_delay_us(6);
   PORTA &= ~(1<<PA3);    // Clock 0
   PORTA |= (1<<PA6);	// LE1 1
   _delay_us(6);
   PORTA &= ~(1<<PA6);	//LE1 0
-  return 0;
 }
 //
 // PLL
-int begin1(void)
+void begin1(void)
 {
   PORTA &= ~(1<<PA3);	// Clock 0
   PORTA &= ~(1<<PA5);   // Data 0
   PORTA &= ~(1<<PA4);   // LE 0
   _delay_us(56);
-  return 0;
 }
-int end1(void)
+void end1(void)
 {
 	_delay_us(6);
   //PORTA &= ~(1<<PA3);    // Clock 1
   PORTA |= (1<<PA4);			// LE1	1
   _delay_us(6);
   PORTA &= ~(1<<PA4);			// LE1 0
-  return 0;
 }
 
-int treiber(unsigned int wert)
+void treiber(unsigned int wert)
 {
   #ifdef debug 
   uart_puts("Treiber\r\n");
@@ -109,6 +108,5 @@ int treiber(unsigned int wert)
   #ifdef debug
   uart_puts("\r\n");
   #endif
-	return 0;
 } 
 

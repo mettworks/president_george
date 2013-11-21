@@ -2,89 +2,32 @@
 avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:0xC9:m -U lfuse:w:0xDF:m
 */
 
-#define F_CPU 18432000UL
-#define BAUD 115800UL
-//#define BAUD 150UL
-//#define debug
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/interrupt.h>
+#include "memory.h"
+#include "display.h"
+#include "led.h"
+#include "transceiver.h"
+#include "operating.h"
+#include "i2c.h"
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
-
+int ichbinaus=0;
+int led_farbe=0;
+unsigned int led_dimm1=20;
+unsigned int led_dimm2=20;
 unsigned char memory[6];
 int mod = 1;
 unsigned int freq = 27205;
 unsigned int step = 5;
 
-#include <avr/io.h>
-#include <util/delay.h>
-#include <util/setbaud.h> 
-#include <avr/interrupt.h>
-#include <i2cmaster.h>
-#include "eeprom.h"
-#include "display.h"
-
-#ifdef debug
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#endif
-
-
-
-
-// Berechnungen
-#define UBRR_VAL ((F_CPU+BAUD*8)/(BAUD*16)-1)   // clever runden
-#define BAUD_REAL (F_CPU/(16*(UBRR_VAL+1)))     // Reale Baudrate
-#define BAUD_ERROR ((BAUD_REAL*1000)/BAUD) // Fehler in Promille, 1000 = kein Fehler.
-#if ((BAUD_ERROR<990) || (BAUD_ERROR>1010))
-  #error Systematischer Fehler der Baudrate grösser 1% und damit zu hoch! 
-#endif
-
-unsigned long keys;
-
-int ichbinaus=0;
-int led_farbe=0;
-unsigned int led_dimm=255;
 //
-
-#ifdef debug
-int uart_putc(unsigned char c)
-{
-  while (!(UCSR1A & (1<<UDRIE1)))  
-  {
-  }                             
-  UDR1 = c;                     
-  return 0;
-}
-
-void uart_puts (char *s)
-{
-  while (*s)
-  {   
-    uart_putc(*s);
-    s++;
-  }
-}
-
-int inituart(void)
-{
-  //
-  // Achtung, wir nutzen die 2. UART!
-  UBRR1H = UBRR_VAL >> 8;
-  UBRR1L = UBRR_VAL & 0xFF;
-  UCSR1B |= (1<<TXEN);			  // UART TX einschalten
-  UCSR1C =  (1 << UCSZ1) | (1 << UCSZ0);  // Asynchron 8N1 
-	return 0;
-}
-
-unsigned char inttochar(unsigned int rein)
-{
-	//int myInt;
-	unsigned char raus;
-	raus = (unsigned char)rein;
-	return raus;
-	
-}
-#endif
-
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
@@ -101,30 +44,6 @@ ISR (INT4_vect)
 		uart_puts("1 Sekunde\r\n");
 		#endif
 	}
-}
-
-int save2memory()
-{
-	//
-	// Wichtig, hier werden Interrupts gesperrt!
-	cli();
-	
-  //
-	// EEPROM
-	unsigned char IOReg;
-	
-	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
-	IOReg   = SPDR;
-	PORTB |= (1<<PB0);                         //ChipSelect aus
-	
-	unsigned char H_Add=0b00000000;    
-  unsigned char M_Add=0b00000000;
-	unsigned char L_Add=0b00000000;
-	
-	ByteWriteSPI(H_Add,L_Add,M_Add,memory);   //Variable test an Test Adresse schreiben
-	return 0;
 }
 
 ISR (INT5_vect)
@@ -186,39 +105,6 @@ ISR (INT7_vect)
 	#ifdef debug
 	uart_puts("INT7\r\n");
 	#endif
-	/*
-	else if(byte0 == 251)
-	{
-		#ifdef debug
-		uart_puts("mod\r\n");
-		#endif
-    if(mod == 1)
-    {
-			mod=2;
-    }
-    else if(mod == 2)
-    {
-			mod=3;
-    }
-    else if(mod == 3)
-    {
-			mod=4;
-    }
-    else if(mod == 4)
-    {
-			mod=1;
-    }
-		modulation(mod);
-	}
-	else if(byte0 == 247)
-	{
-		#ifdef debug
-		uart_puts("step\r\n");
-		#endif
-
-	}
-
-	*/
 	keycheck();
 }
 
@@ -242,184 +128,10 @@ ISR(BADISR_vect)
 	}
 }
 
-// 2 Byte zurück
-unsigned short keysauslesendirekt(unsigned char destaddr)
-{
-	unsigned char byte0;
-	unsigned char byte1;
-	unsigned short alles;
-	i2c_start_wait(destaddr);
-	i2c_write(0x0);
-	i2c_rep_start(destaddr + 1);
-	byte0=i2c_readAck();
-	byte1=i2c_readAck();
-	alles = byte1 + (byte0 << 8);
-	return alles;
-}
-
-unsigned long keysauslesen()
-{
-	// 
-	// es werden gleich wieder Interrupts aktiviert, weil:
-	// wenn VCC wegfällt, würde auch die i2c Kommunikation wegbrechen, da die Gegenstellen keine Spannung mehr haben
-	// so ist sichergestellt, das wir bei einer hängenden i2c Kommunikation auch den INT4 gefasst bekommen
-	// ABER ERST WENN I2C FERTIG IST!
-	unsigned short blubb1;
-	unsigned short blubb2;
-	i2c_init();
-	blubb1=keysauslesendirekt(0x40);
-	blubb2=keysauslesendirekt(0x42);
-	// TODO: Wenn hier der i2c Transfer gestoppt wird hängt sich das Teil beim drücken der runter Taste am Mike auf?? 
-	//i2c_stop();
-	// INT's abschalten
-	cli();
-	keys=(uint32_t)blubb2 + ((uint32_t)blubb1 << 16);
-	return keys;
-}
-
-int keycheck(void)
-{
-	keys=keysauslesen();
-	#ifdef debug
-	uint8_t string[20];
-	uart_puts("Daten: ");
-	sprintf(string,"%lX",keys);
-	uart_puts(string);
-	uart_puts("\r\n");
-	#endif
-	
-
-	// 10. Bit
-	// TX Anfang, PTT Taste ist gedrückt
-	if((keys & 0x100) == 0)
-	{
-		#ifdef debug
-		uart_puts("SW13\r\n");
-    uart_puts("Dimmer\r\n");
-		#endif
-		if(led_dimm == 255)
-		{
-			led_dimm=128;
-		}
-		else if(led_dimm == 128)
-		{
-			led_dimm=64;
-		}
-		else
-		{
-			led_dimm=255;
-		}
-		led_helligkeit(led_dimm);
-		
-	}
-	
-	/*
-	// + Taste am Mikrofon
-	// 31. Bit
-	else if((keys & 0x40000000) == 0)
-	{
-		freq=freq+step;
-    tune(freq,step);
-	}
-	// - Taste am Mikrofon
-	// 30. Bit
-	else if((keys & 0x20000000) == 0)
-	{
-		freq=freq-step;
-    tune(freq,step);
-	}
-	*/
-	
-	
-	// 
-	// M1
-	else if((keys & 0x4000000) == 0)
-	{
-		#ifdef debug
-		uart_puts("M1\r\n");
-		#endif
-		modulation(1);
-	}	
-	// 
-	// M2
-	else if((keys & 0x2000000) == 0)
-	{
-		#ifdef debug
-		uart_puts("M2\r\n");
-		#endif
-		modulation(2);
-	}	
-	// 
-	// M3
-	else if((keys & 0x1000000) == 0)
-	{
-		#ifdef debug
-		uart_puts("M3\r\n");
-		#endif
-		modulation(3);
-	}	
-	// 
-	// M4
-	else if((keys & 0x10000) == 0)
-	{
-		#ifdef debug
-		uart_puts("M4\r\n");
-		#endif
-		modulation(4);
-	}	
-	/*
-	// 
-	// Drehschalter +
-	else if((keys & 0x2) == 0)
-	{
-		#ifdef debug
-		uart_puts("Drehschalter +\r\n");
-		#endif
-		freq=freq+step;
-    tune(freq,step);
-	}	
-	// 
-	// Drehschalter -
-	else if((keys & 0x4) == 0)
-	{
-		#ifdef debug
-		uart_puts("Drehschalter -\r\n");
-		#endif
-		freq=freq-step;
-    tune(freq,step);
-	}	
-	*/
-	/*
-	// AM ENDE LASSEN!
-	// TX Ende, PTT Taste ist losgelassen
-	else if(keys & 0x200)
-	{
-
-		#ifdef debug
-		uart_puts("SW13\r\n");
-    uart_puts("Dimmer\r\n");
-		#endif
-    rx();
-	}	
-*/
-	if(keys != 0xffffffff)
-	{
-		// Taste/Tasten sind immer noch gedrückt, also nochmal... :-)
-		TIMSK |= (1<<TOIE0);
-	}
-	else
-	{
-		// keine Taste/Tasten mehr gedrückt, Timer stoppen
-		TIMSK &= ~(1<<TOIE0);
-	}
-}
-
-
 //
 // sehr unelegant, muss mit einem Timer gemacht werden
 // erstmal geht es nur um den HW Test ... ^^
-/*
-int scan(void)
+void scan(void)
 {
 	while(1)
 	{
@@ -435,23 +147,6 @@ int scan(void)
 		}
 	}
 }
-*/
-int rogerbeep()
-{
-	//
-	// 2 Töne
-	DDRB |= (1<<PB5); 
-	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
-	TCCR1B = (1<<CS11) | (1<<CS10);
-	OCR1A = 128-1; 
-	_delay_ms(250);
-	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
-	_delay_ms(100);
-	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
-	_delay_ms(250);
-	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
-	return 0;
-}
 
 ISR(ADC_vect)
 {
@@ -459,24 +154,17 @@ ISR(ADC_vect)
 	//x += (ADCH<<8);
 	// oder besser
 	x = ADCW;
-	char s[7];
 	#ifdef debug
+	char s[7];
 	uart_puts("Messwert: ");
 	uart_puts( itoa( x, s, 10 ) );
 	uart_puts("\r\n");
 	#endif
 }
 
-
-
-
-
-
-
 int main(void) 
 {
 	cli();
-	//_delay_ms(1000);
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -534,8 +222,8 @@ int main(void)
 	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
-  //TCCR0 = (1<<CS01); // Prescaler 8
-	TCCR0|=(1<<CS00) | (1<<CS01);
+  TCCR0 = (1<<CS01); // Prescaler 8
+	//TCCR0|=(1<<CS00) | (1<<CS01);
 	
 /*
 	// EEPROM
@@ -570,7 +258,8 @@ int main(void)
 	init_geraet();
 	display_init();
 	init_led();
-	led_helligkeit(led_dimm);
+	led_helligkeit1(led_dimm1);
+	led_helligkeit2(led_dimm2);
 	led_color(led_farbe);
 
 	display_write_modus(0);

@@ -1,6 +1,15 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include "transceiver.h"
+#include "3wire.h"
+#include "display.h"
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
 
 //
@@ -36,7 +45,7 @@ extern unsigned char memory[6];
 
 
 
-int init_geraet()
+int init_geraet(void)
 {
 
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
@@ -75,7 +84,7 @@ int init_geraet()
 	return 0;
 }
 
-int tx()
+int tx(void)
 {
 	if(ichsende != 1)
 	{
@@ -95,7 +104,7 @@ int tx()
 	return 0;
 }
 
-int rx()
+int rx(void)
 {
 	ichsende=0;
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
@@ -313,5 +322,22 @@ int modulation(unsigned int mod)
   #endif
   treiber(wert);
 	display_write_mod(mod);
+	return 0;
+}
+
+int rogerbeep(void)
+{
+	//
+	// 2 Töne
+	DDRB |= (1<<PB5); 
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
+	TCCR1B = (1<<CS11) | (1<<CS10);
+	OCR1A = 128-1; 
+	_delay_ms(250);
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
+	_delay_ms(100);
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
+	_delay_ms(250);
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
 	return 0;
 }

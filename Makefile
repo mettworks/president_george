@@ -36,14 +36,15 @@
 # - DEPFLAGS according to Eric Weddingtion's fix (avrfreaks/gcc-forum)
 # - F_OSC Define in CFLAGS and AFLAGS
 
+# Very Important
+F_OSC = 18432000
+# -Ddebug sets Debugging via rs232
+CDEFS = -DF_CPU=$(F_OSC)UL
 
 # MCU name
 MCU = atmega128
 
-# Main Oscillator Frequency
-# This is only used to define F_OSC in all assembler and c-sources.
-# F_OSC = 18432000
-F_OSC = 18432000
+#
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
 
@@ -52,7 +53,7 @@ TARGET = main
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c twimaster.c eeprom.c display.c led.c 3wire.c tuner.c
+SRC = $(TARGET).c i2c.c memory.c display.c led.c 3wire.c transceiver.c operating.c debug.c
 
 
 # List Assembler source files here.
@@ -88,9 +89,6 @@ EXTRAINCDIRS =
 # c99   - ISO C99 standard (not yet fully implemented)
 # gnu99 - c99 plus GCC extensions
 CSTANDARD = -std=gnu99
-
-# Place -D or -U options here
-CDEFS =
 
 # Place -I options here
 CINCS =

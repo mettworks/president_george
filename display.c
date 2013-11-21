@@ -7,8 +7,15 @@
 #include <util/delay.h>
 //#include <util/setbaud.h> 
 //#include <avr/interrupt.h>
-#include <i2cmaster.h>
+#include "i2c.h"
+#include "display.h"
 //#include "eeprom.h"
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 //
 // Das Display wird erstmal mit 4BP's betrieben, mit 3 gab es Probleme... :-(
 // Nach meinem Verständniss sollte der Init Kram nicht immer mitgesendet werden?
@@ -45,13 +52,13 @@
 unsigned char daten[104];
 //
 
-unsigned char segmente[6];
+unsigned char segmente[7];
 // fuer debugausgaben
 char Buffer[7];	
 
 //
 // immer nur eine Zahl, also 0 bis 9
-display_convert_number(unsigned char number,unsigned char segmente[6])
+void display_convert_number(unsigned char number,unsigned char segmente[6])
 {
 	if(number == 0)
 	{
@@ -155,7 +162,7 @@ display_convert_number(unsigned char number,unsigned char segmente[6])
 	}
 }
 
-display_write_modus(unsigned char modus)
+void display_write_modus(unsigned char modus)
 {
 	#ifdef debug
 	uart_puts("Beginn display_write_modus()");
@@ -185,7 +192,7 @@ display_write_modus(unsigned char modus)
 	display_send();
 }
 
-display_write_mod(unsigned char mod)
+void display_write_mod(unsigned char mod)
 {
 	#ifdef debug
 	uart_puts("Beginn display_write_mod()");
@@ -243,7 +250,7 @@ display_write_mod(unsigned char mod)
 	display_send();
 }
 
-display_write_frequenz(unsigned int frequenz)
+void display_write_frequenz(unsigned int frequenz)
 {
 
 /*
@@ -407,7 +414,7 @@ display_write_frequenz(unsigned int frequenz)
 	display_send();
 }
 
-display_write_channel(unsigned char channel)
+void display_write_channel(unsigned char channel)
 {
 	#ifdef debug
 	uart_puts("Beginn display_write_channel()");
@@ -475,7 +482,7 @@ display_write_channel(unsigned char channel)
 	display_send();
 }
 
-display_init(void)
+void display_init(void)
 {
 	#ifdef debug
 	uart_puts("Beginn display_init():");
@@ -493,12 +500,12 @@ display_init(void)
 	#endif
 }
 
-display_send(void)
+void display_send(void)
 {
 	display_init();
 	// die Daten die dann wirklich über den i2c Bus gehen
-	unsigned char daten2send;
-	char bits[7];
+	unsigned char daten2send=0;
+	//char bits[7];
 	int y,addr;
 	#ifdef debug
 	uart_puts("Beginn display_send():");

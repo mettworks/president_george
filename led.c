@@ -1,7 +1,15 @@
 #include <avr/io.h>
+#include "led.h"
+#include "i2c.h"
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
 
-int led_helligkeit(unsigned int led_dimm)
+void led_helligkeit1(unsigned int led_dimm)
 {
 	led_pwm(1,led_dimm);
 	led_pwm(2,led_dimm);
@@ -13,11 +21,15 @@ int led_helligkeit(unsigned int led_dimm)
 	led_pwm(8,led_dimm);
 	led_pwm(9,led_dimm);
 	led_pwm(10,led_dimm);
-	led_pwm(11,led_dimm);
-	led_pwm(12,led_dimm);
 }
 
-int init_led()
+void led_helligkeit2(unsigned int led_dimm)
+{
+	led_pwm(11,led_dimm);
+	led_pwm(12, led_dimm);
+}
+
+void init_led(void)
 {
 	#ifdef debug
 	uart_puts("init_led(): Anfang\r\n");
@@ -63,19 +75,17 @@ int init_led()
 	#ifdef debug
 	uart_puts("init_led(): Ende\r\n");
 	#endif
-	return 0;
 }
 
-int led_pwm(int led, int pwm)
+void led_pwm(int led, int pwm)
 {
 	i2c_start_wait(0xc0);
 	i2c_write(0x01 + led);
 	i2c_write(pwm);
 	i2c_stop();
-	return 0;
 }
 
-int led_color(int color)
+void led_color(int color)
 {
 	if (color == 0 )
 	{
@@ -93,5 +103,4 @@ int led_color(int color)
 		PORTC |= (1<<PC1);	  		// Rot 1
 		PORTC &= ~(1<<PC0);     	// Grün 0
 	}
-	return 0;
 }

@@ -1,18 +1,22 @@
 /*
- * eeprom.c
- *
- * Created: 27.05.2012 11:56:02
+ * Credits:
  *  Author: Stefan Wohlers
- * gefunden: http://www.mikrocontroller.net/topic/260261
+ *  http://www.mikrocontroller.net/topic/260261
  */ 
-//#define debug
 
-#define F_CPU 18432000UL
 #include <avr/io.h>
-#include "eeprom.h"
 #include <util/delay.h>
+#include <avr/interrupt.h>
+#ifdef debug
+#include "debug.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#endif
 
-unsigned char ReadSPI()
+extern unsigned char memory[6];
+
+unsigned char ReadSPI(void)
 {
 	unsigned char data;
 	SPDR = 0x00;                   //Dummy Byte senden um 8 Clock Pulse zu erzeugen
@@ -27,7 +31,7 @@ void WriteSPI(unsigned char data)
 	while(!(SPSR & (1<<SPIF)));
 }
 	
-unsigned char ReadStatus()
+unsigned char ReadStatus(void)
 {
 	unsigned char data;
 	PORTB &= ~(1<<PB0);     //ChipSelect an
@@ -38,7 +42,7 @@ unsigned char ReadStatus()
 	return data;
 }
 	
-void WriteEnable()
+void WriteEnable(void)
 	
 {
 	PORTB &= ~(1<<PB0);    //ChipSelect an
@@ -47,7 +51,7 @@ void WriteEnable()
 	PORTB |= (1<<PB0);    //ChipSelect aus
 }
 	
-void WriteDisable()
+void WriteDisable(void)
 {
 	PORTB &= ~(1<<PB0);  //ChipSelect an
 	_delay_us(10);
@@ -55,7 +59,7 @@ void WriteDisable()
 	PORTB |= (1<<PB0);  //ChipSelect aus
 }		
 	
-void SPIWIPPolling()
+void SPIWIPPolling(void)
 {
 	unsigned char status=0;
 	do 
@@ -74,11 +78,11 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char Mid
 	
 	#ifdef debug
 	uart_puts("\r\nBeginn ByteWriteSPI()\r\n");
-	uint8_t string0[20];
-	uint8_t string1[20];
-	sprintf(string0,"zu schreibendes Byte0: %u\r\n",data[0]);
+	char string0[20];
+	char string1[20];
+	sprintf(string0,"zu schreibendes Byte0: %c\r\n",data[0]);
 	uart_puts(string0);
-	sprintf(string1,"zu schreibendes Byte1: %u\r\n",data[1]);
+	sprintf(string1,"zu schreibendes Byte1: %c\r\n",data[1]);
 	uart_puts(string1);
 	#endif
 	
@@ -116,7 +120,7 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned 
 	PORTB |= (1<<PB0);      //ChipSelect aus
 	#ifdef debug
 	uart_puts("\r\nBeginn ByteReadSPI()\r\n");
-	uint8_t string[20];
+	char string[20];
 	uart_puts("Zieladresse: ");
 	sprintf(string,"%u,",HighAdd);
 	uart_puts(string);
@@ -129,4 +133,28 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned 
 	uart_puts(string);
 	#endif
 	return data;            
+}
+
+int save2memory(void)
+{
+	//
+	// Wichtig, hier werden Interrupts gesperrt!
+	cli();
+	
+  //
+	// EEPROM
+	unsigned char IOReg;
+	
+	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+	IOReg   = SPDR;
+	PORTB |= (1<<PB0);                         //ChipSelect aus
+	
+	unsigned char H_Add=0b00000000;    
+  unsigned char M_Add=0b00000000;
+	unsigned char L_Add=0b00000000;
+	
+	ByteWriteSPI(H_Add,L_Add,M_Add,memory);   //Variable test an Test Adresse schreiben
+	return 0;
 }
