@@ -1,6 +1,5 @@
 #ifdef debug
 #define BAUD 115800UL
-//#define BAUD 150UL
 
 #include <stdio.h>
 #include <stdint.h>

@@ -1,4 +1,5 @@
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include "i2c.h"
 #include "led.h"
 #include "transceiver.h"
@@ -61,15 +62,14 @@ void keycheck(void)
 	uart_puts(string);
 	uart_puts("\r\n");
 	#endif
-	
 	cli();
-	// 10. Bit
-	// TX Anfang, PTT Taste ist gedrückt
-	if((keys & 0x100) == 0)
+	_delay_ms(250);
+	//sei();
+	// 
+	if((keys & 0x1) == 0)
 	{
 		#ifdef debug
-		uart_puts("SW13\r\n");
-    uart_puts("Dimmer\r\n");
+		uart_puts("Dimmer\r\n");
 		#endif
 		if(led_dimm1 == 255)
 		{
@@ -84,9 +84,41 @@ void keycheck(void)
 			led_dimm1=255;
 		}
 		led_helligkeit1(led_dimm1);
-		
 	}
-	
+	if((keys & 0x8) == 0)
+	{
+		#ifdef debug
+		uart_puts("CH19\r\n");
+		#endif
+		if(led_dimm2 == 255)
+		{
+			led_dimm2=128;
+		}
+		else if(led_dimm2 == 128)
+		{
+			led_dimm2=64;
+		}
+		else
+		{
+			led_dimm2=255;
+		}
+		led_helligkeit2(led_dimm2);
+	}
+	else if((keys & 0x20000000) == 0)
+	{
+		#ifdef debug
+		uart_puts("DC\r\n");
+		#endif
+		if(led_farbe == 0)
+		{
+			led_farbe=1;
+		}
+		else
+		{
+			led_farbe=0;
+		}
+		led_color(led_farbe);
+	}
 	/*
 	// + Taste am Mikrofon
 	// 31. Bit
@@ -187,5 +219,4 @@ void keycheck(void)
 		// keine Taste/Tasten mehr gedrückt, Timer stoppen
 		TIMSK &= ~(1<<TOIE0);
 	}
-	sei();
 }

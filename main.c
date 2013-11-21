@@ -91,7 +91,7 @@ ISR (INT5_vect)
 		led_pwm(12,0);
 	}
 }
-
+/*
 ISR (INT6_vect)
 {
 	#ifdef debug
@@ -99,12 +99,14 @@ ISR (INT6_vect)
 	#endif
 	keycheck();
 }
-
+*/
 ISR (INT7_vect)
 {
+	/*
 	#ifdef debug
 	uart_puts("INT7\r\n");
 	#endif
+	*/
 	keycheck();
 }
 

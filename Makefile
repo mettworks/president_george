@@ -39,7 +39,7 @@
 # Very Important
 F_OSC = 18432000
 # -Ddebug sets Debugging via rs232
-CDEFS = -DF_CPU=$(F_OSC)UL
+CDEFS = -DF_CPU=$(F_OSC)UL -Ddebug
 
 # MCU name
 MCU = atmega128
