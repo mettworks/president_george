@@ -4,6 +4,7 @@
 #include "transceiver.h"
 #include "3wire.h"
 #include "display.h"
+#include "memory.h"
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -41,9 +42,23 @@ extern unsigned int freq;
 extern unsigned int step;
 extern int mod;
 
-extern unsigned char memory[6];
+extern unsigned int memory[6];
 
-
+void off(void)
+{
+	cli();
+	#ifdef debug
+	uart_puts("AUS\r\n");
+	#endif
+	save2memory();
+	while(1)
+	{
+		_delay_ms(1000);
+		#ifdef debug
+		uart_puts("1 Sekunde\r\n");
+		#endif
+	}
+}
 
 int init_geraet(void)
 {
@@ -70,7 +85,20 @@ int init_geraet(void)
 	PORTA &= ~(1<<PA4);	
 	PORTA &= ~(1<<PA5);
 	PORTA &= ~(1<<PA6);
-	//_delay_ms(500);
+	
+	read_memory();
+	freq = memory[1] + (memory[0] << 8);
+	freq=28230;
+	mod=memory[2];
+	
+	if(freq == 0)
+	{
+		#ifdef debug
+		uart_puts("ICH HABE ALZHEIMER!\r\n");
+		#endif
+		freq=27000;
+	}
+	
 	treiber(wert); 
 	_delay_ms(28);
 	wert |= (1 << TREIBER_MUTE);
@@ -79,8 +107,6 @@ int init_geraet(void)
 	tune(freq,step);
 	_delay_ms(28);
 	modulation(mod);
-	//_delay_ms(28);
-	//_delay_ms(1000);
 	return 0;
 }
 
@@ -136,21 +162,14 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   // 10240 / 2048 = 5, also der Teiler von 2048 waere dann ein Kanalraster von 5khz
   // 10240 / step = teiler
   // die Bitfolge muss 17 Bits lang sein
-	/*
+	
   #ifdef debug 
-  uart_puts("Tuning\r\n");
-  uart_puts("Frequenz: ");
+  uart_puts("tune(): Frequenz ");
   char text[10];
   utoa(freq,text,10);
   uart_puts(text);
   uart_puts("kHz\r\n");
-  uart_puts("Step: ");
-  utoa(step,text,10);
-  uart_puts(text);
-  uart_puts("kHz\r\n");
-  uart_puts("Bitfolge fuer Kanalraster bzw. Referenz:\t");
-  #endif
-	*/
+	#endif
   unsigned int teiler_ref; 
   // TODO: define !
   teiler_ref=10240/step2tune;
@@ -169,43 +188,22 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   {
     if(index[i-1] == 0)
     {
-			/*
-      #ifdef debug
-      uart_puts("0");
-      #endif
-			*/
       data0();
     }
     else
     {
-			/*
-      #ifdef debug
-      uart_puts("1");
-      #endif
-			*/
       data1();
     }
   }
   //
   // Achtung, Abschlussbit!
   data1();
-	/*
-  #ifdef debug
-  uart_puts("1");
-  uart_puts("\r\n");
-  #endif
-	*/
   end1();
   //
   // Festlegen des Teilers fuer die andere Seite
   // N Paket:
   // stellt den Teiler von der Sollfrequenz ein. 
   // (27255 + 10695) / 7590 = 5
-	/*
-  #ifdef debug
-  uart_puts("Bitfolge fuer Teiler Sollfrequenz:\t\t");
-  #endif
-	*/
   begin1();
   unsigned int teiler_soll; 
   unsigned int teiler_soll_temp=freq2tune+10695;
@@ -225,36 +223,20 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   {
     if(index_soll[j-1] == 0)
     {
-			/*
-      #ifdef debug
-      uart_puts("0");
-      #endif
-			*/
       data0();
     }
     else
     {
-			/*
-      #ifdef debug
-      uart_puts("1");
-      #endif 
-			*/
       data1();
     }
   }
   // 
   // Achtung, Abschlussbit!
   data0();
-	/*
-  #ifdef debug
-  uart_puts("0");  
-  uart_puts("\r\n");
-  #endif
-	*/
   end1();
 	
 	display_write_frequenz(freq2tune);
-	
+	//
 	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
 	memory[0] = freq2tune / 256;
 	memory[1] = freq2tune % 256;
@@ -322,6 +304,9 @@ int modulation(unsigned int mod)
   #endif
   treiber(wert);
 	display_write_mod(mod);
+	//
+	// ab ins EEPROM
+	memory[2]=mod;
 	return 0;
 }
 

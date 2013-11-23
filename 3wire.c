@@ -64,10 +64,6 @@ void end1(void)
 
 void treiber(unsigned int wert)
 {
-  #ifdef debug 
-  uart_puts("Treiber\r\n");
-  uart_puts("Bitfolge fuer Treiberbaustein:\t");
-  #endif
   begin0();
   int index[16];
   int i;
@@ -85,28 +81,16 @@ void treiber(unsigned int wert)
   {
 		if(i == 8)
 		{
-			#ifdef debug
-			uart_puts(" ");
-			#endif
 		}
     if(index[i-1] == 0)
     {
-      #ifdef debug
-      uart_puts("0");
-      #endif
       data0();
     }
     else
     {
-      #ifdef debug
-      uart_puts("1");
-      #endif
       data1();
     }
   }
   end0();
-  #ifdef debug
-  uart_puts("\r\n");
-  #endif
 } 
 

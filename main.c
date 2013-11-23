@@ -22,10 +22,12 @@ int ichbinaus=0;
 int led_farbe=0;
 unsigned int led_dimm1=255;
 unsigned int led_dimm2=255;
-unsigned char memory[6];
-int mod = 1;
-unsigned int freq = 28225;
+unsigned int memory[6];
+int mod;
+//unsigned int freq = 28225;
+unsigned int freq;
 unsigned int step = 5;
+int txstat=0;
 
 //
 // IRQ für Spannungsabfall
@@ -33,17 +35,7 @@ unsigned int step = 5;
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
-	#ifdef debug
-	uart_puts("INT4\r\n");
-	#endif
-	save2memory();
-	while(1)
-	{
-		_delay_ms(1000);
-		#ifdef debug
-		uart_puts("1 Sekunde\r\n");
-		#endif
-	}
+	off();
 }
 
 ISR (INT5_vect)
@@ -129,7 +121,7 @@ ISR(BADISR_vect)
 	{
 	}
 }
-
+/*
 //
 // sehr unelegant, muss mit einem Timer gemacht werden
 // erstmal geht es nur um den HW Test ... ^^
@@ -149,6 +141,7 @@ void scan(void)
 		}
 	}
 }
+*/
 
 ISR(ADC_vect)
 {
@@ -172,7 +165,7 @@ int main(void)
   uart_puts("\r\n\r\n");
 	uart_puts("Beginn main()\r\n");
 	#endif
-
+	_delay_ms(1000);
   //
   // Ein und Ausgaenge
 	// PE4, INT4 ist VCC Kontrolle					-> Eingang
@@ -227,34 +220,7 @@ int main(void)
   TCCR0 = (1<<CS01); // Prescaler 8
 	//TCCR0|=(1<<CS00) | (1<<CS01);
 	
-/*
-	// EEPROM
-	unsigned char IOReg;
-	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-	IOReg   = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
-	IOReg   = SPDR;
-	PORTB |= (1<<PB0);                         	//ChipSelect aus
-	
-	unsigned char H_Add=0b00000000;    						// Adresse
-  unsigned char M_Add=0b00000000;
-	unsigned char L_Add=0b00000000;
-	memory[0] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
-	H_Add=0b00000000;
-  M_Add=0b00000000;
-	L_Add=0b00000001;
-	memory[1] = ByteReadSPI(H_Add,L_Add,M_Add);  //Byte an Test Adresse auslesen und der Variablen out übergeben
 
-	freq = memory[1] + (memory[0] << 8);
-
-	if(freq == 0)
-	{
-		#ifdef debug
-		uart_puts("ICH HABE ALZHEIMER!\r\n");
-		#endif
-		freq=27000;
-	}
-*/
 	mod=1;
 	i2c_init();
 	init_geraet();

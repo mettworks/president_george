@@ -11,9 +11,6 @@
 
 void led_helligkeit1(unsigned int led_dimm)
 {
-	#ifdef debug
-	uart_puts("led_helligkeit1(): Anfang\r\n");
-	#endif
 	led_pwm(1,led_dimm);
 	led_pwm(2,led_dimm);
 	led_pwm(3,led_dimm);
@@ -28,27 +25,16 @@ void led_helligkeit1(unsigned int led_dimm)
 
 void led_helligkeit2(unsigned int led_dimm)
 {
-	#ifdef debug
-	uart_puts("led_helligkeit2(): Anfang\r\n");
-	#endif
 	led_pwm(11,led_dimm);
 	led_pwm(12, led_dimm);
 }
 
 void init_led(void)
 {
-	#ifdef debug
-	uart_puts("init_led(): Anfang\r\n");
-	#endif
 	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
-	#ifdef debug
-	uart_puts("init_led(): Start Wait Ende\r\n");
-	#endif
   i2c_write(0x80);  // autoincrement ab Register 0h
-
   i2c_write(0x00);  // Register 00 /  Mode1  
   i2c_write(0x00);  // Register 01 /  Mode2 
-
   i2c_write(0x00);  // Register 02 /  PWM LED 1    // Default alle PWM auf 0
   i2c_write(0x00);  // Register 03 /  PWM LED 2    
   i2c_write(0x00);  // Register 04 /  PWM LED 3
@@ -65,7 +51,6 @@ void init_led(void)
   i2c_write(0x00);  // Register 0F /  PWM LED 14
   i2c_write(0x00);  // Register 10 /  PWM LED 15
   i2c_write(0x00);  // Register 11 /  PWM LED 16  // Default alle PWM auf 0
-
   i2c_write(0xFF);  // Register 12 /  Group duty cycle control
   i2c_write(0x00);  // Register 13 /  Group frequency
   i2c_write(0xAA);  // Register 14 /  LED output state 0  // Default alle LEDs auf PWM
@@ -78,9 +63,6 @@ void init_led(void)
   i2c_write(0x00);  // Register 1B /  All Call I2C bus address
   i2c_write(0xFF);  // Register 1C /  IREF configuration  
   i2c_stop();  // I2C-Stop
-	#ifdef debug
-	uart_puts("init_led(): Ende\r\n");
-	#endif
 }
 
 void led_pwm(int led, int pwm)
@@ -93,13 +75,11 @@ void led_pwm(int led, int pwm)
 
 void led_color(int color)
 {
+	// TODO: Erstmal Quatsch, Transistoren defekt!
 	/*
 	if (color == 0 )
 	{
 		*/
-	  #ifdef debug
-		uart_puts("LED Farbe: Grün\r\n");
-		#endif
 		PORTC |= (1<<PC0);	  		// Grün 1
 		PORTC &= ~(1<<PC1);     	// Rot 0
 		/*

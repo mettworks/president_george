@@ -14,7 +14,27 @@
 #include <stdint.h>
 #endif
 
-extern unsigned char memory[6];
+/*
+Aufbau Array "memory":
+
+0 Frequenz
+1 Frequenz
+2 Modulation
+3 Step
+4 NBANL
+5 HICUT
+6 Echo
+7 RogerBeep
+8 CB/HAM
+9 An oder Aus
+
+10 Beleuchtung Helligkeit Tasten
+11 Beleuchtung Helligkeit Display
+12 Beleuchtung Farbe
+
+*/
+
+extern unsigned int memory[6];
 
 unsigned char ReadSPI(void)
 {
@@ -25,7 +45,7 @@ unsigned char ReadSPI(void)
 	return data;                 
 }
 	
-void WriteSPI(unsigned char data)
+void WriteSPI(unsigned int data)
 {
 	SPDR = data;   //Byte ins Datenregister schreiben
 	while(!(SPSR & (1<<SPIF)));
@@ -73,33 +93,27 @@ void SPIWIPPolling(void)
 	while (status & 0x01);	//Wiederhole bis WIP Bit auf Null gesetzt wird
 }
 	
-void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd, unsigned char data[6])
+void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned int data)
 {
-	
 	#ifdef debug
 	uart_puts("\r\nBeginn ByteWriteSPI()\r\n");
-	char string0[20];
-	char string1[20];
-	sprintf(string0,"zu schreibendes Byte0: %c\r\n",data[0]);
-	uart_puts(string0);
-	sprintf(string1,"zu schreibendes Byte1: %c\r\n",data[1]);
-	uart_puts(string1);
+	char string[20];
+	uart_puts("Zieladresse: ");
+	sprintf(string,"%u,",HighAdd);
+	uart_puts(string);
+	sprintf(string,"%u",LowAdd);
+	uart_puts(string);
+	uart_puts("\r\n");
+	sprintf(string,"zu schreibendes Byte: %u\r\n",data);
+	uart_puts(string);
 	#endif
-	
 	WriteEnable();          //Schreiben aktivieren
 	PORTB &= ~(1<<PB0);     //ChipSelect an
 	_delay_us(10);
 	WriteSPI(0x02);       //Opcode senden
 	WriteSPI(HighAdd);   //Oberes Adressbyte senden
-	WriteSPI(MidAdd);    //Mittleres Adressbyte senden
 	WriteSPI(LowAdd);    //Unteres Adressbyte senden
-	WriteSPI(data[0]);
-	WriteSPI(data[1]); 
-	WriteSPI(data[2]);
-	WriteSPI(data[3]); 
-	WriteSPI(data[4]);
-	WriteSPI(data[5]); 
-	WriteSPI(data[6]);
+	WriteSPI(data);
 	PORTB |= (1<<PB0);   //ChipSelect aus
 	SPIWIPPolling();     //Auf EEPROM warten
 	#ifdef debug
@@ -107,14 +121,13 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char Mid
 	#endif
 }
 	
-unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char MidAdd)
+unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd)
 {
 	unsigned char data=0;
 	PORTB &= ~(1<<PB0);     //ChipSelect an
 	_delay_us(10);
 	WriteSPI(0x03);         //Opcode senden
 	WriteSPI(HighAdd);      //Oberes Adressbyte senden
-	WriteSPI(MidAdd);       //Mittleres Adressbyte senden
 	WriteSPI(LowAdd);       //Unteres Adressbyte senden
 	data=ReadSPI();         //Datenbyte in Variable data schreiben
 	PORTB |= (1<<PB0);      //ChipSelect aus
@@ -123,8 +136,6 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned 
 	char string[20];
 	uart_puts("Zieladresse: ");
 	sprintf(string,"%u,",HighAdd);
-	uart_puts(string);
-	sprintf(string,"%u,",MidAdd);
 	uart_puts(string);
 	sprintf(string,"%u",LowAdd);
 	uart_puts(string);
@@ -140,21 +151,40 @@ int save2memory(void)
 	//
 	// Wichtig, hier werden Interrupts gesperrt!
 	cli();
-	
-  //
-	// EEPROM
 	unsigned char IOReg;
-	
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
 	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
 	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
 	IOReg   = SPDR;
 	PORTB |= (1<<PB0);                         //ChipSelect aus
-	
 	unsigned char H_Add=0b00000000;    
-  unsigned char M_Add=0b00000000;
 	unsigned char L_Add=0b00000000;
-	
-	ByteWriteSPI(H_Add,L_Add,M_Add,memory);   //Variable test an Test Adresse schreiben
+	ByteWriteSPI(H_Add,L_Add,memory[0]);
+	H_Add=0b00000000;    
+	L_Add=0b00000001;
+	ByteWriteSPI(H_Add,L_Add,memory[1]);
+	H_Add=0x0;    
+	L_Add=0x2;
+	ByteWriteSPI(H_Add,L_Add,memory[2]);
 	return 0;
+}
+
+void read_memory(void)
+{
+	unsigned char IOReg;
+	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
+	IOReg   = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
+	IOReg   = SPDR;
+	PORTB |= (1<<PB0);                         	//ChipSelect aus
+	
+	unsigned char H_Add=0b00000000;    						
+	unsigned char L_Add=0b00000000;
+	memory[0] = ByteReadSPI(H_Add,L_Add);
+	H_Add=0b00000000;
+	L_Add=0b00000001;
+	memory[1] = ByteReadSPI(H_Add,L_Add);
+	H_Add=0x0;
+	L_Add=0x2;
+	memory[2] = ByteReadSPI(H_Add,L_Add);
 }

@@ -7,3 +7,4 @@ void SPIWIPPolling(void);
 void ByteWriteSPI(unsigned char, unsigned char, unsigned char, unsigned char[6]);
 unsigned char ByteReadSPI(unsigned char, unsigned char, unsigned char);
 int save2memory(void);
+void read_memory(void);

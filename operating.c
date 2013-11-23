@@ -3,6 +3,7 @@
 #include "i2c.h"
 #include "led.h"
 #include "transceiver.h"
+#include "display.h"
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -16,6 +17,7 @@ extern unsigned int led_dimm1;
 extern unsigned int led_dimm2;
 extern unsigned int step;
 extern unsigned int freq;
+extern int txstat;
 
 // 2 Byte zurück
 unsigned short keysauslesendirekt(unsigned char destaddr)
@@ -55,6 +57,7 @@ unsigned long keysauslesen(void)
 void keycheck(void)
 {
 	keys=keysauslesen();
+	/*
 	#ifdef debug
 	char string[20];
 	uart_puts("Daten: ");
@@ -62,6 +65,7 @@ void keycheck(void)
 	uart_puts(string);
 	uart_puts("\r\n");
 	#endif
+	*/
 	cli();
 	_delay_ms(250);
 	//sei();
@@ -73,6 +77,7 @@ void keycheck(void)
 		#endif
 		display_write_modus(1);
 		tx();
+		txstat=1;
 	}
 	else if((keys & 0x1) == 0)
 	{
@@ -207,12 +212,16 @@ void keycheck(void)
 	// TX Ende, PTT Taste ist losgelassen
 	else if(keys & 0x20000)
 	{
-		#ifdef debug
-    uart_puts("TX->RX\r\n");
-		#endif
-		rogerbeep();
-		display_write_modus(0);
-    rx();
+		if(txstat==1)
+		{
+			#ifdef debug
+			uart_puts("TX->RX\r\n");
+			#endif
+			rogerbeep();
+			display_write_modus(0);
+			rx();
+			txstat=0;
+		}
 	}	
 
 	//_delay_ms(250);
