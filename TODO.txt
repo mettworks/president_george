@@ -15,10 +15,4 @@ Bugs/Verbesserungen auf Platine 0.1:
 
 BUG: Die Taste für Mikro + wird ab und zu Endlos "gedrückt" (FFFFBFFF)
 
-R21 und R22 gegen 56 Ohm tauschen?
-
-http://www.mikrocontroller.net/topic/80563
-
-Interessant, Variante mit dem C?
-
-http://www.elektronikwissen.net/opamp/9-opamp-wissen.html
+-> Lösung: Es muss ein Elko 47µF paraell zu C19

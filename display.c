@@ -176,7 +176,7 @@ void display_write_modus(unsigned char modus)
 		uart_puts("RX");
 		#endif
 		daten[3]=0x01;
-		daten[1]=0x0;
+		daten[2]=0x0;
 	}
 	else
 	{
@@ -184,7 +184,7 @@ void display_write_modus(unsigned char modus)
 		uart_puts("TX");
 		#endif
 		daten[3]=0x0;
-		daten[1]=0x01;
+		daten[2]=0x01;
 	}
 	#ifdef debug
 	uart_puts("\r\n");

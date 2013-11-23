@@ -11,6 +11,9 @@
 
 void led_helligkeit1(unsigned int led_dimm)
 {
+	#ifdef debug
+	uart_puts("led_helligkeit1(): Anfang\r\n");
+	#endif
 	led_pwm(1,led_dimm);
 	led_pwm(2,led_dimm);
 	led_pwm(3,led_dimm);
@@ -25,6 +28,9 @@ void led_helligkeit1(unsigned int led_dimm)
 
 void led_helligkeit2(unsigned int led_dimm)
 {
+	#ifdef debug
+	uart_puts("led_helligkeit2(): Anfang\r\n");
+	#endif
 	led_pwm(11,led_dimm);
 	led_pwm(12, led_dimm);
 }
@@ -87,13 +93,16 @@ void led_pwm(int led, int pwm)
 
 void led_color(int color)
 {
+	/*
 	if (color == 0 )
 	{
+		*/
 	  #ifdef debug
 		uart_puts("LED Farbe: Grün\r\n");
 		#endif
 		PORTC |= (1<<PC0);	  		// Grün 1
 		PORTC &= ~(1<<PC1);     	// Rot 0
+		/*
 	}
 	else if (color == 1)
 	{
@@ -103,4 +112,5 @@ void led_color(int color)
 		PORTC |= (1<<PC1);	  		// Rot 1
 		PORTC &= ~(1<<PC0);     	// Grün 0
 	}
+	*/
 }

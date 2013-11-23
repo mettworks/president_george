@@ -66,7 +66,15 @@ void keycheck(void)
 	_delay_ms(250);
 	//sei();
 	// 
-	if((keys & 0x1) == 0)
+	if((keys & 0x20000) == 0)
+	{
+		#ifdef debug
+		uart_puts("RX->TX\r\n");
+		#endif
+		display_write_modus(1);
+		tx();
+	}
+	else if((keys & 0x1) == 0)
 	{
 		#ifdef debug
 		uart_puts("Dimmer\r\n");
@@ -85,7 +93,7 @@ void keycheck(void)
 		}
 		led_helligkeit1(led_dimm1);
 	}
-	if((keys & 0x8) == 0)
+	else if((keys & 0x8) == 0)
 	{
 		#ifdef debug
 		uart_puts("CH19\r\n");
@@ -195,19 +203,18 @@ void keycheck(void)
     tune(freq,step);
 	}	
 	
-	/*
 	// AM ENDE LASSEN!
 	// TX Ende, PTT Taste ist losgelassen
-	else if(keys & 0x200)
+	else if(keys & 0x20000)
 	{
-
 		#ifdef debug
-		uart_puts("SW13\r\n");
-    uart_puts("Dimmer\r\n");
+    uart_puts("TX->RX\r\n");
 		#endif
+		rogerbeep();
+		display_write_modus(0);
     rx();
 	}	
-*/
+
 	//_delay_ms(250);
 	if(keys != 0xffffffff)
 	{

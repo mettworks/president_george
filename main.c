@@ -20,11 +20,11 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 int ichbinaus=0;
 int led_farbe=0;
-unsigned int led_dimm1=20;
-unsigned int led_dimm2=20;
+unsigned int led_dimm1=255;
+unsigned int led_dimm2=255;
 unsigned char memory[6];
 int mod = 1;
-unsigned int freq = 27205;
+unsigned int freq = 28225;
 unsigned int step = 5;
 
 //
