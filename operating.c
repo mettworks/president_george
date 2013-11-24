@@ -17,7 +17,13 @@ extern unsigned int led_dimm1;
 extern unsigned int led_dimm2;
 extern unsigned int step;
 extern unsigned int freq;
+extern int mod;
+extern int cb_mod;
 extern int txstat;
+extern int modus;
+extern unsigned int memory[MEM_SIZE];
+extern int cb_channel;
+
 
 // 2 Byte zurück
 unsigned short keysauslesendirekt(unsigned char destaddr)
@@ -54,10 +60,37 @@ unsigned long keysauslesen(void)
 	return keys;
 }
 
+void setmodus(int data)
+{
+	#ifdef debug
+	uart_puts("setmodus():\r\n");
+	#endif
+	memory[1]=data;
+	if(data==1)
+	{
+		#ifdef debug
+		uart_puts("HAM Modus\r\n");
+		#endif
+		tune(freq,step);
+		modulation(mod);
+		display_write_channel(0);
+		modus=1;
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("CB Modus\r\n");
+		#endif
+		channel(cb_channel);
+		modulation(cb_mod);
+		modus=2;
+	}
+}
+
 void keycheck(void)
 {
 	keys=keysauslesen();
-	/*
+	
 	#ifdef debug
 	char string[20];
 	uart_puts("Daten: ");
@@ -65,7 +98,7 @@ void keycheck(void)
 	uart_puts(string);
 	uart_puts("\r\n");
 	#endif
-	*/
+	
 	cli();
 	_delay_ms(250);
 	//sei();
@@ -75,9 +108,18 @@ void keycheck(void)
 		#ifdef debug
 		uart_puts("RX->TX\r\n");
 		#endif
-		display_write_modus(1);
-		tx();
-		txstat=1;
+		if(modus == 2)
+		{
+			#ifdef debug
+			uart_puts("kein Sendebetrieb auf dieser Frequenz...\r\n");
+			#endif
+		}
+		else
+		{
+			tx();
+			display_write_modus(1);
+			txstat=1;
+		}
 	}
 	else if((keys & 0x1) == 0)
 	{
@@ -149,7 +191,13 @@ void keycheck(void)
 	}
 	*/
 	
-	
+	else if((keys & 0x400) == 0)
+	{
+		#ifdef debug
+		uart_puts("SELECT\r\n");
+		#endif
+		tune(28000,5);
+	}
 	// 
 	// M1
 	else if((keys & 0x4000000) == 0)
@@ -186,7 +234,21 @@ void keycheck(void)
 		#endif
 		modulation(4);
 	}	
-	
+	// PA
+	else if((keys & 0x8000000) == 0)
+	{
+		#ifdef debug
+		uart_puts("PA\r\n");
+		#endif
+		if(modus==1)
+		{
+			setmodus(2);
+		}
+		else if(modus==2)
+		{
+			setmodus(1);
+		}
+	}
 	// 
 	// Drehschalter +
 	else if((keys & 0x2) == 0)
@@ -194,8 +256,16 @@ void keycheck(void)
 		#ifdef debug
 		uart_puts("Drehschalter +\r\n");
 		#endif
-		freq=freq+step;
-    tune(freq,step);
+		if(modus==1)
+		{
+			freq=freq+step;
+			tune(freq,step);
+		}
+		else
+		{
+			cb_channel++;
+			channel(cb_channel);
+		}
 	}	
 	// 
 	// Drehschalter -
@@ -204,8 +274,16 @@ void keycheck(void)
 		#ifdef debug
 		uart_puts("Drehschalter -\r\n");
 		#endif
-		freq=freq-step;
-    tune(freq,step);
+		if(modus==1)
+		{
+			freq=freq-step;
+			tune(freq,step);
+		}
+		else
+		{
+			cb_channel--;
+			channel(cb_channel);
+		}
 	}	
 	
 	// AM ENDE LASSEN!
@@ -223,6 +301,12 @@ void keycheck(void)
 			txstat=0;
 		}
 	}	
+	else
+	{
+		#ifdef debug
+		uart_puts("unbekannter Eingang\r\n");
+		#endif
+	}
 
 	//_delay_ms(250);
 	if(keys != 0xffffffff)

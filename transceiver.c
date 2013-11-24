@@ -5,12 +5,15 @@
 #include "3wire.h"
 #include "display.h"
 #include "memory.h"
+#include "operating.h"
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #endif
+
+
 
 
 //
@@ -40,9 +43,12 @@ int ichsende=0;
 
 extern unsigned int freq;
 extern unsigned int step;
+extern unsigned int cb_channel;
+extern unsigned int cb_mod;
 extern int mod;
+extern int modus;
 
-extern unsigned int memory[6];
+extern unsigned int memory[MEM_SIZE];
 
 void off(void)
 {
@@ -87,16 +93,48 @@ int init_geraet(void)
 	PORTA &= ~(1<<PA6);
 	
 	read_memory();
-	freq = memory[1] + (memory[0] << 8);
-	//freq=28230;
-	mod=memory[2];
-	
-	if(freq == 0)
+	freq = memory[3] + (memory[2] << 8);
+	mod=memory[5];
+	modus=memory[1];
+	cb_channel=memory[4];
+	cb_mod=memory[6];
+	if((26565 > freq) || (29690 < freq) || (freq == 0))
 	{
 		#ifdef debug
-		uart_puts("ICH HABE ALZHEIMER!\r\n");
+		uart_puts("Frequenz aus dem EEPROM ist falsch!\r\n");
 		#endif
-		freq=27000;
+		freq=28000;
+	}
+
+	if((1 > mod) || (4 < mod))
+	{
+		#ifdef debug
+		uart_puts("Modulationsart aus dem EEPROM ist falsch!\r\n");
+		#endif
+		mod=1;
+	}
+	if((1 > modus) || (2 < modus))
+	{
+		#ifdef debug
+		uart_puts("Modus aus dem EEPROM ist falsch!\r\n");
+		#endif
+		modus=1;
+	}
+	if((1 > cb_channel) || (4 < cb_channel))
+	{
+		#ifdef debug
+		uart_puts("Kanal (CB) aus dem EEPROM ist falsch!\r\n");
+		#endif
+		cb_channel=1;
+		memory[4]=1;
+	}	
+	if((1 > cb_mod) || (4 < cb_mod))
+	{
+		#ifdef debug
+		uart_puts("Modulationsart (CB) aus dem EEPROM ist falsch!\r\n");
+		#endif
+		cb_mod=1;
+		memory[6]=1;
 	}
 	
 	treiber(wert); 
@@ -104,9 +142,19 @@ int init_geraet(void)
 	wert |= (1 << TREIBER_MUTE);
 	treiber(wert);
 	_delay_ms(28);
-	tune(freq,step);
-	_delay_ms(28);
-	modulation(mod);
+	if(modus == 1)
+	{
+		tune(freq,step);
+		_delay_ms(28);
+		modulation(mod);
+	}
+	else
+	{
+		channel(cb_channel);
+		_delay_ms(28);
+		modulation(cb_mod);
+	}
+	setmodus(modus);
 	return 0;
 }
 
@@ -118,7 +166,7 @@ int tx(void)
 		// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 		//
 		// Senden:
-		// 0100 0001  0100 0000
+	  // 0100 0001  0100 0000
 		// Pause, 7ms
 		// 0110 0001  0100 0000
 		wert &= ~(1 << TREIBER_MUTE);
@@ -149,6 +197,52 @@ int rx(void)
 	return 0;
 }
 
+int ch2freq(unsigned int ch)
+{
+  #ifdef debug 
+  uart_puts("ch2freq(): Kanal ");
+  char text[10];
+  utoa(ch,text,10);
+  uart_puts(text);
+  uart_puts(" -> ");
+	#endif
+	unsigned int data=0;
+	if(ch == 1)
+	{
+		data=26965;
+	}
+	else if(ch==2)
+	{
+		data=26975;
+	}
+	else if(ch==3)
+	{
+		data=26985;
+	}	
+	#ifdef debug
+  utoa(data,text,10);
+  uart_puts(text);
+	uart_puts("\r\n");
+	#endif
+	return data;
+}
+
+void channel(unsigned int ch)
+{
+	unsigned int cb_freq;
+  #ifdef debug 
+  uart_puts("channel(): Kanal ");
+  char text[10];
+  utoa(ch,text,10);
+  uart_puts(text);
+  uart_puts("\r\n");
+	#endif
+	cb_freq=ch2freq(ch);
+	tune(cb_freq,5);
+	display_write_channel(ch);
+	memory[4]=ch;
+}
+
 int tune(unsigned int freq2tune,unsigned int step2tune)
 {
   //
@@ -166,7 +260,7 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   #ifdef debug 
   uart_puts("tune(): Frequenz ");
   char text[10];
-  utoa(freq,text,10);
+  utoa(freq2tune,text,10);
   uart_puts(text);
   uart_puts("kHz\r\n");
 	#endif
@@ -238,8 +332,8 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
 	display_write_frequenz(freq2tune);
 	//
 	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
-	memory[0] = freq2tune / 256;
-	memory[1] = freq2tune % 256;
+	memory[2] = freq2tune / 256;
+	memory[3] = freq2tune % 256;
 	sei();
   return 0;
 }
@@ -306,7 +400,14 @@ int modulation(unsigned int mod)
 	display_write_mod(mod);
 	//
 	// ab ins EEPROM
-	memory[2]=mod;
+	if(modus==1)
+	{
+		memory[5]=mod;
+	}
+	else
+	{	
+		memory[6]=mod;
+	}
 	return 0;
 }
 

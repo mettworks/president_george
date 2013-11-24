@@ -20,14 +20,18 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 int ichbinaus=0;
 int led_farbe=0;
-unsigned int led_dimm1=255;
-unsigned int led_dimm2=255;
-unsigned int memory[6];
+unsigned int led_dimm1=5;
+unsigned int led_dimm2=5;
+unsigned int memory[MEM_SIZE];
 int mod;
 //unsigned int freq = 28225;
 unsigned int freq;
+unsigned int cb_channel;
+unsigned int cb_mod;
 unsigned int step = 5;
 int txstat=0;
+
+int modus;
 
 //
 // IRQ für Spannungsabfall
@@ -231,6 +235,7 @@ int main(void)
 	led_color(led_farbe);
 
 	display_write_modus(0);
+		
 	sei();
 	while(1)
 	{

@@ -14,27 +14,34 @@
 #include <stdint.h>
 #endif
 
+
 /*
 Aufbau Array "memory":
 
-0 Frequenz
-1 Frequenz
-2 Modulation
-3 Step
-4 NBANL
-5 HICUT
-6 Echo
-7 RogerBeep
-8 CB/HAM
-9 An oder Aus
+0 an oder aus
+1 cb oder ham
+2 Frequenz / bei ham
+3 Frequenz / bei ham
+4 kanal / bei cb
+5 Modulation / bei ham
+6 modulation / bei cb
+7 Step
+8 NBANL / bei ham
+9 NBANL / bei cb
+10 HICUT / bei ham
+11 hicut / bei cb
+12 Echo / bei ham
+13 echo / bei cb
+14 RogerBeep / bei ham
+15 rogerbeep / bei cb
 
-10 Beleuchtung Helligkeit Tasten
-11 Beleuchtung Helligkeit Display
-12 Beleuchtung Farbe
+16 Beleuchtung Helligkeit Tasten
+17 Beleuchtung Helligkeit Display
+18 Beleuchtung Farbe
 
 */
 
-extern unsigned int memory[6];
+extern unsigned int memory[MEM_SIZE];
 
 unsigned char ReadSPI(void)
 {
@@ -93,20 +100,8 @@ void SPIWIPPolling(void)
 	while (status & 0x01);	//Wiederhole bis WIP Bit auf Null gesetzt wird
 }
 	
-void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned int data)
+void ByteWriteSPI(unsigned int HighAdd, unsigned int LowAdd, unsigned int data)
 {
-	#ifdef debug
-	uart_puts("\r\nBeginn ByteWriteSPI()\r\n");
-	char string[20];
-	uart_puts("Zieladresse: ");
-	sprintf(string,"%u,",HighAdd);
-	uart_puts(string);
-	sprintf(string,"%u",LowAdd);
-	uart_puts(string);
-	uart_puts("\r\n");
-	sprintf(string,"zu schreibendes Byte: %u\r\n",data);
-	uart_puts(string);
-	#endif
 	WriteEnable();          //Schreiben aktivieren
 	PORTB &= ~(1<<PB0);     //ChipSelect an
 	_delay_us(10);
@@ -116,9 +111,6 @@ void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned int data
 	WriteSPI(data);
 	PORTB |= (1<<PB0);   //ChipSelect aus
 	SPIWIPPolling();     //Auf EEPROM warten
-	#ifdef debug
-	uart_puts("fertig geschrieben\r\n");
-	#endif
 }
 	
 unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd)
@@ -131,18 +123,6 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd)
 	WriteSPI(LowAdd);       //Unteres Adressbyte senden
 	data=ReadSPI();         //Datenbyte in Variable data schreiben
 	PORTB |= (1<<PB0);      //ChipSelect aus
-	#ifdef debug
-	uart_puts("\r\nBeginn ByteReadSPI()\r\n");
-	char string[20];
-	uart_puts("Zieladresse: ");
-	sprintf(string,"%u,",HighAdd);
-	uart_puts(string);
-	sprintf(string,"%u",LowAdd);
-	uart_puts(string);
-	uart_puts("\r\n");
-	sprintf(string,"gelesenes Byte: %u\r\n",data);
-	uart_puts(string);
-	#endif
 	return data;            
 }
 
@@ -151,26 +131,42 @@ int save2memory(void)
 	//
 	// Wichtig, hier werden Interrupts gesperrt!
 	cli();
+	uart_puts("save2memory():\r\n");
+	int i=0;
+	unsigned int H_Add=0;    
+	unsigned int L_Add=0;
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
 	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
 	IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
 	IOReg   = SPDR;
 	PORTB |= (1<<PB0);                         //ChipSelect aus
-	unsigned char H_Add=0b00000000;    
-	unsigned char L_Add=0b00000000;
-	ByteWriteSPI(H_Add,L_Add,memory[0]);
-	H_Add=0b00000000;    
-	L_Add=0b00000001;
-	ByteWriteSPI(H_Add,L_Add,memory[1]);
-	H_Add=0x0;    
-	L_Add=0x2;
-	ByteWriteSPI(H_Add,L_Add,memory[2]);
+	while(i < MEM_SIZE)
+	{
+		ByteWriteSPI(H_Add,L_Add,memory[i]);
+		char string[20];
+		uart_puts("H_Add: ");
+		sprintf(string,"%u,",H_Add);
+		uart_puts(string);
+		uart_puts("L_Add: ");
+		sprintf(string,"%u,",L_Add);
+		uart_puts(string);
+		uart_puts("Data: ");
+		sprintf(string,"%u,",memory[i]);
+		uart_puts(string);
+		uart_puts("\r\n");
+		L_Add++;
+		i++;
+	}
 	return 0;
 }
 
 void read_memory(void)
 {
+	uart_puts("read_memory():\r\n");
+	int i=0;
+	unsigned int H_Add=0;    
+	unsigned int L_Add=0;
 	unsigned char IOReg;
 	DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
 	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
@@ -178,13 +174,21 @@ void read_memory(void)
 	IOReg   = SPDR;
 	PORTB |= (1<<PB0);                         	//ChipSelect aus
 	
-	unsigned char H_Add=0b00000000;    						
-	unsigned char L_Add=0b00000000;
-	memory[0] = ByteReadSPI(H_Add,L_Add);
-	H_Add=0b00000000;
-	L_Add=0b00000001;
-	memory[1] = ByteReadSPI(H_Add,L_Add);
-	H_Add=0x0;
-	L_Add=0x2;
-	memory[2] = ByteReadSPI(H_Add,L_Add);
+	while(i < MEM_SIZE)
+	{
+		memory[i]=ByteReadSPI(H_Add,L_Add);
+		char string[20];
+		uart_puts("H_Add: ");
+		sprintf(string,"%u,",H_Add);
+		uart_puts(string);
+		uart_puts("L_Add: ");
+		sprintf(string,"%u,",L_Add);
+		uart_puts(string);
+		uart_puts("Data: ");
+		sprintf(string,"%u,",memory[i]);
+		uart_puts(string);
+		uart_puts("\r\n");
+		L_Add++;
+		i++;
+	}
 }

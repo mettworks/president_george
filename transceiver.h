@@ -5,6 +5,10 @@ int tune(unsigned int freq2tune,unsigned int step2tune);
 int modulation(unsigned int mod);
 int rogerbeep(void);
 void off(void);
+void channel(unsigned int ch);
+int ch2freq(unsigned int ch);
+
+
 
 
 

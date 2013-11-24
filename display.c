@@ -219,56 +219,6 @@ void display_write_mod(unsigned char mod)
 
 void display_write_frequenz(unsigned int frequenz)
 {
-	/*
-		1. Ziffer
-		a 24
-		b 27
-		c 29
-		d 25
-		e 22
-		f 23
-		g 26
-	
-		2. Ziffer
-		a	33
-		b 36
-		c 38
-		d 35
-		e	31
-		f 32
-		g 35
-		
-		PUNKT ist die 37
-		
-		3. Ziffer
-		a 42
-		b 45
-		c 46
-		d 44
-		e 41
-		f 40
-		g 43
-		
-		4. Ziffer
-		a	51
-		b 54
-		c 55
-		d	53
-		e	50
-		f	49
-		g	52
-		
-		5. Ziffer
-		a	60
-		b	63
-		c	64
-		d	62
-		e	59
-		f	58
-		g	61
-		
-	*/
-
 	// Punkt anmachen
 	daten[37]=0x01;
 
@@ -331,25 +281,6 @@ void display_write_frequenz(unsigned int frequenz)
 
 void display_write_channel(unsigned char channel)
 {
-	/* 1. Ziffer:
-		a	69
-		b	72
-		c	73
-		d	71
-		e	67
-		f	66
-		g	70
-
-		2. Ziffer:
-		a 78
-		b 81
-		c 82
-		d 80
-		e 76
-		f	75
-		g 79
-	*/
-	
 	// 
 	// zerlegen
 	unsigned char x;
@@ -357,22 +288,41 @@ void display_write_channel(unsigned char channel)
 	x = channel / 10;
 	segmente[0]=69;
 	segmente[1]=72;
-	segmente[2]=73;
-	segmente[3]=71;
-	segmente[4]=67;
+	segmente[2]=74;
+	segmente[3]=70;
+	segmente[4]=68;
 	segmente[5]=66;
-	segmente[6]=70;
+	segmente[6]=71;
 	display_convert_number(x,segmente);
-	
+	if(channel == 0)
+	{
+		daten[segmente[0]]=0x0;
+		daten[segmente[1]]=0x0;
+		daten[segmente[2]]=0x0;
+		daten[segmente[3]]=0x0;
+		daten[segmente[4]]=0x0;
+		daten[segmente[5]]=0x0;
+		daten[segmente[6]]=0x0;
+	}
 	x = channel % 10;
 	segmente[0]=78;
 	segmente[1]=81;
-	segmente[2]=82;
+	segmente[2]=83;
 	segmente[3]=80;
-	segmente[4]=76;
+	segmente[4]=77;
 	segmente[5]=75;
 	segmente[6]=79;
 	display_convert_number(x,segmente);
+	if(channel == 0)
+	{
+		daten[segmente[0]]=0x0;
+		daten[segmente[1]]=0x0;
+		daten[segmente[2]]=0x0;
+		daten[segmente[3]]=0x0;
+		daten[segmente[4]]=0x0;
+		daten[segmente[5]]=0x0;
+		daten[segmente[6]]=0x0;
+	}
 	
 	display_send();
 }
