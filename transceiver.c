@@ -88,7 +88,7 @@ int init_geraet(void)
 	
 	read_memory();
 	freq = memory[1] + (memory[0] << 8);
-	freq=28230;
+	//freq=28230;
 	mod=memory[2];
 	
 	if(freq == 0)
