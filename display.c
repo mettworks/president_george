@@ -47,6 +47,17 @@
 // 2 | 5 2 5 2
 // 3 |
 //
+
+/*
+
+87 BEEP
+89 ECHO
+90 NB/ANL
+94 Pfeil rechts unten ??
+96 HICUT
+
+*/
+
 // 
 // pro Bit gibt es aus "Einfachheitsgründen" ein Byte 96
 unsigned char daten[104];
@@ -160,6 +171,51 @@ void display_convert_number(unsigned char number,unsigned char segmente[6])
 		daten[segmente[5]]=0x01;
 		daten[segmente[6]]=0x01;
 	}
+}
+
+void display_write_meter(unsigned int value)
+{
+	/*
+	Zahlen sind die 76
+	Balken
+	82 1.
+	88 2.
+	91 3.
+	92 4.
+	95 5.
+	93 6.
+	98 7.
+	97 8.
+	
+	*/
+	daten[76]=0x01;
+
+	if(value > 500)
+	{
+		daten[82]=0x01;
+		daten[88]=0x01;
+		daten[91]=0x01;
+		daten[92]=0x01;
+		daten[95]=0x01;
+		daten[93]=0x01;
+		daten[98]=0x01;
+		daten[97]=0x01;
+	}
+	else if(value > 320)
+	{
+		daten[82]=0x01;
+		daten[88]=0x01;
+		daten[91]=0x01;
+		daten[92]=0x01;
+		daten[95]=0x0;
+		daten[93]=0x0;
+		daten[98]=0x0;
+		daten[97]=0x0;
+	}
+	
+	// TODO: hier besser umwandlung, vergleichen und nur schreiben wenn notwendig!
+	
+	display_send();
 }
 
 void display_write_modus(unsigned char modus)

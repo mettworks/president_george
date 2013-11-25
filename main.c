@@ -34,6 +34,12 @@ int txstat=0;
 int modus;
 
 //
+// Counter für S-Meter
+unsigned int adccounter=20;
+unsigned int adcvalues[20];
+#define ADCMESSUNGEN 20;
+
+//
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
@@ -149,16 +155,52 @@ void scan(void)
 
 ISR(ADC_vect)
 {
+	
+	// PE4
+	if ( !(PINE & (1<<PINE4)) ) 
+	{
+		off();
+	}
+	
 	uint16_t x;
+	uint32_t sum=0;
+	//char s[7];
+
+	int i;
 	//x += (ADCH<<8);
 	// oder besser
 	x = ADCW;
-	#ifdef debug
-	char s[7];
-	uart_puts("Messwert: ");
-	uart_puts( itoa( x, s, 10 ) );
-	uart_puts("\r\n");
-	#endif
+	
+	if(adccounter == 0)
+	{
+		i=ADCMESSUNGEN;
+		while(i > 0)
+		{
+			sum=sum+adcvalues[i];
+			i--;
+		}
+		sum=sum/ADCMESSUNGEN;
+		/*
+		uart_puts("Durchschnitt: ");
+		uart_puts( itoa( sum, s, 10 ) );
+		uart_puts("\r\n");
+		*/
+		display_write_meter(sum);
+		adccounter=ADCMESSUNGEN;
+	}
+	else
+	{
+		adcvalues[adccounter]=x;
+		adccounter--;
+		/*
+		#ifdef debug
+		uart_puts("Messwert: ");
+		uart_puts( itoa( x, s, 10 ) );
+		uart_puts("\r\n");
+		#endif
+		*/
+	}
+
 }
 
 int main(void) 
@@ -207,6 +249,20 @@ int main(void)
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
 	
+		
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
+
+  ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
+
+	
+	// ADC1 auswählen
+	ADMUX |= (1<<MUX0);
+	//ADMUX |= (1 << MUX3) | (1<<MUX0);
+	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
+  ADCSRA |= (1 << ADEN);  // Enable ADC
+	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
+	ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
+	
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -224,7 +280,6 @@ int main(void)
   TCCR0 = (1<<CS01); // Prescaler 8
 	//TCCR0|=(1<<CS00) | (1<<CS01);
 	
-
 	mod=1;
 	i2c_init();
 	init_geraet();
@@ -233,40 +288,10 @@ int main(void)
 	led_helligkeit1(led_dimm1);
 	led_helligkeit2(led_dimm2);
 	led_color(led_farbe);
-
 	display_write_modus(0);
-		
+	
 	sei();
 	while(1)
 	{
-
 	}
-
-/*
-
-	mod=1;
-	init_geraet();	
-	
-	//
-	// Gemessen wird an ADC1, es kann "Gain" (10x) genutzt werden, dazu liegt ADC0 auf GND
-	// dann muss ADMUX |= (1 << MUX3) | (1<<MUX0); gesetzt sein
-
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
-
-  ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
-
-	
-	// ADC1 auswählen
-	ADMUX |= (1<<MUX0);
-	//ADMUX |= (1 << MUX3) | (1<<MUX0);
-	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
-  ADCSRA |= (1 << ADEN);  // Enable ADC
-	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
-  sei();   // Enable Global Interrupts
-	ADCSRA |= (1 << ADSC);  // Start A2D Conversions
-
-	for(;;)  // Loop Forever
-  {
-  }
-	*/
 } 
