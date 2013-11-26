@@ -89,6 +89,7 @@ void setmodus(int data)
 
 void keycheck(void)
 {
+	cli();
 	keys=keysauslesen();
 	
 	#ifdef debug
@@ -99,8 +100,8 @@ void keycheck(void)
 	uart_puts("\r\n");
 	#endif
 	
-	cli();
-	_delay_ms(250);
+	//cli();
+	_delay_ms(50);
 	//sei();
 	// 
 	if((keys & 0x20000) == 0)

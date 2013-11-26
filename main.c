@@ -155,7 +155,7 @@ void scan(void)
 
 ISR(ADC_vect)
 {
-	
+	uart_puts("ADC_VECT():\r\n");
 	// PE4
 	if ( !(PINE & (1<<PINE4)) ) 
 	{
@@ -170,6 +170,7 @@ ISR(ADC_vect)
 	//x += (ADCH<<8);
 	// oder besser
 	x = ADCW;
+	uart_puts("Ergebnis geholt\r\n");
 	
 	if(adccounter == 0)
 	{
@@ -185,7 +186,7 @@ ISR(ADC_vect)
 		uart_puts( itoa( sum, s, 10 ) );
 		uart_puts("\r\n");
 		*/
-		display_write_meter(sum);
+		//display_write_meter(sum);
 		adccounter=ADCMESSUNGEN;
 	}
 	else
@@ -200,7 +201,7 @@ ISR(ADC_vect)
 		#endif
 		*/
 	}
-
+  
 }
 
 int main(void) 
@@ -211,7 +212,7 @@ int main(void)
   uart_puts("\r\n\r\n");
 	uart_puts("Beginn main()\r\n");
 	#endif
-	_delay_ms(1000);
+	//_delay_ms(1000);
   //
   // Ein und Ausgaenge
 	// PE4, INT4 ist VCC Kontrolle					-> Eingang
