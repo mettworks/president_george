@@ -45,11 +45,17 @@ unsigned int adcvalues[20];
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+	#ifdef debug
+	uart_puts("INT4_vect()\r\n");
+	#endif
 	off();
 }
 
 ISR (INT5_vect)
 {
+	#ifdef debug
+	uart_puts("INT5_vect()\r\n");
+	#endif
 	if(ichbinaus == 1)
 	{
 		#ifdef debug
@@ -93,22 +99,14 @@ ISR (INT5_vect)
 		led_pwm(12,0);
 	}
 }
-/*
-ISR (INT6_vect)
-{
-	#ifdef debug
-	uart_puts("INT6\r\n");
-	#endif
-	keycheck();
-}
-*/
+
 ISR (INT7_vect)
 {
-	/*
+	
 	#ifdef debug
 	uart_puts("INT7\r\n");
 	#endif
-	*/
+	
 	keycheck();
 }
 
@@ -153,24 +151,28 @@ void scan(void)
 }
 */
 
-ISR(ADC_vect)
+uint16_t adc_read(void )
 {
-	uart_puts("ADC_VECT():\r\n");
-	// PE4
-	if ( !(PINE & (1<<PINE4)) ) 
-	{
-		off();
-	}
-	
-	uint16_t x;
-	uint32_t sum=0;
-	//char s[7];
+	// ADC1 auswählen
+	//ADMUX |= (1<<MUX0);
+	//ADMUX |= (1 << MUX3) | (1<<MUX0);
+	ADMUX |= (1<<MUX0);
 
-	int i;
-	//x += (ADCH<<8);
-	// oder besser
-	x = ADCW;
-	uart_puts("Ergebnis geholt\r\n");
+  ADCSRA |= (1<<ADSC);
+  while (ADCSRA & (1<<ADSC) ) 
+	{   
+  }
+  return ADCW;                   
+}
+
+void messung_s(void)
+{
+	uint16_t messwert;
+	messwert=adc_read();
+	uint32_t sum=0;
+	unsigned int i;
+	char s[7];
+
 	
 	if(adccounter == 0)
 	{
@@ -181,27 +183,29 @@ ISR(ADC_vect)
 			i--;
 		}
 		sum=sum/ADCMESSUNGEN;
-		/*
+		
 		uart_puts("Durchschnitt: ");
 		uart_puts( itoa( sum, s, 10 ) );
 		uart_puts("\r\n");
-		*/
-		//display_write_meter(sum);
+		
+		display_write_meter(sum);
 		adccounter=ADCMESSUNGEN;
 	}
 	else
 	{
-		adcvalues[adccounter]=x;
+		adcvalues[adccounter]=messwert;
 		adccounter--;
-		/*
-		#ifdef debug
-		uart_puts("Messwert: ");
-		uart_puts( itoa( x, s, 10 ) );
-		uart_puts("\r\n");
-		#endif
-		*/
 	}
-  
+}
+
+
+void adc_init(void)
+{
+	ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
+	ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
+
+	ADCSRA |= (1 << ADEN);  // Enable ADC
+	ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
 }
 
 int main(void) 
@@ -212,7 +216,7 @@ int main(void)
   uart_puts("\r\n\r\n");
 	uart_puts("Beginn main()\r\n");
 	#endif
-	//_delay_ms(1000);
+	_delay_ms(1000);
   //
   // Ein und Ausgaenge
 	// PE4, INT4 ist VCC Kontrolle					-> Eingang
@@ -250,20 +254,6 @@ int main(void)
 	// PA2
 	DDRA &= ~(1<<PA2);	// Eingang
 	
-		
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
-
-  ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
-
-	
-	// ADC1 auswählen
-	ADMUX |= (1<<MUX0);
-	//ADMUX |= (1 << MUX3) | (1<<MUX0);
-	ADCSRA |= (1 << ADFR);  // Set ADC to Free-Running Mode
-  ADCSRA |= (1 << ADEN);  // Enable ADC
-	ADCSRA |= (1 << ADIE);  // Enable ADC Interrupt
-	ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
-	
 	//
 	// Interrupts
 	// INT4 wird bei fallender Flanke ausgelöst -> VCC weg
@@ -290,9 +280,11 @@ int main(void)
 	led_helligkeit2(led_dimm2);
 	led_color(led_farbe);
 	display_write_modus(0);
-	
+	adc_init();
 	sei();
+	
 	while(1)
 	{
+		messung_s();
 	}
 } 

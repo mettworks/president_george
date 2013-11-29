@@ -96,6 +96,7 @@ int init_geraet(void)
 	freq = memory[3] + (memory[2] << 8);
 	mod=memory[5];
 	modus=memory[1];
+	step=5;
 	cb_channel=memory[4];
 	cb_mod=memory[6];
 	if((26565 > freq) || (29690 < freq) || (freq == 0))
@@ -144,15 +145,15 @@ int init_geraet(void)
 	_delay_ms(28);
 	if(modus == 1)
 	{
-		tune(freq,step);
-		_delay_ms(28);
-		modulation(mod);
+		//tune(freq,step);
+		//_delay_ms(28);
+		//modulation(mod);
 	}
 	else
 	{
-		channel(cb_channel);
-		_delay_ms(28);
-		modulation(cb_mod);
+		//channel(cb_channel);
+		//_delay_ms(28);
+		//modulation(cb_mod);
 	}
 	setmodus(modus);
 	return 0;

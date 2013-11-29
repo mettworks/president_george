@@ -71,6 +71,8 @@ unsigned char segmente[7];
 // immer nur eine Zahl, also 0 bis 9
 void display_convert_number(unsigned char number,unsigned char segmente[6])
 {
+	//uart_puts("display_convert_number():\r\n");
+
 	if(number == 0)
 	{
 		daten[segmente[0]]=0x01;
@@ -173,8 +175,10 @@ void display_convert_number(unsigned char number,unsigned char segmente[6])
 	}
 }
 
-void display_write_meter(unsigned int value)
+void display_write_meter(uint32_t value)
 {
+	//uart_puts("display_write_meter():\r\n");
+
 	/*
 	Zahlen sind die 76
 	Balken
@@ -212,7 +216,17 @@ void display_write_meter(unsigned int value)
 		daten[98]=0x0;
 		daten[97]=0x0;
 	}
-	
+	else
+	{
+		daten[82]=0x01;
+		daten[88]=0x0;
+		daten[91]=0x0;
+		daten[92]=0x0;
+		daten[95]=0x0;
+		daten[93]=0x0;
+		daten[98]=0x0;
+		daten[97]=0x0;
+	}
 	// TODO: hier besser umwandlung, vergleichen und nur schreiben wenn notwendig!
 	
 	display_send();
@@ -220,6 +234,8 @@ void display_write_meter(unsigned int value)
 
 void display_write_modus(unsigned char modus)
 {
+	//uart_puts("display_write_modus():\r\n");
+
 	// RX 3
 	// TX 2
 	if(modus == 0)
@@ -237,6 +253,8 @@ void display_write_modus(unsigned char modus)
 
 void display_write_mod(unsigned char mod)
 {
+	//uart_puts("display_write_mod():\r\n");
+
 	// 1 FM 21
 	// 2 AM 12
 	// 3 USB 39
@@ -275,6 +293,8 @@ void display_write_mod(unsigned char mod)
 
 void display_write_frequenz(unsigned int frequenz)
 {
+	//uart_puts("display_write_frequenz():\r\n");
+
 	// Punkt anmachen
 	daten[37]=0x01;
 
@@ -337,6 +357,8 @@ void display_write_frequenz(unsigned int frequenz)
 
 void display_write_channel(unsigned char channel)
 {
+	//uart_puts("display_write_channel():\r\n");
+
 	// 
 	// zerlegen
 	unsigned char x;
@@ -385,16 +407,20 @@ void display_write_channel(unsigned char channel)
 
 void display_init(void)
 {
+	//uart_puts("display_init():\r\n");
+
 	i2c_start_wait(0x70);
 	i2c_write(0xe0);     			// Device Select 0
   i2c_write(0xcf);	  	// multiplex 1100 1111 , 3 BP's
   i2c_write(0xF8);   				// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
   i2c_write(0xF0);   				// 1111 0000 = Blinken, alles abgeschaltet 
-	i2c_stop();
+	//i2c_stop();
 }
 
 void display_send(void)
 {
+	//uart_puts("display_send():\r\n");
+
 	display_init();
 	// die Daten die dann wirklich über den i2c Bus gehen
 	unsigned char daten2send=0;
@@ -475,7 +501,7 @@ void display_send(void)
 		i2c_start_wait(0x70);
 		i2c_write(addr);
 		i2c_write(daten2send);
-		i2c_stop();
+		//i2c_stop();
 		y=y+6;
 		addr=addr+2;
 	}

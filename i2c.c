@@ -33,6 +33,8 @@
 *************************************************************************/
 void i2c_init(void)
 {
+	//uart_puts("i2c_init():\r\n");
+
   /* initialize TWI clock: 100 kHz clock, TWPS = 0 => prescaler = 1 */
   
   TWSR = 0;                         /* no prescaler */
@@ -47,6 +49,8 @@ void i2c_init(void)
 *************************************************************************/
 unsigned char i2c_start(unsigned char address)
 {
+	//uart_puts("i2c_start():\r\n");
+
     uint8_t   twst;
 
   // send START condition
@@ -83,6 +87,8 @@ unsigned char i2c_start(unsigned char address)
 *************************************************************************/
 void i2c_start_wait(unsigned char address)
 {
+	//uart_puts("i2c_start_wait():\r\n");
+
     uint8_t   twst;
 
 
@@ -134,6 +140,8 @@ void i2c_start_wait(unsigned char address)
 *************************************************************************/
 unsigned char i2c_rep_start(unsigned char address)
 {
+	//uart_puts("i2c_rep_start():\r\n");
+
     return i2c_start( address );
 
 }/* i2c_rep_start */
@@ -144,6 +152,8 @@ unsigned char i2c_rep_start(unsigned char address)
 *************************************************************************/
 void i2c_stop(void)
 {
+	//uart_puts("i2c_stop():\r\n");
+
     /* send stop condition */
   TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
   
@@ -162,6 +172,8 @@ void i2c_stop(void)
 *************************************************************************/
 unsigned char i2c_write( unsigned char data )
 { 
+	//uart_puts("i2c_write():\r\n");
+
     uint8_t   twst;
     
   // send data to the previously addressed device
@@ -186,6 +198,8 @@ unsigned char i2c_write( unsigned char data )
 *************************************************************************/
 unsigned char i2c_readAck(void)
 {
+	//uart_puts("i2c_readAck():\r\n");
+
   TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
   while(!(TWCR & (1<<TWINT)));    
 
@@ -201,6 +215,8 @@ unsigned char i2c_readAck(void)
 *************************************************************************/
 unsigned char i2c_readNak(void)
 {
+	//uart_puts("i2c_readNak():\r\n");
+
   TWCR = (1<<TWINT) | (1<<TWEN);
   while(!(TWCR & (1<<TWINT)));
   
