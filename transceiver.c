@@ -48,6 +48,8 @@ extern unsigned int cb_mod;
 extern int mod;
 extern int modus;
 
+char string[10];
+
 extern unsigned int memory[MEM_SIZE];
 
 void off(void)
@@ -68,7 +70,7 @@ void off(void)
 
 int init_geraet(void)
 {
-
+	uart_puts("init_geraet()\r\n");
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 	//
 	// Init:
@@ -156,6 +158,9 @@ int init_geraet(void)
 		//modulation(cb_mod);
 	}
 	setmodus(modus);
+	uart_puts("Frequenz: ");
+	uart_puts(itoa(freq, string, 10));
+	uart_puts("\r\n");
 	return 0;
 }
 
@@ -246,6 +251,7 @@ void channel(unsigned int ch)
 
 int tune(unsigned int freq2tune,unsigned int step2tune)
 {
+	uart_puts("tune(): Beginn\r\n");
   //
 	// hier müssen Interrupts gesperrt werden!
 	// der Port Expander schickt noch Quatsch weil der Taster prellt, dann wird irgendwo abgebrochen
@@ -257,7 +263,7 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   // 10240 / 2048 = 5, also der Teiler von 2048 waere dann ein Kanalraster von 5khz
   // 10240 / step = teiler
   // die Bitfolge muss 17 Bits lang sein
-	
+	/*
   #ifdef debug 
   uart_puts("tune(): Frequenz ");
   char text[10];
@@ -265,6 +271,7 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   uart_puts(text);
   uart_puts("kHz\r\n");
 	#endif
+	*/
   unsigned int teiler_ref; 
   // TODO: define !
   teiler_ref=10240/step2tune;
@@ -290,6 +297,10 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
       data1();
     }
   }
+	
+	uart_puts("tune(): Ende 1. Packet\r\ntune(): Beginn 2. Packet\r\n");
+
+	
   //
   // Achtung, Abschlussbit!
   data1();
@@ -333,9 +344,13 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
 	display_write_frequenz(freq2tune);
 	//
 	// Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
+	
 	memory[2] = freq2tune / 256;
 	memory[3] = freq2tune % 256;
-	sei();
+	
+	
+	//sei();
+	uart_puts("tune(): Ende\r\n");
   return 0;
 }
 

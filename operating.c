@@ -101,7 +101,7 @@ void keycheck(void)
 	#endif
 	
 	//cli();
-	_delay_ms(50);
+	_delay_ms(200);
 	//sei();
 	// 
 	if((keys & 0x20000) == 0)
@@ -251,29 +251,39 @@ void keycheck(void)
 		}
 	}
 	// 
-	// Drehschalter +
-	else if((keys & 0x2) == 0)
+	// Drehschalter + ODER CH+
+	else if(((keys & 0x2) == 0) || ((keys & 0x80) == 0))
 	{
 		#ifdef debug
-		uart_puts("Drehschalter +\r\n");
+		uart_puts("Drehschalter + ODER Taster +\r\n");
 		#endif
 		if(modus==1)
 		{
+			#ifdef debug
+			uart_puts("Modus HAM -> Frequenz: ");
+			uart_puts(itoa(freq, string, 10));
+			uart_puts(" Step: ");
+			uart_puts(itoa(step, string, 10));
+			uart_puts("\r\n");
+			#endif
 			freq=freq+step;
 			tune(freq,step);
 		}
 		else
 		{
+			#ifdef debug
+			uart_puts("Modus CB\r\n");
+			#endif
 			cb_channel++;
 			channel(cb_channel);
 		}
 	}	
 	// 
-	// Drehschalter -
-	else if((keys & 0x4) == 0)
+	// Drehschalter - ODER CH-
+	else if(((keys & 0x4) == 0) || ((keys & 0x40) == 0))
 	{
 		#ifdef debug
-		uart_puts("Drehschalter -\r\n");
+		uart_puts("Drehschalter - ODER Taster -\r\n");
 		#endif
 		if(modus==1)
 		{

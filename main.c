@@ -171,7 +171,7 @@ void messung_s(void)
 	messwert=adc_read();
 	uint32_t sum=0;
 	unsigned int i;
-	char s[7];
+	//char s[7];
 
 	
 	if(adccounter == 0)
@@ -183,11 +183,11 @@ void messung_s(void)
 			i--;
 		}
 		sum=sum/ADCMESSUNGEN;
-		
+		/*
 		uart_puts("Durchschnitt: ");
 		uart_puts( itoa( sum, s, 10 ) );
 		uart_puts("\r\n");
-		
+		*/
 		display_write_meter(sum);
 		adccounter=ADCMESSUNGEN;
 	}
@@ -285,6 +285,6 @@ int main(void)
 	
 	while(1)
 	{
-		messung_s();
+		//messung_s();
 	}
 } 
