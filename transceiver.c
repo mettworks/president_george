@@ -38,6 +38,13 @@
 #define TREIBER_SWR 14
 #define TREIBER_SRF 15
 
+#define HAM_FREQ_MIN 28000
+//#define HAM_FREQ_MAX 28050
+#define HAM_FREQ_MAX 29690
+
+#define CB_CH_MIN 1
+#define CB_CH_MAX 3
+
 unsigned int wert = 0;
 int ichsende=0;
 
@@ -180,6 +187,8 @@ int tx(void)
 		_delay_ms(7);
 		wert |= (1 << TREIBER_TR);
 		treiber(wert);
+		_delay_ms(250);
+		beep();
 	}
 	return 0;
 }
@@ -235,6 +244,16 @@ int ch2freq(unsigned int ch)
 
 void channel(unsigned int ch)
 {
+	if(ch > CB_CH_MAX)
+	{
+		ch=CB_CH_MIN;
+		uart_puts("channel(): Kanal ist groesser als CB_CH_MAX -> CB_CH_MIN ");
+	}
+	if(ch < CB_CH_MIN)
+	{
+		ch=CB_CH_MAX;
+		uart_puts("channel(): Kanal ist kleiner als CB_CH_MIN -> CB_CH_MAX ");
+	}
 	unsigned int cb_freq;
   #ifdef debug 
   uart_puts("channel(): Kanal ");
@@ -247,10 +266,22 @@ void channel(unsigned int ch)
 	tune(cb_freq,5);
 	display_write_channel(ch);
 	memory[4]=ch;
+	cb_channel=ch;
 }
 
 int tune(unsigned int freq2tune,unsigned int step2tune)
 {
+	if(modus==1)
+	{
+		if(freq2tune > HAM_FREQ_MAX)
+		{
+			freq2tune=HAM_FREQ_MIN;
+		}
+		if(freq2tune < HAM_FREQ_MIN)
+		{
+			freq2tune=HAM_FREQ_MAX;
+		}
+	}
 	uart_puts("tune(): Beginn\r\n");
   //
 	// hier müssen Interrupts gesperrt werden!
@@ -347,7 +378,10 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
 	
 	memory[2] = freq2tune / 256;
 	memory[3] = freq2tune % 256;
-	
+	if(modus==1)
+	{
+		freq=freq2tune;
+	}
 	
 	//sei();
 	uart_puts("tune(): Ende\r\n");
@@ -427,19 +461,47 @@ int modulation(unsigned int mod)
 	return 0;
 }
 
-int rogerbeep(void)
+int beep(void)
 {
-	//
+/*
 	// 2 Töne
 	DDRB |= (1<<PB5); 
+	
 	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	TCCR1B = (1<<CS11) | (1<<CS10);
-	OCR1A = 128-1; 
+	//TCCR1B=
+	OCR1A = 128-1;
+	*/
+/* 
 	_delay_ms(250);
 	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
 	_delay_ms(100);
 	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
 	_delay_ms(250);
 	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
+	*/
 	return 0;
+}
+int rogerbeep(void)
+{
+/*
+	//
+	// 2 Töne
+	DDRB |= (1<<PB5); 
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
+	TCCR1B = (1<<CS11) | (1<<CS10);	
+	OCR1A = 128-1; 
+
+	_delay_ms(1000);
+	
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
+	_delay_ms(100);
+	
+	TCCR1A = (1<<WGM10) | (1<<COM1A1); 
+	_delay_ms(250);
+	
+	TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
+	*/
+	return 0;
+	
 }

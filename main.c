@@ -20,8 +20,8 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 int ichbinaus=0;
 int led_farbe=0;
-unsigned int led_dimm1=5;
-unsigned int led_dimm2=5;
+unsigned int led_dimm1=128;
+unsigned int led_dimm2=128;
 unsigned int memory[MEM_SIZE];
 int mod;
 //unsigned int freq = 28225;
@@ -38,6 +38,8 @@ int modus;
 unsigned int adccounter=20;
 unsigned int adcvalues[20];
 #define ADCMESSUNGEN 20;
+
+
 
 //
 // IRQ für Spannungsabfall
@@ -109,7 +111,7 @@ ISR (INT7_vect)
 	
 	keycheck();
 }
-
+/*
 ISR (TIMER0_OVF_vect)
 {
 	#ifdef debug
@@ -117,7 +119,7 @@ ISR (TIMER0_OVF_vect)
 	#endif
 	keycheck();
 }
-
+*/
 ISR(BADISR_vect)
 {
 	#ifdef debug
@@ -208,6 +210,12 @@ void adc_init(void)
 	ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
 }
 
+ISR (TIMER1_COMPA_vect) {
+  // LED umschalten
+  PORTB ^= (1 << 5);
+	//uart_puts("blubb\r\n");
+}
+
 int main(void) 
 {
 	cli();
@@ -268,7 +276,7 @@ int main(void)
 	
 	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
   // Timer 0 konfigurieren
-  TCCR0 = (1<<CS01); // Prescaler 8
+  //TCCR0 = (1<<CS01); // Prescaler 8
 	//TCCR0|=(1<<CS00) | (1<<CS01);
 	
 	mod=1;
@@ -281,8 +289,43 @@ int main(void)
 	led_color(led_farbe);
 	display_write_modus(0);
 	adc_init();
-	sei();
 	
+ // http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
+ 
+ 	DDRB |= (1<<PB5);
+
+ 
+  // In diesem Register werden diesmal keine Bits gesetzt
+  TCCR1A = 0;
+ 
+  // WGM12 = CTC Modus, CS10+CS11 für Vorteiler
+	// Vorteiler 64
+	// Takt / 64
+  TCCR1B |= (1 << WGM12)|(1 << CS11)|(1 << CS10);
+ 
+  // Initialisiere Timer
+  TCNT1 = 0;
+ 
+  //Laden des Vergleichswerts
+  //OCR1A = 31249;
+	//OCR1A = 4298;
+	
+	/*
+	Zähler = ((1/f)/2) / ( 1/(CPU Takt/Vorteiler))-1
+	*/
+	
+	
+	//OCR1A = 2148; // 67Hz
+	OCR1A = 1440; // 100Hz
+	
+ 
+  // CTC Interrupt einschalten
+  TIMSK |= (1 << OCIE1A);
+ 
+  // Global Interrupts einschalten
+
+	sei();
+
 	while(1)
 	{
 		//messung_s();
