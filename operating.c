@@ -118,6 +118,7 @@ void keycheck(void)
 		else
 		{
 			tx();
+			//TIMSK |= (1<<OCIE1A);
 			display_write_modus(1);
 			txstat=1;
 		}
@@ -309,6 +310,7 @@ void keycheck(void)
 			rogerbeep();
 			display_write_modus(0);
 			rx();
+			//TIMSK &= ~(1<<OCIE1A);
 			txstat=0;
 		}
 	}	
@@ -322,12 +324,16 @@ void keycheck(void)
 	//_delay_ms(250);
 	if(keys != 0xffffffff)
 	{
+		cli();
 		// Taste/Tasten sind immer noch gedrückt, also nochmal... :-)
-		TIMSK |= (1<<TOIE0);
+		TIMSK |= (1 << OCIE2);
+		sei();
 	}
 	else
 	{
+		cli();
 		// keine Taste/Tasten mehr gedrückt, Timer stoppen
-		TIMSK &= ~(1<<TOIE0);
+		TIMSK &= ~(1 << OCIE2);
+		sei();
 	}
 }
