@@ -131,7 +131,9 @@ int save2memory(void)
 	//
 	// Wichtig, hier werden Interrupts gesperrt!
 	cli();
+	#ifdef debug
 	uart_puts("save2memory():\r\n");
+	#endif
 	int i=0;
 	unsigned int H_Add=0;    
 	unsigned int L_Add=0;
@@ -144,6 +146,7 @@ int save2memory(void)
 	while(i < MEM_SIZE)
 	{
 		ByteWriteSPI(H_Add,L_Add,memory[i]);
+		#ifdef debug
 		char string[20];
 		uart_puts("H_Add: ");
 		sprintf(string,"%u,",H_Add);
@@ -155,6 +158,7 @@ int save2memory(void)
 		sprintf(string,"%u,",memory[i]);
 		uart_puts(string);
 		uart_puts("\r\n");
+		#endif
 		L_Add++;
 		i++;
 	}
@@ -163,7 +167,9 @@ int save2memory(void)
 
 void read_memory(void)
 {
+	#ifdef debug
 	uart_puts("read_memory():\r\n");
+	#endif
 	int i=0;
 	unsigned int H_Add=0;    
 	unsigned int L_Add=0;
@@ -177,6 +183,7 @@ void read_memory(void)
 	while(i < MEM_SIZE)
 	{
 		memory[i]=ByteReadSPI(H_Add,L_Add);
+		#ifdef debug
 		char string[20];
 		uart_puts("H_Add: ");
 		sprintf(string,"%u,",H_Add);
@@ -188,6 +195,7 @@ void read_memory(void)
 		sprintf(string,"%u,",memory[i]);
 		uart_puts(string);
 		uart_puts("\r\n");
+		#endif
 		L_Add++;
 		i++;
 	}

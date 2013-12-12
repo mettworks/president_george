@@ -204,10 +204,10 @@ void adc_init(void)
 	ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
 }
 
-ISR (TIMER2_COMP_vect)
+ISR (TIMER0_COMP_vect)
 {
 	#ifdef debug
-	uart_puts("INT Timer2\r\n");
+	uart_puts("INT Timer0\r\n");
 	#endif
 	keycheck();
 }
@@ -215,43 +215,32 @@ ISR (TIMER2_COMP_vect)
 
 ISR (TIMER1_COMPA_vect) 
 {
+	#ifdef debug
 	uart_puts("INT Timer1\r\n");
+	#endif
   PORTB ^= (1 << 5);
 }
 
 void init_timer0(void)
 {
-//Timer 0 initialisieren 
-	TCNT2 = 0x00; //Timer 0 mit Null initialisieren
-	OCR2 = 255;  //Vergleichsregister initialisieren
-	//TIMSK = (1<<OCIE0);    //Output Compare interrupt enable
-
-	//TCCR2A=0;
-//Timer Start
-	//TCCR2 = ((1<<WGM01) | (1<<COM00) | (1<<CS02) |  (1<<CS00));
-	TCCR2 |= (1 << CS22)|(1 << CS20);
-
-	/*
-	// TODO, hier muss noch ein besserer Vorteiler gesucht werden... Je nachdem wie schnell die Tasten sind...
-  // Timer 0 konfigurieren
-  TCCR0 = (1<<CS01); // Prescaler 8
-	//TCCR0|=(1<<CS00) | (1<<CS01);
-	*/
-		//TIMSK |= (1 << OCIE2);
-
+	//
+	// das ist Timer0
+	// Register TIMSK, Bit OCIE0 startet den INT
+	TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
+	TCNT0 = 0x00; //Timer 0 mit Null initialisieren
+	OCR0 = 255;  //Vergleichsregister initialisieren
 }
 
 void init_timer1(void)
 {
+	// Timer 1
 	// http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
 	DDRB |= (1<<PB5);
 	TCCR1A = 0;
- 
-  // WGM12 = CTC Modus, CS10+CS11 für Vorteiler
+	// WGM12 = CTC Modus, CS10+CS11 für Vorteiler
 	// Takt / 64
   TCCR1B |= (1 << WGM12)|(1 << CS11)|(1 << CS10);
- 
-  // Initialisiere Timer
+	// Initialisiere Timer
   TCNT1 = 0;
 	
 	/*
@@ -261,15 +250,47 @@ void init_timer1(void)
 	//OCR1A = 2148; // 67Hz
 	OCR1A = 1440; // 100Hz
 	//OCR1A = 20000;
-	
-	// CTC Interrupt einschalten
-	TIMSK |= (1 << OCIE1A);
 }
 
+void set_timer0(char status)
+{
+	if(status == 0)
+	{
+		#ifdef debug
+		uart_puts("Timer0 gestoppt\r\n");
+		#endif
+		TIMSK &= ~(1 << OCIE0);
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("Timer0 gestartet\r\n");
+		#endif
+		TIMSK |= (1 << OCIE0);
+	}
+}
+
+void set_timer1(char status)
+{
+	if(status == 0)
+	{
+		#ifdef debug
+		uart_puts("Timer1 gestoppt\r\n");
+		#endif
+		TIMSK &= ~(1 << OCIE1A);
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("Timer1 gestartet\r\n");
+		#endif
+		TIMSK |= (1 << OCIE1A);
+	}
+}
 
 int main(void) 
 {
-	cli();
+	//cli();
   #ifdef debug
 	inituart();
   uart_puts("\r\n\r\n");
@@ -336,10 +357,11 @@ int main(void)
 	led_helligkeit2(led_dimm2);
 	led_color(led_farbe);
 	display_write_modus(0);
-	adc_init();
+	//adc_init();
 
 	init_timer0();
 	init_timer1();
+	set_timer1(1);
 	
 	sei();
 

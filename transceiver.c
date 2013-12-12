@@ -61,7 +61,7 @@ extern unsigned int memory[MEM_SIZE];
 
 void off(void)
 {
-	cli();
+	//cli();
 	#ifdef debug
 	uart_puts("AUS\r\n");
 	#endif
@@ -77,7 +77,9 @@ void off(void)
 
 int init_geraet(void)
 {
+	#ifdef debug
 	uart_puts("init_geraet()\r\n");
+	#endif
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 	//
 	// Init:
@@ -165,9 +167,11 @@ int init_geraet(void)
 		//modulation(cb_mod);
 	}
 	setmodus(modus);
+	#ifdef debug
 	uart_puts("Frequenz: ");
 	uart_puts(itoa(freq, string, 10));
 	uart_puts("\r\n");
+	#endif
 	return 0;
 }
 
@@ -188,7 +192,7 @@ int tx(void)
 		wert |= (1 << TREIBER_TR);
 		treiber(wert);
 		_delay_ms(250);
-		beep();
+		//beep();
 	}
 	return 0;
 }
@@ -247,12 +251,16 @@ void channel(unsigned int ch)
 	if(ch > CB_CH_MAX)
 	{
 		ch=CB_CH_MIN;
+		#ifdef debug
 		uart_puts("channel(): Kanal ist groesser als CB_CH_MAX -> CB_CH_MIN ");
+		#endif
 	}
 	if(ch < CB_CH_MIN)
 	{
 		ch=CB_CH_MAX;
+		#ifdef debug
 		uart_puts("channel(): Kanal ist kleiner als CB_CH_MIN -> CB_CH_MAX ");
+		#endif
 	}
 	unsigned int cb_freq;
   #ifdef debug 
@@ -282,11 +290,13 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
 			freq2tune=HAM_FREQ_MAX;
 		}
 	}
+	#ifdef debug
 	uart_puts("tune(): Beginn\r\n");
+	#endif
   //
 	// hier müssen Interrupts gesperrt werden!
 	// der Port Expander schickt noch Quatsch weil der Taster prellt, dann wird irgendwo abgebrochen
-	cli();
+	//cli();
   begin1();
   //
   // Festlegung Kanalraster
@@ -329,9 +339,10 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
     }
   }
 	
+	#ifdef debug
 	uart_puts("tune(): Ende 1. Packet\r\ntune(): Beginn 2. Packet\r\n");
+	#endif
 
-	
   //
   // Achtung, Abschlussbit!
   data1();
@@ -384,7 +395,9 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
 	}
 	
 	//sei();
+	#ifdef debug
 	uart_puts("tune(): Ende\r\n");
+	#endif
   return 0;
 }
 

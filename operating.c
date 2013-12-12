@@ -55,7 +55,7 @@ unsigned long keysauslesen(void)
 	// TODO: Wenn hier der i2c Transfer gestoppt wird hängt sich das Teil beim drücken der runter Taste am Mike auf?? 
 	//i2c_stop();
 	// INT's abschalten
-	cli();
+	//cli();
 	keys=(uint32_t)blubb2 + ((uint32_t)blubb1 << 16);
 	return keys;
 }
@@ -89,7 +89,7 @@ void setmodus(int data)
 
 void keycheck(void)
 {
-	cli();
+	//cli();
 	keys=keysauslesen();
 	
 	#ifdef debug
@@ -307,7 +307,7 @@ void keycheck(void)
 			#ifdef debug
 			uart_puts("TX->RX\r\n");
 			#endif
-			rogerbeep();
+			//rogerbeep();
 			display_write_modus(0);
 			rx();
 			//TIMSK &= ~(1<<OCIE1A);
@@ -324,16 +324,19 @@ void keycheck(void)
 	//_delay_ms(250);
 	if(keys != 0xffffffff)
 	{
-		cli();
+		//cli();
 		// Taste/Tasten sind immer noch gedrückt, also nochmal... :-)
-		TIMSK |= (1 << OCIE2);
-		sei();
+		//TIMSK |= (1 << OCIE2);
+		set_timer0(1);
+		//sei();
 	}
 	else
 	{
-		cli();
+		//cli();
 		// keine Taste/Tasten mehr gedrückt, Timer stoppen
-		TIMSK &= ~(1 << OCIE2);
-		sei();
+		//TIMSK &= ~(1 << OCIE2);
+		set_timer0(0);
+		//sei();
 	}
+	//sei();
 }
