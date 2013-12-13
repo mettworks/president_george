@@ -224,6 +224,7 @@ ISR (TIMER1_COMPA_vect)
 void init_timer0(void)
 {
 	//
+	// http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
 	// das ist Timer0
 	// Register TIMSK, Bit OCIE0 startet den INT
 	TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
@@ -233,23 +234,16 @@ void init_timer0(void)
 
 void init_timer1(void)
 {
-	// Timer 1
-	// http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
-	DDRB |= (1<<PB5);
-	TCCR1A = 0;
-	// WGM12 = CTC Modus, CS10+CS11 für Vorteiler
-	// Takt / 64
-  TCCR1B |= (1 << WGM12)|(1 << CS11)|(1 << CS10);
-	// Initialisiere Timer
-  TCNT1 = 0;
+	// 
+	// Anregung: http://www.mikrocontroller.net/topic/215420
+	DDRB |= (1<<PB5); 
 	
-	/*
-	Zähler = ((1/f)/2) / ( 1/(CPU Takt/Vorteiler))-1
-	*/
-	
-	//OCR1A = 2148; // 67Hz
-	OCR1A = 1440; // 100Hz
-	//OCR1A = 20000;
+	TCCR1A |= (1 << WGM11) | (1<<COM1A1);
+	// 64 ist Vorteiler
+	TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS10) | (1 << CS11);
+
+	ICR1 = (((18432000/64) / 100) - 1); //TOP
+	OCR1A = (((18432000/64) / 100) - 1)/2;
 }
 
 void set_timer0(char status)
@@ -272,6 +266,7 @@ void set_timer0(char status)
 
 void set_timer1(char status)
 {
+	/*
 	if(status == 0)
 	{
 		#ifdef debug
@@ -286,6 +281,7 @@ void set_timer1(char status)
 		#endif
 		TIMSK |= (1 << OCIE1A);
 	}
+	*/
 }
 
 int main(void) 
@@ -361,7 +357,7 @@ int main(void)
 
 	init_timer0();
 	init_timer1();
-	set_timer1(1);
+	//set_timer1(1);
 	
 	sei();
 
