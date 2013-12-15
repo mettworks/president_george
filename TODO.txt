@@ -1,17 +1,17 @@
 Bugs/Verbesserungen auf Platine 0.1:
 
 - Footprint EEPROM, Displaycontroller und Poti (50k) passt nicht
-- Masseflächen !!
-- Bohrloch links oben ein bisschen versetzen
-- die beiden äusseren Haltekerben am Aussenrahmen ein bisschen anpassen
-- Masseflächen für den Drehtaster und Displayrahmen
-- freie Flächen um die Halterungen, Displayrahmen und unter dem Drehtaster
+- Masseflächen !! -> erledigt
+- Bohrloch links oben ein bisschen versetzen -> erledigt
+- die beiden äusseren Haltekerben am Aussenrahmen ein bisschen anpassen -> erledigt
+- Masseflächen für den Drehtaster und Displayrahmen -> erledigt
+- freie Flächen um die Halterungen, Displayrahmen und unter dem Drehtaster -> erledigt
 - R4, D4 und R5 sind im Weg
 - Buchse für ISP und Seriell
 - Buchse für Goldcap und Mirkrofontasten
-- Spannungsregler für LED's raus ??
-- Widerstände für LED Farbauswahl anpassen ??
-- LED's Display Beleuchtung um 90° drehen
+- Spannungsregler für LED's raus ?? -> erledigt
+- Widerstände für LED Farbauswahl anpassen ?? -> erledigt, 2 x LED Treiber
+- LED's Display Beleuchtung um 90° drehen -> erledigt
 
 BUG: Die Taste für Mikro + wird ab und zu Endlos "gedrückt" (FFFFBFFF)
 

@@ -67,6 +67,69 @@ unsigned char segmente[7];
 // fuer debugausgaben
 //char Buffer[7];	
 
+void display_clear(void)
+{
+	unsigned int i=0;
+	while(i < 104)
+	{
+		daten[i]=0;
+		i++;
+	}
+	display_send();
+}
+
+void display_ctcss(unsigned int ctcss_disp)
+{
+	if(ctcss_disp==0)
+	{
+		daten[94]=0;
+	}
+	else
+	{
+		daten[94]=1;
+	}
+	display_send();
+}
+
+void display_rpt(unsigned int rpt_disp)
+{
+	if(rpt_disp==0)
+	{
+		daten[73]=0;
+	}
+	else
+	{
+		daten[73]=1;
+	}
+	display_send();
+}
+
+void display_echo(unsigned int echo_disp)
+{
+	if(echo_disp==0)
+	{
+		daten[89]=0;
+	}
+	else
+	{
+		daten[89]=1;
+	}
+	display_send();
+}
+
+void display_beep(unsigned int beep_disp)
+{
+	if(beep_disp==0)
+	{
+		daten[87]=0;
+	}
+	else
+	{
+		daten[87]=1;
+	}
+	display_send();
+}
+
 //
 // immer nur eine Zahl, also 0 bis 9
 void display_convert_number(unsigned char number,unsigned char segmente[6])
@@ -291,7 +354,7 @@ void display_write_mod(unsigned char mod)
 	display_send();
 }
 
-void display_write_frequenz(unsigned int frequenz)
+void display_write_frequenz(unsigned int freq2write)
 {
 	//uart_puts("display_write_frequenz():\r\n");
 
@@ -302,7 +365,7 @@ void display_write_frequenz(unsigned int frequenz)
 	// zerlegen
 	unsigned char x;
 	
-	x = frequenz / 10000;
+	x = freq2write / 10000;
 	segmente[0]=24;
 	segmente[1]=27;
 	segmente[2]=29;
@@ -312,7 +375,7 @@ void display_write_frequenz(unsigned int frequenz)
 	segmente[6]=26;
 	display_convert_number(x,segmente);
 	
-	x = frequenz % 10000 / 1000;
+	x = freq2write % 10000 / 1000;
 	segmente[0]=33;
 	segmente[1]=36;
 	segmente[2]=38;
@@ -322,7 +385,7 @@ void display_write_frequenz(unsigned int frequenz)
 	segmente[6]=35;
 	display_convert_number(x,segmente);
 	
-	x = frequenz % 1000 / 100;
+	x = freq2write % 1000 / 100;
 	segmente[0]=42;
 	segmente[1]=45;
 	segmente[2]=47;
@@ -332,7 +395,7 @@ void display_write_frequenz(unsigned int frequenz)
 	segmente[6]=44;
 	display_convert_number(x,segmente);
 	
-	x = frequenz % 100 / 10;
+	x = freq2write % 100 / 10;
 	segmente[0]=51;
 	segmente[1]=54;
 	segmente[2]=56;
@@ -342,7 +405,7 @@ void display_write_frequenz(unsigned int frequenz)
 	segmente[6]=53;
 	display_convert_number(x,segmente);
 	
-	x = frequenz % 10;
+	x = freq2write % 10;
 	segmente[0]=60;
 	segmente[1]=63;
 	segmente[2]=65;

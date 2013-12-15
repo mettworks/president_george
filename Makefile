@@ -40,7 +40,7 @@
 F_OSC = 18432000
 # -Ddebug sets Debugging via rs232
 # MEM_SIZE, Grosse des Array's Memory
-CDEFS = -DF_CPU=$(F_OSC)UL -DMEM_SIZE=17 -Ddebug 
+CDEFS = -DF_CPU=$(F_OSC)UL -DMEM_SIZE=21 -Ddebug 
 
 # MCU name
 MCU = atmega128

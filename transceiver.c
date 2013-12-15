@@ -54,6 +54,10 @@ extern unsigned int cb_channel;
 extern unsigned int cb_mod;
 extern int mod;
 extern int modus;
+extern unsigned int ctcss;
+extern unsigned int rpt;
+extern unsigned int echo_ham;
+extern unsigned int beep_ham;
 
 char string[10];
 
@@ -61,7 +65,7 @@ extern unsigned int memory[MEM_SIZE];
 
 void off(void)
 {
-	//cli();
+	cli();
 	#ifdef debug
 	uart_puts("AUS\r\n");
 	#endif
@@ -110,6 +114,11 @@ int init_geraet(void)
 	step=5;
 	cb_channel=memory[4];
 	cb_mod=memory[6];
+	ctcss=memory[16];
+	rpt=memory[18];
+	echo_ham=memory[12];
+	beep_ham=memory[14];
+	//ctcss_tone=memory[17];
 	if((26565 > freq) || (29690 < freq) || (freq == 0))
 	{
 		#ifdef debug
@@ -167,6 +176,10 @@ int init_geraet(void)
 		//modulation(cb_mod);
 	}
 	setmodus(modus);
+	set_ctcss(ctcss);
+	set_rpt(rpt);
+	set_echo(echo_ham);
+	set_beep(beep_ham);
 	#ifdef debug
 	uart_puts("Frequenz: ");
 	uart_puts(itoa(freq, string, 10));
@@ -175,11 +188,109 @@ int init_geraet(void)
 	return 0;
 }
 
+void set_echo(unsigned int echo_value)
+{
+	if(echo_value==1)
+	{
+		#ifdef debug
+		uart_puts("set_echo(): AN\r\n");
+		#endif
+    wert |= (1 << TREIBER_ECHO);
+		treiber(wert);
+		display_echo(1);
+		echo_ham=1;
+		memory[12]=1;
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("set_echo(): AUS\r\n");
+		#endif
+    wert &= ~(1 << TREIBER_ECHO);
+		treiber(wert);
+		display_echo(0);
+		echo_ham=0;
+		memory[12]=0;
+	}
+}
+
+void set_beep(unsigned int beep_value)
+{
+	if(beep_value==1)
+	{
+		#ifdef debug
+		uart_puts("set_beep(): AN\r\n");
+		#endif
+		display_beep(1);
+		beep_ham=1;
+		memory[14]=1;
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("set_beep(): AUS\r\n");
+		#endif
+		display_beep(0);
+		beep_ham=0;
+		memory[14]=0;
+	}
+}
+
+void set_ctcss(unsigned int ctcss_value)
+{
+	if(ctcss_value==1)
+	{
+		#ifdef debug
+		uart_puts("set_ctcss(): AN\r\n");
+		#endif
+		display_ctcss(1);
+		ctcss=1;
+		memory[16]=1;
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("set_ctcss(): AUS\r\n");
+		#endif
+		display_ctcss(0);
+		ctcss=0;
+		memory[16]=0;
+	}
+}
+
+void set_rpt(unsigned int rpt_value)
+{
+	if(rpt_value==1)
+	{
+		#ifdef debug
+		uart_puts("set_rpt(): AN\r\n");
+		#endif
+		display_rpt(1);
+		rpt=1;
+		memory[18]=1;
+	}
+	else
+	{
+		#ifdef debug
+		uart_puts("set_rpt(): AUS\r\n");
+		#endif
+		display_rpt(0);
+		rpt=0;
+		memory[18]=0;
+	}
+}
+
 int tx(void)
 {
 	if(ichsende != 1)
 	{
 		ichsende=1;
+		if(rpt==1)
+		{
+			tune(freq-100,5);
+		}
+		
+		
 		// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 		//
 		// Senden:
@@ -190,8 +301,13 @@ int tx(void)
 		treiber(wert);
 		_delay_ms(7);
 		wert |= (1 << TREIBER_TR);
+		//wert |= (1 << TREIBER_BIT9);
 		treiber(wert);
 		_delay_ms(250);
+		if(ctcss==1)
+		{
+			tone(67);
+		}
 		//beep();
 	}
 	return 0;
@@ -199,6 +315,18 @@ int tx(void)
 
 int rx(void)
 {
+	if(rpt==1)
+	{
+		tune(freq+100,5);
+	}
+	if(ctcss==1)
+	{
+		tone(0);
+	}
+	if(beep_ham == 1)
+	{
+		rogerbeep();
+	}
 	ichsende=0;
 	// alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
 	//
@@ -207,12 +335,16 @@ int rx(void)
 	// Pause, 4ms
 	// 0100 1001  0100 0000
 	// Pause, 4ms
+	//rogerbeep();
+
 	wert &= ~(1 << TREIBER_TR);
+	//wert &= ~(1 << TREIBER_BIT9);
 	treiber(wert);
 	_delay_ms(4);
 	wert |= (1 << TREIBER_MUTE);
 	treiber(wert);
 	_delay_ms(4);
+
 	return 0;
 }
 
@@ -338,11 +470,11 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
       data1();
     }
   }
-	
+	/*
 	#ifdef debug
 	uart_puts("tune(): Ende 1. Packet\r\ntune(): Beginn 2. Packet\r\n");
 	#endif
-
+	*/
   //
   // Achtung, Abschlussbit!
   data1();
@@ -497,6 +629,11 @@ int beep(void)
 }
 int rogerbeep(void)
 {
+	tone(1000);
+	_delay_ms(500);
+	tone(1500);
+	_delay_ms(500);
+	tone(0);
 /*
 	//
 	// 2 Töne

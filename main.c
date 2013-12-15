@@ -29,6 +29,10 @@ unsigned int freq;
 unsigned int cb_channel;
 unsigned int cb_mod;
 unsigned int step = 5;
+unsigned int ctcss;
+unsigned int rpt;
+unsigned int echo_ham;
+unsigned int beep_ham;
 int txstat=0;
 
 int modus;
@@ -38,8 +42,6 @@ int modus;
 unsigned int adccounter=20;
 unsigned int adcvalues[20];
 #define ADCMESSUNGEN 20;
-
-
 
 //
 // IRQ für Spannungsabfall
@@ -58,61 +60,50 @@ ISR (INT5_vect)
 	#ifdef debug
 	uart_puts("INT5_vect()\r\n");
 	#endif
-	if(ichbinaus == 1)
+	_delay_ms(100);
+	//
+	// Entprellung
+	if ( !(PINE & (1<<PINE5)) ) 
 	{
-		#ifdef debug
-		uart_puts("AN\r\n");
-		#endif
-	  PORTA |= (1<<PA7);	// einschalten
-		led_pwm(1,0);
-		led_pwm(2,0);
-		led_pwm(3,0);
-		led_pwm(4,0);
-		led_pwm(5,0);
-		led_pwm(6,0);
-		led_pwm(7,0);
-		led_pwm(8,0);
-		led_pwm(9,0);
-		led_pwm(10,0);
-		led_pwm(11,0);
-		led_pwm(12,0);
-		init_geraet();
-		ichbinaus=0;
-	}
-	else
-	{
-		ichbinaus=1;
-		#ifdef debug
-		uart_puts("AUS\r\n");
-		#endif
-		save2memory();
-		PORTA &= ~(1<<PA7);	// ausschalten...
-		led_pwm(1,0);
-		led_pwm(2,0);
-		led_pwm(3,0);
-		led_pwm(4,0);
-		led_pwm(5,0);
-		led_pwm(6,0);
-		led_pwm(7,0);
-		led_pwm(8,0);
-		led_pwm(9,0);
-		led_pwm(10,0);
-		led_pwm(11,0);
-		led_pwm(12,0);
+		uart_puts("wirklich auf 0\r\n");
+	
+		if(ichbinaus == 1)
+		{
+			#ifdef debug
+			uart_puts("AN\r\n");
+			#endif
+			PORTA |= (1<<PA7);	// einschalten
+			led_helligkeit1(led_dimm1);
+			led_helligkeit2(led_dimm2);
+			init_geraet();
+			ichbinaus=0;
+			EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+		}
+		else
+		{
+			ichbinaus=1;
+			#ifdef debug
+			uart_puts("AUS\r\n");
+			#endif
+			display_clear();
+			save2memory();
+			PORTA &= ~(1<<PA7);	// ausschalten...
+			led_helligkeit1(0);
+			led_helligkeit2(0);
+			// LED 9 ist die am Taster 1...
+			led_pwm(10,255);
+			EIMSK = (1<< INT5);
+		}
 	}
 }
 
 ISR (INT7_vect)
 {
-	
 	#ifdef debug
 	uart_puts("INT7\r\n");
 	#endif
-	
 	keycheck();
 }
-
-
 
 ISR(BADISR_vect)
 {
@@ -194,7 +185,6 @@ void messung_s(void)
 	}
 }
 
-
 void adc_init(void)
 {
 	ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
@@ -229,10 +219,12 @@ void init_timer0(void)
 	// Register TIMSK, Bit OCIE0 startet den INT
 	TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
 	TCNT0 = 0x00; //Timer 0 mit Null initialisieren
-	OCR0 = 255;  //Vergleichsregister initialisieren
+	OCR0 = 64;  //Vergleichsregister initialisieren
 }
 
-void init_timer1(void)
+//
+// vielleicht noch auf 1/10 Hz genau? :-D
+void init_tone(void)
 {
 	// 
 	// Anregung: http://www.mikrocontroller.net/topic/215420
@@ -241,9 +233,19 @@ void init_timer1(void)
 	TCCR1A |= (1 << WGM11) | (1<<COM1A1);
 	// 64 ist Vorteiler
 	TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS10) | (1 << CS11);
-
-	ICR1 = (((18432000/64) / 100) - 1); //TOP
-	OCR1A = (((18432000/64) / 100) - 1)/2;
+}
+void tone(unsigned int tonefreq)
+{
+	if(tonefreq == 0)
+	{
+		ICR1=0;
+		OCR1A=0;
+	}
+	else
+	{
+		ICR1 = (((18432000/64) / tonefreq) - 1); //TOP
+		OCR1A = (((18432000/64) / tonefreq) - 1)/2;
+	}
 }
 
 void set_timer0(char status)
@@ -344,7 +346,7 @@ int main(void)
 	
 
 	
-	mod=1;
+	//mod=1;
 	i2c_init();
 	init_geraet();
 	display_init();
@@ -356,7 +358,8 @@ int main(void)
 	//adc_init();
 
 	init_timer0();
-	init_timer1();
+	init_tone();
+	//init_timer1();
 	//set_timer1(1);
 	
 	sei();

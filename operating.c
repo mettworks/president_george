@@ -23,7 +23,10 @@ extern int txstat;
 extern int modus;
 extern unsigned int memory[MEM_SIZE];
 extern int cb_channel;
-
+extern unsigned int ctcss;
+extern unsigned int rpt;
+extern unsigned int echo_ham;
+extern unsigned int beep_ham;
 
 // 2 Byte zurück
 unsigned short keysauslesendirekt(unsigned char destaddr)
@@ -75,6 +78,7 @@ void setmodus(int data)
 		modulation(mod);
 		display_write_channel(0);
 		modus=1;
+		memory[1]=1;
 	}
 	else
 	{
@@ -84,6 +88,7 @@ void setmodus(int data)
 		channel(cb_channel);
 		modulation(cb_mod);
 		modus=2;
+		memory[1]=2;
 	}
 }
 
@@ -193,6 +198,62 @@ void keycheck(void)
 	}
 	*/
 	
+	else if((keys & 0x80000) == 0)
+	{
+		#ifdef debug
+		uart_puts("ECHO\r\n");
+		#endif
+		if(echo_ham == 0)
+		{
+			set_echo(1);
+		}
+		else
+		{
+			set_echo(0);
+		}
+	}
+	else if((keys & 0x100000) == 0)
+	{
+		#ifdef debug
+		uart_puts("Beep\r\n");
+		#endif
+		if(beep_ham == 0)
+		{
+			set_beep(1);
+		}
+		else
+		{
+			set_beep(0);
+		}
+	}
+	else if((keys & 0x100) == 0)
+	{
+		#ifdef debug
+		uart_puts("Meter\r\n");
+		#endif
+		if(ctcss == 0)
+		{
+			set_ctcss(1);
+		}
+		else
+		{
+			set_ctcss(0);
+		}
+	}	
+	else if((keys & 0x200) == 0)
+	{
+		#ifdef debug
+		uart_puts("DW\r\n");
+		#endif
+		if(rpt == 0)
+		{
+			set_rpt(1);
+		}
+		else
+		{
+			set_rpt(0);
+		}
+	}	
 	else if((keys & 0x400) == 0)
 	{
 		#ifdef debug

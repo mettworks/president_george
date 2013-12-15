@@ -34,10 +34,13 @@ Aufbau Array "memory":
 13 echo / bei cb
 14 RogerBeep / bei ham
 15 rogerbeep / bei cb
+16 ctcss aktiv / bei ham
+17 ctcss ton / bei ham (numerisch)
+18 relaisablage / bei ham
 
-16 Beleuchtung Helligkeit Tasten
-17 Beleuchtung Helligkeit Display
-18 Beleuchtung Farbe
+19 Beleuchtung Helligkeit Tasten
+20 Beleuchtung Helligkeit Display
+21 Beleuchtung Farbe
 
 */
 
