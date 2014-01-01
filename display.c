@@ -420,52 +420,47 @@ void display_write_frequenz(unsigned int freq2write)
 
 void display_write_channel(unsigned char channel)
 {
-	//uart_puts("display_write_channel():\r\n");
-
-	// 
-	// zerlegen
-	unsigned char x;
+  unsigned char x;
 	
-	x = channel / 10;
-	segmente[0]=69;
-	segmente[1]=72;
-	segmente[2]=74;
-	segmente[3]=70;
-	segmente[4]=68;
-	segmente[5]=66;
-	segmente[6]=71;
-	display_convert_number(x,segmente);
-	if(channel == 0)
-	{
-		daten[segmente[0]]=0x0;
-		daten[segmente[1]]=0x0;
-		daten[segmente[2]]=0x0;
-		daten[segmente[3]]=0x0;
-		daten[segmente[4]]=0x0;
-		daten[segmente[5]]=0x0;
-		daten[segmente[6]]=0x0;
-	}
-	x = channel % 10;
-	segmente[0]=78;
-	segmente[1]=81;
-	segmente[2]=83;
-	segmente[3]=80;
-	segmente[4]=77;
-	segmente[5]=75;
-	segmente[6]=79;
-	display_convert_number(x,segmente);
-	if(channel == 0)
-	{
-		daten[segmente[0]]=0x0;
-		daten[segmente[1]]=0x0;
-		daten[segmente[2]]=0x0;
-		daten[segmente[3]]=0x0;
-		daten[segmente[4]]=0x0;
-		daten[segmente[5]]=0x0;
-		daten[segmente[6]]=0x0;
-	}
-	
-	display_send();
+  x = channel / 10;
+  segmente[0]=69;
+  segmente[1]=72;
+  segmente[2]=74;
+  segmente[3]=70;
+  segmente[4]=68;
+  segmente[5]=66;
+  segmente[6]=71;
+  display_convert_number(x,segmente);
+  if(channel == 0)
+  {
+    daten[segmente[0]]=0x0;
+    daten[segmente[1]]=0x0;
+    daten[segmente[2]]=0x0;
+    daten[segmente[3]]=0x0;
+    daten[segmente[4]]=0x0;
+    daten[segmente[5]]=0x0;
+    daten[segmente[6]]=0x0;
+  }
+  x = channel % 10;
+  segmente[0]=78;
+  segmente[1]=81;
+  segmente[2]=83;
+  segmente[3]=79;
+  segmente[4]=77;
+  segmente[5]=75;
+  segmente[6]=80;
+  display_convert_number(x,segmente);
+  if(channel == 0)
+  {
+    daten[segmente[0]]=0x0;
+    daten[segmente[1]]=0x0;
+    daten[segmente[2]]=0x0;
+    daten[segmente[3]]=0x0;
+    daten[segmente[4]]=0x0;
+    daten[segmente[5]]=0x0;
+    daten[segmente[6]]=0x0;
+  }
+  display_send();
 }
 
 void display_init(void)

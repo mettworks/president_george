@@ -6,15 +6,14 @@
 #include "display.h"
 #include "memory.h"
 #include "operating.h"
+//#include "channels.h"
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #endif
-
-
-
+#include "channels.h"
 
 //
 // Bits fuer den Treiberbaustein
@@ -43,7 +42,7 @@
 #define HAM_FREQ_MAX 29690
 
 #define CB_CH_MIN 1
-#define CB_CH_MAX 3
+#define CB_CH_MAX 80
 
 unsigned int wert = 0;
 int ichsende=0;
@@ -347,35 +346,25 @@ int rx(void)
 
 	return 0;
 }
-
+ 
 int ch2freq(unsigned int ch)
 {
+
   #ifdef debug 
   uart_puts("ch2freq(): Kanal ");
   char text[10];
   utoa(ch,text,10);
   uart_puts(text);
   uart_puts(" -> ");
-	#endif
-	unsigned int data=0;
-	if(ch == 1)
-	{
-		data=26965;
-	}
-	else if(ch==2)
-	{
-		data=26975;
-	}
-	else if(ch==3)
-	{
-		data=26985;
-	}	
-	#ifdef debug
+  #endif
+  unsigned int data;
+  data=channels[ch-1];
+  #ifdef debug
   utoa(data,text,10);
   uart_puts(text);
-	uart_puts("\r\n");
-	#endif
-	return data;
+  uart_puts("\r\n");
+  #endif
+  return data;
 }
 
 void channel(unsigned int ch)
