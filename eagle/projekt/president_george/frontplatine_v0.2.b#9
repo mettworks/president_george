@@ -165,13 +165,6 @@ v0.2 by DO7ALE</text>
 <rectangle x1="-192" y1="37" x2="-190" y2="40" layer="41"/>
 <rectangle x1="-192" y1="37" x2="-190" y2="40" layer="42"/>
 <rectangle x1="-192" y1="37" x2="-190" y2="40" layer="43"/>
-<rectangle x1="-45" y1="18.5" x2="-41" y2="24.5" layer="40"/>
-<rectangle x1="-56" y1="8.5" x2="-52" y2="14.5" layer="42"/>
-<rectangle x1="-66.5" y1="15" x2="-62.5" y2="21" layer="42"/>
-<rectangle x1="-86" y1="2" x2="-82" y2="8" layer="42"/>
-<rectangle x1="-106" y1="2" x2="-102" y2="8" layer="42"/>
-<rectangle x1="-136" y1="8.5" x2="-132" y2="14.5" layer="42"/>
-<rectangle x1="-146" y1="2" x2="-142" y2="8" layer="42"/>
 <rectangle x1="-8" y1="8.5" x2="-5" y2="11.5" layer="39"/>
 <rectangle x1="-31.5" y1="11" x2="-28.5" y2="14" layer="39"/>
 <rectangle x1="-29" y1="0" x2="-26" y2="3" layer="39"/>
