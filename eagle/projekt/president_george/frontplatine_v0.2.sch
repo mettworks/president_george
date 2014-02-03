@@ -29215,13 +29215,11 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <variantdefs>
 </variantdefs>
 <classes>
-<class number="0" name="default" width="0.125" drill="0.25">
+<class number="0" name="default" width="0.15" drill="0.25">
 </class>
 <class number="1" name="GND" width="0.25" drill="0.5">
 </class>
 <class number="2" name="SUPPLY LED" width="0.25" drill="0.5">
-</class>
-<class number="3" name="LCD" width="0.075" drill="0.25">
 </class>
 </classes>
 <parts>
@@ -31188,7 +31186,7 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <wire x1="195.58" y1="35.56" x2="195.58" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$30" class="3">
+<net name="N$30" class="0">
 <segment>
 <pinref part="IC8" gate="G$1" pin="BP0"/>
 <wire x1="170.18" y1="35.56" x2="170.18" y2="49.53" width="0.1524" layer="91"/>

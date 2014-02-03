@@ -3397,13 +3397,11 @@ Sourcxe: http://www.molex.com/pdm_docs/sd/530470210_sd.pdf</description>
 <variantdefs>
 </variantdefs>
 <classes>
-<class number="0" name="default" width="0.125" drill="0.25">
+<class number="0" name="default" width="0.15" drill="0.25">
 </class>
 <class number="1" name="GND" width="0.25" drill="0.5">
 </class>
 <class number="2" name="SUPPLY LED" width="0.25" drill="0.5">
-</class>
-<class number="3" name="LCD" width="0.075" drill="0.25">
 </class>
 </classes>
 <designrules name="Eagle_WEdirekt_125_check">
@@ -6039,7 +6037,7 @@ Bitte nur von autorisierten erfahrenen Nutzern anwenden!!!
 <wire x1="-117.5" y1="46.25" x2="-117.5" y2="45.8" width="0.127" layer="16"/>
 <wire x1="-77.6" y1="32.8" x2="-77.50941875" y2="32.792940625" width="0.127" layer="16"/>
 </signal>
-<signal name="N$30" class="3">
+<signal name="N$30">
 <contactref element="IC8" pad="25"/>
 <contactref element="DISPLAY1" pad="COM1"/>
 <wire x1="-72.1" y1="29" x2="-72.1" y2="29.8" width="0.127" layer="16"/>

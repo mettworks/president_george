@@ -29505,6 +29505,16 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <attribute name="OC_FARNELL" value="9733051"/>
 <attribute name="OC_NEWARK" value="57H4701"/>
 </part>
+<part name="U4" library="Molex_By_element14_Batch_1" deviceset="52207-1085" device="">
+<attribute name="MPN" value="52207-1085"/>
+<attribute name="OC_FARNELL" value="1079938"/>
+<attribute name="OC_NEWARK" value="58J9503"/>
+<attribute name="PACKAGE" value="SOCKET FPC, SMT, 1MM, 10 WAY"/>
+<attribute name="SUPPLIER" value="Molex"/>
+</part>
+<part name="GND21" library="supply1" deviceset="GND" device=""/>
+<part name="GND88" library="supply1" deviceset="GND" device=""/>
+<part name="GND89" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -30175,6 +30185,13 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <instance part="X4" gate="-2" x="370.84" y="-86.36" rot="R90"/>
 <instance part="X5" gate="-1" x="716.28" y="-173.99"/>
 <instance part="X5" gate="-2" x="594.36" y="-212.09" rot="R270"/>
+<instance part="U4" gate="A" x="411.48" y="-190.5" smashed="yes">
+<attribute name="NAME" x="406.7556" y="-178.8414" size="2.0828" layer="95" ratio="10" rot="SR0"/>
+<attribute name="VALUE" x="407.035" y="-207.9752" size="2.0828" layer="96" ratio="10" rot="SR0"/>
+</instance>
+<instance part="GND21" gate="1" x="430.53" y="-184.15" smashed="yes" rot="MR180"/>
+<instance part="GND88" gate="1" x="392.43" y="-204.47" smashed="yes"/>
+<instance part="GND89" gate="1" x="430.53" y="-204.47" smashed="yes"/>
 </instances>
 <busses>
 </busses>
@@ -30878,6 +30895,24 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <wire x1="170.18" y1="-149.86" x2="168.91" y2="-149.86" width="0.1524" layer="91"/>
 <wire x1="168.91" y1="-149.86" x2="168.91" y2="-156.21" width="0.1524" layer="91"/>
 </segment>
+<segment>
+<pinref part="GND21" gate="1" pin="GND"/>
+<wire x1="430.53" y1="-186.69" x2="430.53" y2="-187.96" width="0.1524" layer="91"/>
+<pinref part="U4" gate="A" pin="2"/>
+<wire x1="430.53" y1="-187.96" x2="429.26" y2="-187.96" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="U4" gate="A" pin="11"/>
+<pinref part="GND88" gate="1" pin="GND"/>
+<wire x1="393.7" y1="-200.66" x2="392.43" y2="-200.66" width="0.1524" layer="91"/>
+<wire x1="392.43" y1="-200.66" x2="392.43" y2="-201.93" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="U4" gate="A" pin="12"/>
+<pinref part="GND89" gate="1" pin="GND"/>
+<wire x1="429.26" y1="-200.66" x2="430.53" y2="-200.66" width="0.1524" layer="91"/>
+<wire x1="430.53" y1="-200.66" x2="430.53" y2="-201.93" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="N$10" class="0">
 <segment>
@@ -31170,9 +31205,14 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <junction x="433.07" y="-170.18"/>
 <pinref part="SWR/CAL" gate="G$1" pin="A"/>
 <wire x1="406.4" y1="-121.92" x2="425.45" y2="-121.92" width="0.1524" layer="91"/>
-<wire x1="433.07" y1="-199.39" x2="321.31" y2="-199.39" width="0.1524" layer="91"/>
+<wire x1="433.07" y1="-199.39" x2="388.62" y2="-199.39" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="PF1(ADC1)"/>
+<wire x1="388.62" y1="-199.39" x2="321.31" y2="-199.39" width="0.1524" layer="91"/>
 <wire x1="321.31" y1="-152.4" x2="321.31" y2="-199.39" width="0.1524" layer="91"/>
+<pinref part="U4" gate="A" pin="1"/>
+<wire x1="393.7" y1="-187.96" x2="388.62" y2="-187.96" width="0.1524" layer="91"/>
+<wire x1="388.62" y1="-187.96" x2="388.62" y2="-199.39" width="0.1524" layer="91"/>
+<junction x="388.62" y="-199.39"/>
 </segment>
 </net>
 <net name="N$1" class="0">

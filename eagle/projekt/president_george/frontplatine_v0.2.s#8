@@ -29759,7 +29759,7 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <attribute name="OC_FARNELL" value="9733051"/>
 <attribute name="OC_NEWARK" value="57H4701"/>
 </part>
-<part name="X5" library="con-molex" deviceset="53?-02" device="047" value="Mikro">
+<part name="X5" library="con-molex" deviceset="53?-02" device="047" value="PTT/+-">
 <attribute name="MF" value="MOLEX"/>
 <attribute name="MPN" value="53047-0210"/>
 <attribute name="OC_FARNELL" value="9733051"/>

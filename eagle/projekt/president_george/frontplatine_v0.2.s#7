@@ -29751,7 +29751,7 @@ wire to board 1.25 mm (.049 inch) pitch header</description>
 <part name="GND86" library="supply1" deviceset="GND" device=""/>
 <part name="GND87" library="supply1" deviceset="GND" device=""/>
 <part name="X2" library="con-molex" deviceset="53?-02" device="047" value="Goldcap"/>
-<part name="X1" library="con-molex" deviceset="53?-03" device="047"/>
+<part name="X1" library="con-molex" deviceset="53?-03" device="047" value="Supply"/>
 <part name="X3" library="con-molex" deviceset="53?-04" device="047"/>
 <part name="X4" library="con-molex" deviceset="53?-02" device="047" value="I2C">
 <attribute name="MF" value="MOLEX"/>
