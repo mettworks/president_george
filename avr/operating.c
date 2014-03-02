@@ -145,7 +145,7 @@ void keycheck(void)
 		{
 			led_dimm1=255;
 		}
-		led_helligkeit1(led_dimm1);
+		//led_helligkeit1(led_dimm1);
 	}
 	else if((keys & 0x8) == 0)
 	{
@@ -164,22 +164,14 @@ void keycheck(void)
 		{
 			led_dimm2=255;
 		}
-		led_helligkeit2(led_dimm2);
+		//led_helligkeit2(led_dimm2);
 	}
 	else if((keys & 0x20000000) == 0)
 	{
 		#ifdef debug
 		uart_puts("DC\r\n");
 		#endif
-		if(led_farbe == 0)
-		{
-			led_farbe=1;
-		}
-		else
-		{
-			led_farbe=0;
-		}
-		led_color(led_farbe);
+		//led_color(led_farbe);
 	}
 	/*
 	// + Taste am Mikrofon

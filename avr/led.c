@@ -9,29 +9,73 @@
 #endif
 
 
-void led_helligkeit1(unsigned int led_dimm)
+void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
 {
-  led_pwm(1,led_dimm);
-	led_pwm(2,led_dimm);
-	led_pwm(3,led_dimm);
-	led_pwm(4,led_dimm);
-	led_pwm(5,led_dimm);
-	led_pwm(6,led_dimm);
-	led_pwm(7,led_dimm);
-	led_pwm(8,led_dimm);
-	led_pwm(9,led_dimm);
-	led_pwm(10,led_dimm);
+  unsigned int led_dimm0;
+  unsigned int led_dimm1;
+
+  if(led_color == 0)
+  {
+    led_dimm0=led_dimm;
+    led_dimm1=0x0;
+  }
+  else
+  {
+    led_dimm0=0x0;
+    led_dimm1=led_dimm;
+  }
+
+  if(led_color == 0)
+  {
+    // LED01 , 1. LED Driver (IC3) , OUT6
+    led_pwm(7,led_dimm0, ADDR_LED00); // LED01
+    led_pwm(9,led_dimm0, ADDR_LED01); // LED19
+
+  }
+  else
+  {
+    led_pwm(8,led_dimm1, ADDR_LED00); // LED02
+    led_pwm(10,led_dimm1, ADDR_LED01); // LED20
+  }
 }
 
-void led_helligkeit2(unsigned int led_dimm)
+void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
 {
-	led_pwm(11,led_dimm);
-	led_pwm(12, led_dimm);
+  unsigned int led_dimm0;
+  unsigned int led_dimm1;
+
+  if(led_color == 0)
+  {
+    led_dimm0=led_dimm;
+    led_dimm1=0x0;
+  }
+  else
+  {
+    led_dimm0=0x0;
+    led_dimm1=led_dimm;
+  }
+
+  if(led_color == 0)
+  {
+    led_pwm(11,led_dimm1, ADDR_LED00); 
+    led_pwm(11,led_dimm1, ADDR_LED01); 
+    led_pwm(12,led_dimm0, ADDR_LED00); 
+    led_pwm(12,led_dimm0, ADDR_LED01); 
+  }
+  else
+  {
+    led_pwm(11,led_dimm1, ADDR_LED00); 
+    led_pwm(11,led_dimm1, ADDR_LED01); 
+    led_pwm(12,led_dimm0, ADDR_LED00); 
+    led_pwm(12,led_dimm0, ADDR_LED01); 
+  }
 }
 
-void init_led(void)
+void init_led(unsigned int address)
 {
-	i2c_start_wait(0xc0); // TLC59116 Slave Adresse ->C0 hex
+  //  0xC0 
+  //  0xC2
+  i2c_start_wait(address); // TLC59116 Slave Adresse ->C0 hex
   i2c_write(0x80);  // autoincrement ab Register 0h
   i2c_write(0x00);  // Register 00 /  Mode1  
   i2c_write(0x00);  // Register 01 /  Mode2 
@@ -65,32 +109,10 @@ void init_led(void)
   i2c_stop();  // I2C-Stop
 }
 
-void led_pwm(int led, int pwm)
+void led_pwm(int led, int pwm, unsigned int address)
 {
-	i2c_start_wait(0xc0);
-	i2c_write(0x01 + led);
-	i2c_write(pwm);
-	i2c_stop();
-}
-
-void led_color(int color)
-{
-	// TODO: Erstmal Quatsch, Transistoren defekt!
-	/*
-	if (color == 0 )
-	{
-		*/
-		PORTC |= (1<<PC0);	  		// Grün 1
-		PORTC &= ~(1<<PC1);     	// Rot 0
-		/*
-	}
-	else if (color == 1)
-	{
-		#ifdef debug
-		uart_puts("LED Farbe: Rot\r\n");
-		#endif
-		PORTC |= (1<<PC1);	  		// Rot 1
-		PORTC &= ~(1<<PC0);     	// Grün 0
-	}
-	*/
+  i2c_start_wait(address);
+  i2c_write(0x01 + led);
+  i2c_write(pwm);
+  i2c_stop();
 }

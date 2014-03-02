@@ -64,18 +64,18 @@ extern unsigned int memory[MEM_SIZE];
 
 void off(void)
 {
-	cli();
-	#ifdef debug
-	uart_puts("AUS\r\n");
-	#endif
-	save2memory();
-	while(1)
-	{
-		_delay_ms(1000);
-		#ifdef debug
-		uart_puts("1 Sekunde\r\n");
-		#endif
-	}
+  cli();
+  #ifdef debug
+  uart_puts("AUS\r\n");
+  #endif
+  save2memory();
+  while(1)
+  {
+    _delay_ms(1000);
+    #ifdef debug
+    uart_puts("1 Sekunde\r\n");
+    #endif
+  }
 }
 
 int init_geraet(void)
