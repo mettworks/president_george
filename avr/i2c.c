@@ -171,7 +171,8 @@ void i2c_stop(void)
             1 write failed
 *************************************************************************/
 unsigned char i2c_write( unsigned char data )
-{ 
+{
+  uart_puts("i2c_write():\r\n");
 	//uart_puts("i2c_write():\r\n");
 
     uint8_t   twst;

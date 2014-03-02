@@ -133,6 +133,7 @@ void keycheck(void)
 		#ifdef debug
 		uart_puts("Dimmer\r\n");
 		#endif
+		/*
 		if(led_dimm1 == 255)
 		{
 			led_dimm1=128;
@@ -146,12 +147,14 @@ void keycheck(void)
 			led_dimm1=255;
 		}
 		//led_helligkeit1(led_dimm1);
+		*/
 	}
 	else if((keys & 0x8) == 0)
 	{
 		#ifdef debug
 		uart_puts("CH19\r\n");
 		#endif
+		/*
 		if(led_dimm2 == 255)
 		{
 			led_dimm2=128;
@@ -165,6 +168,7 @@ void keycheck(void)
 			led_dimm2=255;
 		}
 		//led_helligkeit2(led_dimm2);
+		*/
 	}
 	else if((keys & 0x20000000) == 0)
 	{

@@ -11,63 +11,70 @@
 
 void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
 {
-  unsigned int led_dimm0;
-  unsigned int led_dimm1;
-
   if(led_color == 0)
   {
-    led_dimm0=led_dimm;
-    led_dimm1=0x0;
+    led_pwm(1,led_dimm, ADDR_LED00);
+    led_pwm(2,0x0,	ADDR_LED00);
+    led_pwm(3,led_dimm, ADDR_LED00);
+    led_pwm(4,0x0,	ADDR_LED00);
+    led_pwm(5,led_dimm, ADDR_LED00);
+    led_pwm(6,0x0,	ADDR_LED00);
+    led_pwm(7,led_dimm, ADDR_LED00);
+    led_pwm(8,0x0,	ADDR_LED00);
+    led_pwm(9,led_dimm, ADDR_LED00);
+    led_pwm(10,0x0,	ADDR_LED00);
+    led_pwm(1,led_dimm, ADDR_LED01);
+    led_pwm(2,0x0,	ADDR_LED01);
+    led_pwm(3,led_dimm, ADDR_LED01);
+    led_pwm(4,0x0,	ADDR_LED01);
+    led_pwm(5,led_dimm, ADDR_LED01);
+    led_pwm(6,0x0,	ADDR_LED01);
+    led_pwm(7,led_dimm, ADDR_LED01);
+    led_pwm(8,0x0,	ADDR_LED01);
+    led_pwm(9,led_dimm, ADDR_LED01);
+    led_pwm(10,0x0,	ADDR_LED01);
   }
   else
   {
-    led_dimm0=0x0;
-    led_dimm1=led_dimm;
-  }
+    led_pwm(1,0x0,	ADDR_LED00);
+    led_pwm(2,led_dimm,	ADDR_LED00);
+    led_pwm(3,0x0,	ADDR_LED00);
+    led_pwm(4,led_dimm,	ADDR_LED00);
+    led_pwm(5,0x0,	ADDR_LED00);
+    led_pwm(6,led_dimm,	ADDR_LED00);
+    led_pwm(7,0x0,	ADDR_LED00);
+    led_pwm(8,led_dimm,	ADDR_LED00);
+    led_pwm(9,0x0,	ADDR_LED00);
+    led_pwm(10,led_dimm,ADDR_LED00);
+    led_pwm(1,0x0,	ADDR_LED01);
+    led_pwm(2,led_dimm,	ADDR_LED01);
+    led_pwm(3,0x0,	ADDR_LED01);
+    led_pwm(4,led_dimm,	ADDR_LED01);
+    led_pwm(5,0x0,	ADDR_LED01);
+    led_pwm(6,led_dimm,	ADDR_LED01);
+    led_pwm(7,0x0,	ADDR_LED01);
+    led_pwm(8,led_dimm,	ADDR_LED01);
+    led_pwm(9,0x0,	ADDR_LED01);
+    led_pwm(10,led_dimm,ADDR_LED01);
 
-  if(led_color == 0)
-  {
-    // LED01 , 1. LED Driver (IC3) , OUT6
-    led_pwm(7,led_dimm0, ADDR_LED00); // LED01
-    led_pwm(9,led_dimm0, ADDR_LED01); // LED19
-
-  }
-  else
-  {
-    led_pwm(8,led_dimm1, ADDR_LED00); // LED02
-    led_pwm(10,led_dimm1, ADDR_LED01); // LED20
   }
 }
 
 void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
 {
-  unsigned int led_dimm0;
-  unsigned int led_dimm1;
-
   if(led_color == 0)
   {
-    led_dimm0=led_dimm;
-    led_dimm1=0x0;
+    led_pwm(11,led_dimm, ADDR_LED00); 
+    led_pwm(11,led_dimm, ADDR_LED01); 
+    led_pwm(12,0x0, ADDR_LED00); 
+    led_pwm(12,0x0, ADDR_LED01); 
   }
   else
   {
-    led_dimm0=0x0;
-    led_dimm1=led_dimm;
-  }
-
-  if(led_color == 0)
-  {
-    led_pwm(11,led_dimm1, ADDR_LED00); 
-    led_pwm(11,led_dimm1, ADDR_LED01); 
-    led_pwm(12,led_dimm0, ADDR_LED00); 
-    led_pwm(12,led_dimm0, ADDR_LED01); 
-  }
-  else
-  {
-    led_pwm(11,led_dimm1, ADDR_LED00); 
-    led_pwm(11,led_dimm1, ADDR_LED01); 
-    led_pwm(12,led_dimm0, ADDR_LED00); 
-    led_pwm(12,led_dimm0, ADDR_LED01); 
+    led_pwm(11,0x0, ADDR_LED00); 
+    led_pwm(11,0x0, ADDR_LED01); 
+    led_pwm(12,led_dimm, ADDR_LED00); 
+    led_pwm(12,led_dimm, ADDR_LED01); 
   }
 }
 

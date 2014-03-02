@@ -20,9 +20,11 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 //#define ADDR_LED01 0xC0
 
+//char* zaehler=0;
+
 int ichbinaus=0;
-unsigned int led_dimm1=128;
-unsigned int led_dimm2=128;
+//unsigned int led_dimm1=128;
+//unsigned int led_dimm2=128;
 unsigned int memory[MEM_SIZE];
 int mod;
 //unsigned int freq = 28225;
@@ -88,10 +90,10 @@ ISR (INT5_vect)
       display_clear();
       save2memory();
       PORTA &= ~(1<<PA7);	// ausschalten...
-      led_helligkeit1(0,0);
-      led_helligkeit2(0,0);
+      //led_helligkeit1(0,0);
+      //led_helligkeit2(0,0);
       // LED 9 ist die am Taster 1...
-      led_pwm(10,255,0);
+      //led_pwm(10,255,0);
       EIMSK = (1<< INT5);
     }
   }
@@ -351,7 +353,7 @@ int main(void)
   init_led(ADDR_LED00);
   init_led(ADDR_LED01);
   led_helligkeit1(255,0);
-  led_helligkeit2(255,0);
+  //led_helligkeit2(255,0);
   display_write_modus(0);
   //adc_init();
 
@@ -369,6 +371,9 @@ int main(void)
 
   while(1)
   {
+    //_delay_ms(100);
+    //zaehler++;
+    //uart_puts("-");
     //messung_s();
   }
 } 
