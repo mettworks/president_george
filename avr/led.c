@@ -13,9 +13,9 @@ void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
 {
   if(led_color == 0)
   {
-    led_pwm(1,led_dimm, ADDR_LED00);
+    led_pwm(1,led_dimm,	ADDR_LED00);
     led_pwm(2,0x0,	ADDR_LED00);
-    led_pwm(3,led_dimm, ADDR_LED00);
+    led_pwm(3,led_dimm,	ADDR_LED00);
     led_pwm(4,0x0,	ADDR_LED00);
     led_pwm(5,led_dimm, ADDR_LED00);
     led_pwm(6,0x0,	ADDR_LED00);
@@ -64,17 +64,17 @@ void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
 {
   if(led_color == 0)
   {
-    led_pwm(11,led_dimm, ADDR_LED00); 
-    led_pwm(11,led_dimm, ADDR_LED01); 
-    led_pwm(12,0x0, ADDR_LED00); 
-    led_pwm(12,0x0, ADDR_LED01); 
+    led_pwm(11,0x0,	  ADDR_LED00); 
+    led_pwm(11,0x0,	  ADDR_LED01); 
+    led_pwm(12,led_dimm,  ADDR_LED00); 
+    led_pwm(12,led_dimm,  ADDR_LED01); 
   }
   else
   {
-    led_pwm(11,0x0, ADDR_LED00); 
-    led_pwm(11,0x0, ADDR_LED01); 
-    led_pwm(12,led_dimm, ADDR_LED00); 
-    led_pwm(12,led_dimm, ADDR_LED01); 
+    led_pwm(11,led_dimm,  ADDR_LED00); 
+    led_pwm(11,led_dimm,  ADDR_LED01); 
+    led_pwm(12,0x0,	  ADDR_LED00); 
+    led_pwm(12,0x0,	  ADDR_LED01); 
   }
 }
 
@@ -116,7 +116,7 @@ void init_led(unsigned int address)
   i2c_stop();  // I2C-Stop
 }
 
-void led_pwm(int led, int pwm, unsigned int address)
+void led_pwm(unsigned int led, unsigned int pwm, unsigned int address)
 {
   i2c_start_wait(address);
   i2c_write(0x01 + led);

@@ -18,16 +18,9 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <stdint.h>
 #endif
 
-//#define ADDR_LED01 0xC0
-
-//char* zaehler=0;
-
 int ichbinaus=0;
-//unsigned int led_dimm1=128;
-//unsigned int led_dimm2=128;
 unsigned int memory[MEM_SIZE];
 int mod;
-//unsigned int freq = 28225;
 unsigned int freq;
 unsigned int cb_channel;
 unsigned int cb_mod;
@@ -37,7 +30,6 @@ unsigned int rpt;
 unsigned int echo_ham;
 unsigned int beep_ham;
 int txstat=0;
-
 int modus;
 
 //
@@ -68,7 +60,6 @@ ISR (INT5_vect)
   // Entprellung
   if ( !(PINE & (1<<PINE5)) ) 
   {
-    uart_puts("wirklich auf 0\r\n");
     if(ichbinaus == 1)
     {
       #ifdef debug
@@ -294,7 +285,7 @@ int main(void)
   uart_puts("\r\n\r\n");
   uart_puts("Beginn main()\r\n");
   #endif
-  _delay_ms(1000);
+  //_delay_ms(1000);
   //
   // Ein und Ausgaeng
   // PE4, INT4 ist VCC Kontrolle				-> Eingang
@@ -353,7 +344,7 @@ int main(void)
   init_led(ADDR_LED00);
   init_led(ADDR_LED01);
   led_helligkeit1(255,0);
-  //led_helligkeit2(255,0);
+  led_helligkeit2(255,0);
   display_write_modus(0);
   //adc_init();
 
@@ -368,7 +359,6 @@ int main(void)
   uart_puts("\r\n\r\n");
   uart_puts("Init fertig\r\n");
   #endif
-
   while(1)
   {
     //_delay_ms(100);

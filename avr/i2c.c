@@ -172,10 +172,9 @@ void i2c_stop(void)
 *************************************************************************/
 unsigned char i2c_write( unsigned char data )
 {
-  uart_puts("i2c_write():\r\n");
-	//uart_puts("i2c_write():\r\n");
+  //uart_puts("i2c_write():\r\n");
 
-    uint8_t   twst;
+  uint8_t   twst;
     
   // send data to the previously addressed device
   TWDR = data;

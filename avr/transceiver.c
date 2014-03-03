@@ -297,6 +297,8 @@ int tx(void)
 		// Pause, 7ms
 		// 0110 0001  0100 0000
 		wert &= ~(1 << TREIBER_MUTE);
+		// Hi Power Mode!
+		wert &= ~(1 << TREIBER_BIT9);
 		treiber(wert);
 		_delay_ms(7);
 		wert |= (1 << TREIBER_TR);
