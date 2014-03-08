@@ -279,77 +279,25 @@ void set_timer1(char status)
 
 int main(void) 
 {
-  //cli();
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   uart_puts("Beginn main()\r\n");
   #endif
-  //_delay_ms(1000);
-  //
-  // Ein und Ausgaeng
-  // PE4, INT4 ist VCC Kontrolle				-> Eingang
-  // PE7, INT7 ist 1. Port Expander				-> Eingang
-  // PE6, INT6 ist 2. Port Expander				-> Eingang
-  // PE5, INT5 ist Taster 1, Ein/Aus				-> Eingang
-  // PA4 ist Latch PLL      					-> Ausgang		PIN10 vom Mainboard     
-  // PA6 ist Latch Treiber  					-> Ausgang		PIN7 vom Mainboard     
-  // PA5 ist Data	    					-> Ausgang		PIN9 vom Mainboard   
-  // PA3 ist Clock	    					-> Ausgang		PIN8 vom Mainboard     
-  // PC0 ist LED Rot						-> Ausgang
-  // PC1 ist LED Grün 						-> Ausgang
-  // PA7 ist Ein/Aus						-> Ausgang
-  // PA2 ist "Busy" (Rauschsperre offen)			-> Eingang
-	
-  // PE4
-  DDRE &= ~(1<<PE4);	// Eingang
-  //PORTE |= (1<<PE4);	// internen Pullup aktivieren
-
-  // PE7
-  DDRE &= ~(1<<PE7);	// Eingang
-  PORTE |= (1<<PE7);	// internen Pullup aktivieren
-  // PE6
-  DDRE &= ~(1<<PE6);	// Eingang
-  PORTE |= (1<<PE6);	// internen Pullup aktivieren
-  // PE5
-  DDRE &= ~(1<<PE5);	// Eingang
-  PORTE |= (1<<PE5);	// internen Pullup aktivieren
-
-  // PC0
-  DDRC |= (1<<PC0);
-  // PC1
-  DDRC |= (1<<PC1);
-  // PA7
-  DDRA |= (1<<PA7);
-  PORTA |= (1<<PA7);	// einschalten
-  // PA2
-  DDRA &= ~(1<<PA2);	// Eingang
-	
-  //
-  // Interrupts
-  // INT4 wird bei fallender Flanke ausgelöst -> VCC weg
-  // INT7 wird für den 1. i2c Port Expander genutzt 
-  // (warum nicht bei fallender Flanke? Hmmm!)
-	
-  EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
-  EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
-  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
-  EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
-  EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
-	
-  //mod=1;
-  i2c_init();
+  _delay_ms(500);
+  
+  boot();
+  read_memory();
   init_geraet();
-  display_init();
-  init_led(ADDR_LED00);
-  init_led(ADDR_LED01);
+  
+  
   led_helligkeit1(255,0);
   led_helligkeit2(255,0);
-  display_write_modus(0);
+  //display_write_modus(0);
   //adc_init();
 
-  init_timer0();
-  init_tone();
+  //init_timer0();
+  //init_tone();
   //init_timer1();
   //set_timer1(1);
 

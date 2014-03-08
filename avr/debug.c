@@ -42,14 +42,14 @@ int inituart(void)
   UBRR1L = UBRR_VAL & 0xFF;
   UCSR1B |= (1<<TXEN);			  // UART TX einschalten
   UCSR1C =  (1 << UCSZ1) | (1 << UCSZ0);  // Asynchron 8N1 
-	return 0;
+  return 0;
 }
 
 unsigned char inttochar(unsigned int rein)
 {
-	//int myInt;
-	unsigned char raus;
-	raus = (unsigned char)rein;
-	return raus;
+  //int myInt;
+  unsigned char raus;
+  raus = (unsigned char)rein;
+  return raus;
 }
 #endif
