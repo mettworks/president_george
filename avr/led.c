@@ -11,6 +11,9 @@
 
 void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
 {
+  #ifdef debug 
+  uart_puts("led_helligkeit1()\r\n");
+  #endif
   if(led_color == 0)
   {
     led_pwm(1,led_dimm,	ADDR_LED00);
@@ -56,12 +59,17 @@ void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
     led_pwm(8,led_dimm,	ADDR_LED01);
     led_pwm(9,0x0,	ADDR_LED01);
     led_pwm(10,led_dimm,ADDR_LED01);
-
   }
+  #ifdef debug 
+  uart_puts("led_helligkeit1() ENDE\r\n");
+  #endif
 }
 
 void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
 {
+  #ifdef debug 
+  uart_puts("led_helligkeit2()\r\n");
+  #endif
   if(led_color == 0)
   {
     led_pwm(11,0x0,	  ADDR_LED00); 
@@ -76,6 +84,9 @@ void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
     led_pwm(12,0x0,	  ADDR_LED00); 
     led_pwm(12,0x0,	  ADDR_LED01); 
   }
+  #ifdef debug 
+  uart_puts("led_helligkeit2() ENDE\r\n");
+  #endif
 }
 
 void init_led(unsigned int address)
@@ -118,8 +129,18 @@ void init_led(unsigned int address)
 
 void led_pwm(unsigned int led, unsigned int pwm, unsigned int address)
 {
+  /*
+  #ifdef debug
+  uart_puts("led_pwm()\r\n");
+  #endif debug
+  */
   i2c_start_wait(address);
   i2c_write(0x01 + led);
   i2c_write(pwm);
   i2c_stop();
+  /*
+  #ifdef debug
+  uart_puts("led_pwm() ENDE\r\n");
+  #endif debug
+  */
 }

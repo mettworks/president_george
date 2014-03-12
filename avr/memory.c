@@ -143,8 +143,8 @@ int save2memory(void)
   unsigned char IOReg;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  IOReg   = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
-  IOReg   = SPDR;
+  IOReg = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+  IOReg = SPDR;
   PORTB |= (1<<PB0);                         //ChipSelect aus
   while(i < MEM_SIZE)
   {
@@ -171,7 +171,7 @@ int save2memory(void)
 void read_memory(void)
 {
   #ifdef debug
-  uart_puts("read_memory():\r\n");
+  uart_puts("read_memory()\r\n");
   #endif
   int i=0;
   unsigned int H_Add=0;    
@@ -179,8 +179,8 @@ void read_memory(void)
   unsigned char IOReg;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  IOReg   = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
-  IOReg   = SPDR;
+  IOReg = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
+  IOReg = SPDR;
   PORTB |= (1<<PB0);                         	//ChipSelect aus
 
   while(i < MEM_SIZE)
@@ -202,4 +202,8 @@ void read_memory(void)
     L_Add++;
     i++;
   }
+  #ifdef debug
+  uart_puts("read_memory() ENDE\r\n");
+  #endif
+
 }

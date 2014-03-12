@@ -178,6 +178,7 @@ int init_geraet(void)
   uart_puts("Frequenz: ");
   uart_puts(itoa(freq, string, 10));
   uart_puts("\r\n");
+  uart_puts("init_geraet() ENDE\r\n");
   #endif
   return 0;
 }
@@ -594,6 +595,9 @@ int beep(void)
 
 int rogerbeep(void)
 {
+  #ifdef debug
+  uart_puts("rogerbeep()\r\n");
+  #endif
   tone(1000);
   _delay_ms(500);
   tone(1500);

@@ -27,9 +27,14 @@ extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
 extern unsigned int beep_ham;
+extern unsigned int led_br;
+extern unsigned int led_color_v;
 
 void boot(void)
 {
+  #ifdef debug
+  uart_puts("boot()\r\n");
+  #endif
   //
   // Ein und Ausgaeng
   // PE4, INT4 ist VCC Kontrolle                                -> Eingang
@@ -95,10 +100,13 @@ void boot(void)
 
   i2c_init();
   display_init();
-  init_led(ADDR_LED00);
-  init_led(ADDR_LED01);
+  //init_led(ADDR_LED00);
+  //init_led(ADDR_LED01);
   init_timer0();
   init_tone();
+  #ifdef debug
+  uart_puts("boot() ENDE\r\n");
+  #endif
 }
 
 // 2 Byte zurück
@@ -195,45 +203,49 @@ void keycheck(void)
     uart_puts("DC\r\n");
     #endif
   }
-  else if((keys & 0x80000) == 0)
-  {
-    #ifdef debug
-    uart_puts("2 ??\r\n");
-    #endif
-  }
-  else if((keys & 0x100000) == 0)
-  {
-    #ifdef debug
-    uart_puts("1 ??\r\n");
-    #endif
-  }
   else if((keys & 0x100) == 0)
   {
     #ifdef debug
     uart_puts("Meter\r\n");
     #endif
-    if(ctcss == 0)
+    if(led_color_v == 0)
     {
-      set_ctcss(1);
+      led_color_v=1;
     }
     else
     {
-      set_ctcss(0);
+      led_color_v=0;
     }
+    led_helligkeit1(led_br,led_color_v);
+    led_helligkeit2(led_br,led_color_v);
   }	
   else if((keys & 0x200) == 0)
   {
     #ifdef debug
-    uart_puts("DW\r\n");
+    uart_puts("LED Helligkeit\r\n");
     #endif
-    if(rpt == 0)
+    if(led_br == 0)
     {
-      set_rpt(1);
+      uart_puts("-> 20\r\n");
+      led_br=20;
+    }
+    else if(led_br == 20)
+    {
+      uart_puts("-> 100\r\n");
+      led_br=100;
+    }
+    else if(led_br == 255)
+    {
+      uart_puts("-> 0\r\n");
+      led_br=0;
     }
     else
     {
-      set_rpt(0);
+      uart_puts("-> 255\r\n");
+      led_br=255;
     }
+    led_helligkeit1(led_br,led_color_v);
+    led_helligkeit2(led_br,led_color_v);
   }	
   else if((keys & 0x400) == 0)
   {

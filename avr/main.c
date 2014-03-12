@@ -11,6 +11,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include "transceiver.h"
 #include "operating.h"
 #include "i2c.h"
+#include <avr/wdt.h> 
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -31,6 +32,8 @@ unsigned int echo_ham;
 unsigned int beep_ham;
 int txstat=0;
 int modus;
+unsigned int led_br=255;
+unsigned int led_color_v=0;
 
 //
 // Counter für S-Meter
@@ -44,6 +47,8 @@ unsigned int adcvalues[20];
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+  cli();
+  wdt_disable();
   #ifdef debug
   uart_puts("INT4_vect()\r\n");
   #endif
@@ -97,13 +102,46 @@ ISR (INT7_vect)
   #endif
   keycheck();
 }
-
-ISR(BADISR_vect)
+ISR (INT6_vect)
 {
   #ifdef debug
-  uart_puts("RESET AUSGELOEST!\r\n");
-  uart_puts("nicht definierter Interrupt!\r\n");
-  uart_puts("STOP\r\n");
+  uart_puts("INT6\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (INT0_vect)
+{
+  #ifdef debug
+  uart_puts("INT0\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (INT1_vect)
+{
+  #ifdef debug
+  uart_puts("INT1\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (INT2_vect)
+{
+  #ifdef debug
+  uart_puts("INT2\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (INT3_vect)
+{
+  #ifdef debug
+  uart_puts("INT3\r\n");
   #endif
   while(1)
   {
@@ -197,9 +235,226 @@ ISR (TIMER0_COMP_vect)
 ISR (TIMER1_COMPA_vect) 
 {
   #ifdef debug
-  uart_puts("INT Timer1\r\n");
+  uart_puts("INT Timer1A\r\n");
   #endif
   PORTB ^= (1 << 5);
+}
+ISR (TIMER1_COMPB_vect) 
+{
+  #ifdef debug
+  uart_puts("INT Timer1B\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER1_OVF_vect) 
+{
+  #ifdef debug
+  uart_puts("INT Timer1 OVF\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER1_CAPT_vect) 
+{
+  #ifdef debug
+  uart_puts("INT Timer1 CAPT\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+
+ISR (TIMER2_COMP_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER2_COMP_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER2_OVF_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER2_OVF_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER0_OVF_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER0_OVF_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (SPI_STC_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER0_OVF_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART0_RX_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART0_RX_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART0_UDRE_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART0_UDRE_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART0_TX_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART0_TX_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (ADC_vect)
+{
+  #ifdef debug
+  uart_puts("INT ADC_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (EE_READY_vect)
+{
+  #ifdef debug
+  uart_puts("INT EE_READY_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (ANALOG_COMP_vect)
+{
+  #ifdef debug
+  uart_puts("INT ANALOG_COMP_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER1_COMPC_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER1_COMPC_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER3_CAPT_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER3_CAPT_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER3_COMPA_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER3_COMPA_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER3_COMPB_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER3_COMPB_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER3_COMPC_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER3_COMPC_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TIMER3_OVF_vect)
+{
+  #ifdef debug
+  uart_puts("TIMER3_OVF_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART1_RX_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART1_RX_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART1_UDRE_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART1_UDRE_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (USART1_TX_vect)
+{
+  #ifdef debug
+  uart_puts("INT USART1_TX_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (TWI_vect)
+{
+  #ifdef debug
+  uart_puts("INT TWI_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
+}
+ISR (SPM_READY_vect)
+{
+  #ifdef debug
+  uart_puts("INT SPM_READY_vect\r\n");
+  #endif
+  while(1)
+  {
+  }
 }
 
 void init_timer0(void)
@@ -279,20 +534,35 @@ void set_timer1(char status)
 
 int main(void) 
 {
+  cli();
+ _delay_ms(500);
+ if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))              // external, power-on- oder brown-out-reset
+  {
+    MCUCSR = 0;                                         // Reset-Flags zurücksetzen
+  }
+  if ((MCUCSR & (1 << WDRF)))           // watchdog-reset
+  {
+    MCUCSR = 0;                                         // Reset-Flags zurücksetzen
+    uart_puts("Wachhund Fehler");
+  }
+  wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
+  wdt_reset();
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   uart_puts("Beginn main()\r\n");
   #endif
-  _delay_ms(500);
   
   boot();
   read_memory();
   init_geraet();
-  
-  
-  led_helligkeit1(255,0);
-  led_helligkeit2(255,0);
+ 
+  _delay_ms(500);
+
+  wdt_reset();
+
+  //led_helligkeit1(25,0);
+  //led_helligkeit2(25,0);
   //display_write_modus(0);
   //adc_init();
 
@@ -301,14 +571,33 @@ int main(void)
   //init_timer1();
   //set_timer1(1);
 
-  sei();
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
   uart_puts("Init fertig\r\n");
   #endif
+
+  wdt_reset();
+  _delay_ms(500);
+  wdt_reset();
+
+  init_led(ADDR_LED00);
+  init_led(ADDR_LED01);
+
+  sei();
+
+  _delay_ms(1500);
+  wdt_reset();
+  _delay_ms(1500);
+  wdt_reset();
+  led_helligkeit1(led_br,led_color_v);
+  led_helligkeit2(led_br,led_color_v);
+  //
+  //sei();
+
   while(1)
   {
+    wdt_reset();
     //_delay_ms(100);
     //zaehler++;
     //uart_puts("-");
