@@ -35,6 +35,8 @@ int modus;
 unsigned int led_br=255;
 unsigned int led_color_v=0;
 
+unsigned int f=0;
+
 //
 // Counter für S-Meter
 unsigned int adccounter=20;
@@ -168,7 +170,23 @@ void scan(void)
   }
 }
 */
-
+void set_timer3(char status)
+{
+  if(status == 0)
+  {
+    #ifdef debug
+    uart_puts("Timer3 gestoppt\r\n");
+    #endif
+    ETIMSK &= ~(1 << OCIE3A);
+  }
+  else
+  {
+    #ifdef debug
+    uart_puts("Timer3 gestartet\r\n");
+    #endif
+    ETIMSK |= (1 << OCIE3A);
+  }
+}
 uint16_t adc_read(void )
 {
   // ADC1 auswählen
@@ -230,7 +248,20 @@ ISR (TIMER0_COMP_vect)
   #endif
   keycheck();
 }
+ISR (TIMER3_COMPA_vect)
+{
+  #ifdef debug
+  uart_puts("INT TIMER3_COMPA_vect\r\n");
+  #endif
+  toogle_f();
+}
 
+void toogle_f(void)
+{
+  set_timer3(0);
+  display_del_function();
+  f=0;
+}
 
 ISR (TIMER1_COMPA_vect) 
 {
@@ -375,15 +406,7 @@ ISR (TIMER3_CAPT_vect)
   {
   }
 }
-ISR (TIMER3_COMPA_vect)
-{
-  #ifdef debug
-  uart_puts("INT TIMER3_COMPA_vect\r\n");
-  #endif
-  while(1)
-  {
-  }
-}
+
 ISR (TIMER3_COMPB_vect)
 {
   #ifdef debug
@@ -463,11 +486,25 @@ void init_timer0(void)
   // http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
   // das ist Timer0
   // Register TIMSK, Bit OCIE0 startet den INT
+  //
+  // CTC Modus, Vorteiler 128
   TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
   TCNT0 = 0x00; //Timer 0 mit Null initialisieren
   OCR0 = 64;  //Vergleichsregister initialisieren
 }
+void init_timer3(void)
+{
+  //
+  // das ist Timer3
+  //
+  TCCR3A |= (1 << WGM31) | (1<<COM3A1);
 
+  TCCR3B |= (1 << WGM33) | (1 << WGM32) | (1 << CS30) | (1 << CS32);
+
+  ICR3 = 65535; //TOP
+  OCR3A = 65535;
+
+}
 //
 // vielleicht noch auf 1/10 Hz genau? :-D
 void init_tone(void)
@@ -512,6 +549,8 @@ void set_timer0(char status)
   }
 }
 
+
+
 void set_timer1(char status)
 {
   /*
@@ -545,7 +584,7 @@ int main(void)
     MCUCSR = 0;                                         // Reset-Flags zurücksetzen
     uart_puts("Wachhund Fehler");
   }
-  wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
+  //wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
   wdt_reset();
   #ifdef debug
   inituart();
@@ -586,18 +625,23 @@ int main(void)
 
   sei();
 
-  _delay_ms(1500);
-  wdt_reset();
-  _delay_ms(1500);
+  //_delay_ms(1500);
+  //wdt_reset();
+  //_delay_ms(1500);
   wdt_reset();
   led_helligkeit1(led_br,led_color_v);
   led_helligkeit2(led_br,led_color_v);
   //
   //sei();
-
+  //set_timer3(1);
   while(1)
   {
-    wdt_reset();
+    //wdt_reset();
+
+    //set_timer3(1);
+    //_delay_ms(1000);
+    //uart_puts(".");
+
     //_delay_ms(100);
     //zaehler++;
     //uart_puts("-");

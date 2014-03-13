@@ -8,11 +8,9 @@ void display_init(void);
 void display_send(void);
 void display_write_meter(uint32_t value);
 void display_clear(void);
+void display_write_function(void);
+void display_del_function(void);
 void display_ctcss(unsigned int ctcss_disp);
 void display_rpt(unsigned int rpt_disp);
 void display_beep(unsigned int beep_disp);
 void display_echo(unsigned int echo_disp);
-
-
-
-

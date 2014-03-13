@@ -29,7 +29,7 @@ extern unsigned int echo_ham;
 extern unsigned int beep_ham;
 extern unsigned int led_br;
 extern unsigned int led_color_v;
-
+extern unsigned int f;
 void boot(void)
 {
   #ifdef debug
@@ -103,6 +103,7 @@ void boot(void)
   //init_led(ADDR_LED00);
   //init_led(ADDR_LED01);
   init_timer0();
+  init_timer3();
   init_tone();
   #ifdef debug
   uart_puts("boot() ENDE\r\n");
@@ -265,13 +266,28 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Echo\r\n");
     #endif
-    if(echo_ham == 0)
+    if(f == 0)
     {
-      set_echo(1);
+      if(echo_ham == 0)
+      {
+	set_echo(1);
+      }
+      else
+      {
+	set_echo(0);
+      }
     }
     else
     {
-      set_echo(0);
+      if(beep_ham == 0)
+      {
+	set_beep(1);
+      }
+      else
+      {
+	set_beep(0);
+      }
+      toogle_f();
     }
   }
   else if((keys & 0x1000000) == 0)
@@ -359,10 +375,20 @@ void keycheck(void)
       cb_channel++;
       channel(cb_channel);
     }
-  }	
+  }
+
+  else if((keys & 0x40) == 0)
+  {
+    f=1;
+    uart_puts("F\r\n");
+    init_timer3();
+    //set_timer3(1);
+    display_write_function();
+    set_timer3(1);
+  }
   // 
   // Drehschalter - ODER CH-
-  else if(((keys & 0x4) == 0) || ((keys & 0x40) == 0))
+  else if((keys & 0x4) == 0)
   {
     #ifdef debug
     uart_puts("Drehschalter - ODER Taster -\r\n");
@@ -391,7 +417,6 @@ void keycheck(void)
       //rogerbeep();
       display_write_modus(0);
       rx();
-      //TIMSK &= ~(1<<OCIE1A);
       txstat=0;
     }
   }	
@@ -401,7 +426,7 @@ void keycheck(void)
     uart_puts("unbekannter Eingang\r\n");
     #endif
   }
-
+  /*
   if(keys != 0xffffffff)
   {
     set_timer0(1);
@@ -410,4 +435,5 @@ void keycheck(void)
   {
     set_timer0(0);
   }
+  */
 }

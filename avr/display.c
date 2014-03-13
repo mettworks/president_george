@@ -9,6 +9,7 @@
 //#include <avr/interrupt.h>
 #include "i2c.h"
 #include "display.h"
+#include <string.h>
 //#include "eeprom.h"
 #ifdef debug
 #include "debug.h"
@@ -61,47 +62,60 @@
 // 
 // pro Bit gibt es aus "Einfachheitsgründen" ein Byte 96
 unsigned char daten[104];
+unsigned char daten_temp[104];
 //
 
 unsigned char segmente[7];
 // fuer debugausgaben
 //char Buffer[7];	
 
+extern unsigned int f;
+
+void display_daten2temp(void)
+{
+  memcpy(daten_temp,daten,sizeof(daten));
+}
+
+void display_temp2daten(void)
+{
+  memcpy(daten,daten_temp,sizeof(daten_temp));
+}
+
 void display_clear(void)
 {
-	unsigned int i=0;
-	while(i < 104)
-	{
-		daten[i]=0;
-		i++;
-	}
-	display_send();
+  unsigned int i=0;
+  while(i < 104)
+  {
+    daten[i]=0;
+    i++;
+  }
+  display_send();
 }
 
 void display_ctcss(unsigned int ctcss_disp)
 {
-	if(ctcss_disp==0)
-	{
-		daten[94]=0;
-	}
-	else
-	{
-		daten[94]=1;
-	}
-	display_send();
+  if(ctcss_disp==0)
+  {
+    daten[94]=0;
+  }
+  else
+  {
+    daten[94]=1;
+  }
+  display_send();
 }
 
 void display_rpt(unsigned int rpt_disp)
 {
-	if(rpt_disp==0)
-	{
-		daten[73]=0;
-	}
-	else
-	{
-		daten[73]=1;
-	}
-	display_send();
+  if(rpt_disp==0)
+  {
+    daten[73]=0;
+  }
+  else
+  {
+    daten[73]=1;
+  }
+  display_send();
 }
 
 void display_echo(unsigned int echo_disp)
@@ -119,15 +133,29 @@ void display_echo(unsigned int echo_disp)
 
 void display_beep(unsigned int beep_disp)
 {
-	if(beep_disp==0)
-	{
-		daten[87]=0;
-	}
-	else
-	{
-		daten[87]=1;
-	}
-	display_send();
+  if(beep_disp==0)
+  {
+    if(f == 0)
+    {
+      daten[87]=0;
+    }
+    else
+    {
+      daten_temp[87]=0;
+    }
+  }
+  else
+  {
+    if(f == 0)
+    {
+      daten[87]=1;
+    }
+    else
+    {
+      daten_temp[87]=1;
+    }
+  }
+  display_send();
 }
 
 //
@@ -418,6 +446,21 @@ void display_write_frequenz(unsigned int freq2write)
 	display_send();
 }
 
+void display_write_function(void)
+{
+  display_daten2temp();
+  display_clear();
+  daten[69]=0x01;
+  daten[66]=0x01;
+  daten[68]=0x01;
+  daten[71]=0x01;
+  display_send();
+}
+void display_del_function(void)
+{
+  display_temp2daten();
+  display_send();
+}
 void display_write_channel(unsigned char channel)
 {
   unsigned char x;
@@ -465,37 +508,31 @@ void display_write_channel(unsigned char channel)
 
 void display_init(void)
 {
-	//uart_puts("display_init():\r\n");
-
-	i2c_start_wait(0x70);
-	i2c_write(0xe0);     			// Device Select 0
-  i2c_write(0xcf);	  	// multiplex 1100 1111 , 3 BP's
-  i2c_write(0xF8);   				// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
-  i2c_write(0xF0);   				// 1111 0000 = Blinken, alles abgeschaltet 
-	//i2c_stop();
+  i2c_start_wait(0x70);
+  i2c_write(0xe0);     			// Device Select 0
+  i2c_write(0xcf);			// multiplex 1100 1111 , 3 BP's
+  i2c_write(0xF8);   			// 1111 1000 = immer die 1. RAM Bank (macht eh keinen Sinn...)
+  i2c_write(0xF0);   			// 1111 0000 = Blinken, alles abgeschaltet 
 }
 
 void display_send(void)
 {
-	//uart_puts("display_send():\r\n");
-
-	display_init();
-	// die Daten die dann wirklich über den i2c Bus gehen
-	unsigned char daten2send=0;
-	int y,addr;
-	y=0;
-	addr=0;
-
-	for ( y = 0; y < 98; )
-	{
-		if(daten[y] & (1<<0x00)) 
-		{
-			daten2send |= (1<<0x07);
-		}
-		else
-		{
-			daten2send &= ~(1<<0x07);
-		}
+  display_init();
+  // die Daten die dann wirklich über den i2c Bus gehen
+  unsigned char daten2send=0;
+  int y,addr;
+  y=0;
+  addr=0;
+  for ( y = 0; y < 98; )
+  {
+    if(daten[y] & (1<<0x00)) 
+    {
+      daten2send |= (1<<0x07);
+    }
+    else
+    {
+      daten2send &= ~(1<<0x07);
+    }
 		
 		if(daten[y+1] & (1<<0x00)) 
 		{
@@ -559,7 +596,6 @@ void display_send(void)
 		i2c_start_wait(0x70);
 		i2c_write(addr);
 		i2c_write(daten2send);
-		//i2c_stop();
 		y=y+6;
 		addr=addr+2;
 	}
