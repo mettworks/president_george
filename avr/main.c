@@ -19,7 +19,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <stdint.h>
 #endif
 
-int ichbinaus=0;
+//int ichbinaus=0;
 unsigned int memory[MEM_SIZE];
 int mod;
 unsigned int freq;
@@ -35,14 +35,19 @@ int modus;
 unsigned int led_br=255;
 unsigned int led_color_v=0;
 
+
+unsigned long freq_a;
+unsigned long freq_b;
+char vfo;
 unsigned int f=0;
 
 //
 // Counter für S-Meter
+/*
 unsigned int adccounter=20;
 unsigned int adcvalues[20];
 #define ADCMESSUNGEN 20;
-
+*/
 //
 // IRQ für Spannungsabfall
 // wegspeichern der Einstellungen im EEPROM
@@ -56,7 +61,7 @@ ISR (INT4_vect)
   #endif
   off();
 }
-
+/*
 ISR (INT5_vect)
 {
   #ifdef debug
@@ -96,7 +101,7 @@ ISR (INT5_vect)
     }
   }
 }
-
+*/
 ISR (INT7_vect)
 {
   #ifdef debug
@@ -199,7 +204,7 @@ uint16_t adc_read(void )
   }
   return ADCW;                   
 }
-
+/*
 void messung_s(void)
 {
   uint16_t messwert;
@@ -217,11 +222,9 @@ void messung_s(void)
       i--;
     }
     sum=sum/ADCMESSUNGEN;
-    /*
-    uart_puts("Durchschnitt: ");
-    uart_puts( itoa( sum, s, 10 ) );
-    uart_puts("\r\n");
-    */
+    //uart_puts("Durchschnitt: ");
+    //uart_puts( itoa( sum, s, 10 ) );
+    //uart_puts("\r\n");
     display_write_meter(sum);
     adccounter=ADCMESSUNGEN;
   }
@@ -231,14 +234,13 @@ void messung_s(void)
     adccounter--;
   }
 }
-
+*/
 void adc_init(void)
 {
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
-  ADMUX |= (1 << REFS0) | (1 << REFS1); 	// 2.65 V
-
-  ADCSRA |= (1 << ADEN);  // Enable ADC
-  ADCSRA |= (1 << ADSC);  // Start A2D Conversions	
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);	  // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
+  ADMUX |= (1 << REFS0) | (1 << REFS1);			  // 2.65 V
+  ADCSRA |= (1 << ADEN);				  // Enable ADC
+  ADCSRA |= (1 << ADSC);				  // Start A2D Conversions	
 }
 
 ISR (TIMER0_COMP_vect)
@@ -574,8 +576,8 @@ void set_timer1(char status)
 int main(void) 
 {
   cli();
- _delay_ms(500);
- if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))              // external, power-on- oder brown-out-reset
+  _delay_ms(500);
+  if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))              // external, power-on- oder brown-out-reset
   {
     MCUCSR = 0;                                         // Reset-Flags zurücksetzen
   }
@@ -584,7 +586,7 @@ int main(void)
     MCUCSR = 0;                                         // Reset-Flags zurücksetzen
     uart_puts("Wachhund Fehler");
   }
-  //wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
+  wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
   wdt_reset();
   #ifdef debug
   inituart();
@@ -629,14 +631,14 @@ int main(void)
   //wdt_reset();
   //_delay_ms(1500);
   wdt_reset();
-  led_helligkeit1(led_br,led_color_v);
-  led_helligkeit2(led_br,led_color_v);
+  //led_helligkeit1(led_br,led_color_v);
+  //led_helligkeit2(led_br,led_color_v);
   //
   //sei();
   //set_timer3(1);
   while(1)
   {
-    //wdt_reset();
+    wdt_reset();
 
     //set_timer3(1);
     //_delay_ms(1000);

@@ -14,36 +14,6 @@
 #include <stdint.h>
 #endif
 
-
-/*
-Aufbau Array "memory":
-
-0 an oder aus
-1 cb oder ham
-2 Frequenz / bei ham
-3 Frequenz / bei ham
-4 kanal / bei cb
-5 Modulation / bei ham
-6 modulation / bei cb
-7 Step
-8 NBANL / bei ham
-9 NBANL / bei cb
-10 HICUT / bei ham
-11 hicut / bei cb
-12 Echo / bei ham
-13 echo / bei cb
-14 RogerBeep / bei ham
-15 rogerbeep / bei cb
-16 ctcss aktiv / bei ham
-17 ctcss ton / bei ham (numerisch)
-18 relaisablage / bei ham
-
-19 Beleuchtung Helligkeit Tasten
-20 Beleuchtung Helligkeit Display
-21 Beleuchtung Farbe
-
-*/
-
 extern unsigned int memory[MEM_SIZE];
 
 unsigned char ReadSPI(void)
@@ -205,5 +175,4 @@ void read_memory(void)
   #ifdef debug
   uart_puts("read_memory() ENDE\r\n");
   #endif
-
 }

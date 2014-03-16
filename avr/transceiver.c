@@ -7,6 +7,7 @@
 #include "memory.h"
 #include "operating.h"
 //#include "channels.h"
+#include <avr/wdt.h>
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -37,16 +38,14 @@
 #define TREIBER_SWR 14
 #define TREIBER_SRF 15
 
-#define HAM_FREQ_MIN 28000
-//#define HAM_FREQ_MAX 28050
-#define HAM_FREQ_MAX 29690
+#define HAM_FREQ_MIN 28000000
+#define HAM_FREQ_MAX 29690000
 
 #define CB_CH_MIN 1
 #define CB_CH_MAX 80
 
 unsigned int wert = 0;
 int ichsende=0;
-
 extern unsigned int freq;
 extern unsigned int step;
 extern unsigned int cb_channel;
@@ -57,10 +56,12 @@ extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
 extern unsigned int beep_ham;
-
 char string[10];
 
 extern unsigned int memory[MEM_SIZE];
+extern unsigned long freq_a;
+extern unsigned long freq_b;
+extern char vfo;
 
 void off(void)
 {
@@ -95,7 +96,68 @@ int init_geraet(void)
   wert |= (1 << TREIBER_SRF);
   wert |= (1 << TREIBER_FM);
 
-  freq = memory[3] + (memory[2] << 8);
+/*
+Aufbau Array "memory":
+
+Byte  0-3 Frequenz in Hz VFO A / HAM  -> han_freq_a 
+Byte  4-7 Frequenz in Hz VFO B / HAM  -> ham_freq_b
+Byte    8 Channel / CB                -> cb_channel
+Byte    9 Brightness / Display
+Byte   10 Brightness / Keys
+Byte   11 Brightness Standby
+
+
+Byte 12
+#######
+    7-6       5-4         3-2     1                     0
+Mod HAM A   Mod HAM B     Mod CB  color display green   color keys green 
+                                  color display red     color keys red
+Byte 13
+#######
+     7    6     5           4               3               2               1             0
+1    on   cb    split on    NBANL ham on    NBANL cb on     HICUT ham on    HICUT cb on   VFO B active
+0    off  ham   split off   NBANL ham off   NBANL cb off    HICUT ham off   HICUT cb off  VFO A active
+
+Byte 14
+#######
+
+  7-6           5-4         3             2           1               0
+1 RB Typ HAM    RB Typ CB   RB on HAM     RB on CB    Echo on HAM     Echo on CB
+0                           RB off HAM    RB off CB   Echo off HAM    Echo off CB
+
+Byte 15
+#######
+7-4         3-0
+Step VFO A  Step VFO B
+
+Byte 16
+#######
+  7-1         0
+1 CTCSS Tone  CTCSS on
+0             CTCSS off
+
+Byte 17
+#######
+7             6   5-0
+1 relais on   -   *100kHz
+0 relais off  +
+
+*/
+
+  freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
+  freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
+
+  if(memory[13] & 0x0) 
+  {
+    uart_puts("VFO A ausgelesen\r\n");
+    vfo='A';
+  }
+  else
+  {
+    uart_puts("VFO B ausgelesen\r\n");
+    vfo='B';
+  }
+
   mod=memory[5];
   modus=memory[1];
   step=5;
@@ -106,14 +168,20 @@ int init_geraet(void)
   echo_ham=memory[12];
   beep_ham=memory[14];
   //ctcss_tone=memory[17];
-  if((26565 > freq) || (29690 < freq) || (freq == 0))
+  if((26565000 > freq_a) || (29690000 < freq_a) || (freq_a == 0))
   {
     #ifdef debug
-    uart_puts("Frequenz aus dem EEPROM ist falsch!\r\n");
+    uart_puts("Frequenz A aus dem EEPROM ist falsch!\r\n");
     #endif
-    freq=28000;
+    freq_a=28000000;
   }
-
+  if((26565000 > freq_b) || (29690000 < freq_b) || (freq_b == 0))
+  {
+    #ifdef debug
+    uart_puts("Frequenz B aus dem EEPROM ist falsch!\r\n");
+    #endif
+    freq_b=28000000;
+  }
   if((1 > mod) || (4 < mod))
   {
     #ifdef debug
@@ -155,7 +223,7 @@ int init_geraet(void)
     #ifdef debug
     uart_puts("Modus: HAM\r\n");
     #endif
-    tune(freq,step);
+    tune(freq_a,step);
     _delay_ms(28);
     modulation(mod);
   }
@@ -172,11 +240,14 @@ int init_geraet(void)
   set_rpt(rpt);
   set_echo(echo_ham);
   set_beep(beep_ham);
+  //display_write_vfo('A');
+  setvfo();
   display_write_modus(0);
 
+  
   #ifdef debug
   uart_puts("Frequenz: ");
-  uart_puts(itoa(freq, string, 10));
+  uart_puts(itoa(freq_a, string, 10));
   uart_puts("\r\n");
   uart_puts("init_geraet() ENDE\r\n");
   #endif
@@ -390,7 +461,7 @@ void channel(unsigned int ch)
   cb_channel=ch;
 }
 
-int tune(unsigned int freq2tune,unsigned int step2tune)
+int tune(unsigned long freq2tune,unsigned int step2tune)
 {
   if(modus==1)
   {
@@ -403,8 +474,13 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
       freq2tune=HAM_FREQ_MAX;
     }
   }
+
+  //freq2tune=freq2tune/1000;
   #ifdef debug
   uart_puts("tune(): Beginn\r\n");
+  uart_puts("tune: Frequenz : ");
+  uart_puts(ltoa(freq_a, string, 10));
+  uart_puts("\r\n");
   #endif
   //
   // Maybe it should be better ? The port expander sends some "stuff"... 
@@ -451,8 +527,9 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   // stellt den Teiler von der Sollfrequenz ein. 
   // (27255 + 10695) / 7590 = 5
   begin1();
-  unsigned int teiler_soll; 
-  unsigned int teiler_soll_temp=freq2tune+10695;
+  unsigned int teiler_soll;
+  // TODO! / 1000 !! ??
+  unsigned int teiler_soll_temp=(freq2tune/1000)+10695;
   teiler_soll=teiler_soll_temp/step2tune;
   int index_soll[24];
   int j;
@@ -484,9 +561,20 @@ int tune(unsigned int freq2tune,unsigned int step2tune)
   display_write_frequenz(freq2tune);
   //
   // Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
-	
-  memory[2] = freq2tune / 256;
-  memory[3] = freq2tune % 256;
+  if(vfo == 'A')
+  {
+    memory[3] = freq2tune / 16777215;
+    memory[2] = freq2tune / 65535;
+    memory[1] = freq2tune / 256;
+    memory[0] = freq2tune % 256;
+  }
+  else
+  {
+    memory[7] = freq2tune / 16777215;
+    memory[6] = freq2tune / 65535;
+    memory[5] = freq2tune / 256;
+    memory[4] = freq2tune % 256;
+  }  
   if(modus==1)
   {
     freq=freq2tune;

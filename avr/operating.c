@@ -30,6 +30,10 @@ extern unsigned int beep_ham;
 extern unsigned int led_br;
 extern unsigned int led_color_v;
 extern unsigned int f;
+
+extern unsigned long freq_a;
+extern unsigned long freq_b;
+extern char vfo;
 void boot(void)
 {
   #ifdef debug
@@ -143,6 +147,26 @@ unsigned long keysauslesen(void)
   //cli();
   keys=(uint32_t)blubb2 + ((uint32_t)blubb1 << 16);
   return keys;
+}
+
+void setvfo(void)
+{
+  if(vfo == 'A')
+  {
+    uart_puts("VFO -> B\r\n");
+    tune(freq_b,step);
+    display_write_vfo('B');
+    vfo='B';
+    memory[13] &= ~(1 << 0);
+  }
+  else
+  {
+    uart_puts("VFO -> A\r\n");
+    tune(freq_a,step);
+    display_write_vfo('A');
+    vfo='A';
+    memory[13] |= ( 1 << 0);
+  }  
 }
 
 void setmodus(int data)
@@ -348,6 +372,14 @@ void keycheck(void)
       setmodus(1);
     }
   }
+  else if((keys & 0x20) == 0)
+  {
+    #ifdef debug
+    uart_puts("VFO\r\n");
+    #endif
+    setvfo();
+  }
+
   // 
   // Drehschalter + ODER CH+
   else if(((keys & 0x2) == 0) || ((keys & 0x80) == 0))
@@ -357,15 +389,8 @@ void keycheck(void)
     #endif
     if(modus==1)
     {
-      #ifdef debug
-      uart_puts("Modus HAM -> Frequenz: ");
-      uart_puts(itoa(freq, string, 10));
-      uart_puts(" Step: ");
-      uart_puts(itoa(step, string, 10));
-      uart_puts("\r\n");
-      #endif
-      freq=freq+step;
-      tune(freq,step);
+      freq_a=freq_a+1000;
+      tune(freq_a,step);
     }
     else
     {
@@ -395,8 +420,8 @@ void keycheck(void)
     #endif
     if(modus==1)
     {
-      freq=freq-step;
-      tune(freq,step);
+      freq_a=freq_a-1000;
+      tune(freq_a,step);
     }
     else
     {
