@@ -38,7 +38,7 @@ unsigned int led_color_v=0;
 
 unsigned long freq_a;
 unsigned long freq_b;
-char vfo;
+unsigned int vfo;
 unsigned int f=0;
 
 //
@@ -639,7 +639,6 @@ int main(void)
   while(1)
   {
     wdt_reset();
-
     //set_timer3(1);
     //_delay_ms(1000);
     //uart_puts(".");

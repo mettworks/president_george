@@ -160,7 +160,6 @@ void display_convert_letter(char letter,unsigned char segmente[6])
 {
   if(letter == 'A')
   {
-    uart_puts("A\r\n");
     daten[segmente[0]]=0x01;
     daten[segmente[1]]=0x01;
     daten[segmente[2]]=0x01;
@@ -171,7 +170,6 @@ void display_convert_letter(char letter,unsigned char segmente[6])
   }
   else if(letter == 'B')
   {
-    uart_puts("A\r\n");
     daten[segmente[0]]=0x01;
     daten[segmente[1]]=0x01;
     daten[segmente[2]]=0x01;
@@ -416,7 +414,7 @@ void display_write_mod(unsigned char mod)
   display_send();
 }
 
-void display_write_vfo(char vfo)
+void display_write_vfo(char display_vfo)
 {
   segmente[0]=15;
   segmente[1]=18;
@@ -425,7 +423,7 @@ void display_write_vfo(char vfo)
   segmente[4]=13;
   segmente[5]=14;
   segmente[6]=17;
-  display_convert_letter(vfo,segmente);
+  display_convert_letter(display_vfo,segmente);
   display_send();
 }
 

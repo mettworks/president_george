@@ -15,4 +15,4 @@ void display_ctcss(unsigned int ctcss_disp);
 void display_rpt(unsigned int rpt_disp);
 void display_beep(unsigned int beep_disp);
 void display_echo(unsigned int echo_disp);
-void display_write_vfo(char vfo);
+void display_write_vfo(char display_vfo);

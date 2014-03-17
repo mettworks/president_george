@@ -13,3 +13,4 @@ void set_ctcss(unsigned int ctcss_value);
 void set_rpt(unsigned int rpt_value);
 void set_echo(unsigned int echo_value);
 void set_beep(unsigned int beep_value);
+void setvfo(unsigned int vfo);

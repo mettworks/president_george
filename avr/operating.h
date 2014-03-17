@@ -5,3 +5,4 @@ unsigned long keysauslesen(void);
 void keycheck(void);
 void setmodus(int data);
 void boot(void);
+void setvfo(unsigned int vfo);

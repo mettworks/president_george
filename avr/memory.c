@@ -16,6 +16,17 @@
 
 extern unsigned int memory[MEM_SIZE];
 
+void format_memory(void)
+{
+  unsigned int i;
+  while(i < MEM_SIZE)
+  {
+    memory[i]=0;
+    i++;
+  }
+  save2memory();
+}
+
 unsigned char ReadSPI(void)
 {
   unsigned char data;

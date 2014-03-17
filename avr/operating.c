@@ -4,6 +4,7 @@
 #include "led.h"
 #include "transceiver.h"
 #include "display.h"
+#include <avr/wdt.h>
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -33,7 +34,7 @@ extern unsigned int f;
 
 extern unsigned long freq_a;
 extern unsigned long freq_b;
-extern char vfo;
+extern int vfo;
 void boot(void)
 {
   #ifdef debug
@@ -149,26 +150,6 @@ unsigned long keysauslesen(void)
   return keys;
 }
 
-void setvfo(void)
-{
-  if(vfo == 'A')
-  {
-    uart_puts("VFO -> B\r\n");
-    tune(freq_b,step);
-    display_write_vfo('B');
-    vfo='B';
-    memory[13] &= ~(1 << 0);
-  }
-  else
-  {
-    uart_puts("VFO -> A\r\n");
-    tune(freq_a,step);
-    display_write_vfo('A');
-    vfo='A';
-    memory[13] |= ( 1 << 0);
-  }  
-}
-
 void setmodus(int data)
 {
   #ifdef debug
@@ -210,6 +191,19 @@ void keycheck(void)
       txstat=1;
     }
   }
+
+  else if((keys & 0x10400) == 0)
+  {
+    #ifdef debug
+    uart_puts("M1 + SELECT\r\n");
+    uart_puts("RESET!\r\n");
+    #endif
+    cli();
+    wdt_disable();
+    format_memory();
+    wdt_enable(WDTO_15MS);
+  }
+
   else if((keys & 0x1) == 0)
   {
     #ifdef debug
@@ -314,6 +308,20 @@ void keycheck(void)
       toogle_f();
     }
   }
+  else if((keys & 0x20) == 0)
+  {
+    #ifdef debug
+    uart_puts("VFO\r\n");
+    #endif
+    if(vfo == 0)
+    {
+      setvfo(1);
+    }
+    else
+    {
+      setvfo(0);
+    }
+  }
   else if((keys & 0x1000000) == 0)
   {
     #ifdef debug
@@ -372,14 +380,15 @@ void keycheck(void)
       setmodus(1);
     }
   }
-  else if((keys & 0x20) == 0)
+    else if((keys & 0x40) == 0)
   {
-    #ifdef debug
-    uart_puts("VFO\r\n");
-    #endif
-    setvfo();
+    f=1;
+    uart_puts("F\r\n");
+    init_timer3();
+    //set_timer3(1);
+    display_write_function();
+    set_timer3(1);
   }
-
   // 
   // Drehschalter + ODER CH+
   else if(((keys & 0x2) == 0) || ((keys & 0x80) == 0))
@@ -389,8 +398,16 @@ void keycheck(void)
     #endif
     if(modus==1)
     {
-      freq_a=freq_a+1000;
-      tune(freq_a,step);
+      if(vfo==0)
+      {
+	freq_a=freq_a+1000;
+	tune(freq_a,step);
+      }
+      else
+      {
+	freq_b=freq_b+1000;
+	tune(freq_b,step);
+      }
     }
     else
     {
@@ -401,16 +418,6 @@ void keycheck(void)
       channel(cb_channel);
     }
   }
-
-  else if((keys & 0x40) == 0)
-  {
-    f=1;
-    uart_puts("F\r\n");
-    init_timer3();
-    //set_timer3(1);
-    display_write_function();
-    set_timer3(1);
-  }
   // 
   // Drehschalter - ODER CH-
   else if((keys & 0x4) == 0)
@@ -420,8 +427,16 @@ void keycheck(void)
     #endif
     if(modus==1)
     {
-      freq_a=freq_a-1000;
-      tune(freq_a,step);
+      if(vfo==0)
+      {
+	freq_a=freq_a-1000;
+	tune(freq_a,step);
+      }
+      else
+      {
+	freq_b=freq_b-1000;
+	tune(freq_b,step);
+      }
     }
     else
     {

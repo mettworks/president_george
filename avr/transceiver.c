@@ -61,7 +61,7 @@ char string[10];
 extern unsigned int memory[MEM_SIZE];
 extern unsigned long freq_a;
 extern unsigned long freq_b;
-extern char vfo;
+extern unsigned int vfo;
 
 void off(void)
 {
@@ -147,15 +147,13 @@ Byte 17
   freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
   freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
 
-  if(memory[13] & 0x0) 
+  if(memory[13] &1) 
   {
-    uart_puts("VFO A ausgelesen\r\n");
-    vfo='A';
+    vfo=1;
   }
   else
   {
-    uart_puts("VFO B ausgelesen\r\n");
-    vfo='B';
+    vfo=0;
   }
 
   mod=memory[5];
@@ -240,8 +238,8 @@ Byte 17
   set_rpt(rpt);
   set_echo(echo_ham);
   set_beep(beep_ham);
+  setvfo(vfo);
   //display_write_vfo('A');
-  setvfo();
   display_write_modus(0);
 
   
@@ -299,6 +297,26 @@ void set_beep(unsigned int beep_value)
     display_beep(0);
     beep_ham=0;
     memory[14]=0;
+  }
+}
+
+void setvfo(unsigned int vfo_value)
+{
+  if(vfo_value == 0)
+  {
+    vfo=0;
+    uart_puts("VFO -> A\r\n");
+    tune(freq_a,step);
+    display_write_vfo('A');
+    memory[13] &= ~(1 << 0);
+  }
+  else
+  {
+    vfo=1;
+    uart_puts("VFO -> B\r\n");
+    tune(freq_b,step);
+    display_write_vfo('B');
+    memory[13] |= ( 1 << 0);
   }
 }
 
@@ -561,7 +579,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   display_write_frequenz(freq2tune);
   //
   // Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
-  if(vfo == 'A')
+  if(vfo == 0)
   {
     memory[3] = freq2tune / 16777215;
     memory[2] = freq2tune / 65535;
@@ -574,12 +592,13 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
     memory[6] = freq2tune / 65535;
     memory[5] = freq2tune / 256;
     memory[4] = freq2tune % 256;
-  }  
+  } 
+  /*
   if(modus==1)
   {
     freq=freq2tune;
   }
-
+  */
   #ifdef debug
   uart_puts("tune(): Ende\r\n");
   #endif
