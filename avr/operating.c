@@ -341,28 +341,28 @@ void keycheck(void)
     #ifdef debug
     uart_puts("M1\r\n");
     #endif
-    modulation(2);
+    set_modulation(2);
   }
   else if((keys & 0x40000) == 0)
   {
     #ifdef debug
     uart_puts("M2\r\n");
     #endif
-    modulation(1);
+    set_modulation(1);
   }
   else if((keys & 0x80000) == 0)
   {
     #ifdef debug
     uart_puts("M3\r\n");
     #endif
-    modulation(4);
+    set_modulation(4);
   }
   else if((keys & 0x100000) == 0)
   {
     #ifdef debug
     uart_puts("M4\r\n");
     #endif
-    modulation(3);
+    set_modulation(3);
   }
 
   // PA

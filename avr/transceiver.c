@@ -50,7 +50,7 @@ extern unsigned int freq;
 extern unsigned int step;
 extern unsigned int cb_channel;
 extern unsigned int cb_mod;
-extern int mod;
+extern unsigned int mod;
 extern int modus;
 extern unsigned int ctcss;
 extern unsigned int rpt;
@@ -62,20 +62,22 @@ extern unsigned int memory[MEM_SIZE];
 extern unsigned long freq_a;
 extern unsigned long freq_b;
 extern unsigned int vfo;
+extern unsigned int ham_mod_a;
+extern unsigned int ham_mod_b;
 
 void off(void)
 {
   cli();
+  wdt_disable();
   #ifdef debug
   uart_puts("AUS\r\n");
   #endif
   save2memory();
+  #ifdef debug
+  uart_puts("Fertig\r\n");
+  #endif
   while(1)
   {
-    _delay_ms(1000);
-    #ifdef debug
-    uart_puts("1 Sekunde\r\n");
-    #endif
   }
 }
 
@@ -156,14 +158,17 @@ Byte 17
     vfo=0;
   }
 
-  mod=memory[5];
+  ham_mod_a = memory[12] >> 5; 
+  ham_mod_b = memory[12] >> 2 & 0x7; 
+
   modus=memory[1];
   step=5;
   cb_channel=memory[4];
   cb_mod=memory[6];
   ctcss=memory[16];
   rpt=memory[18];
-  echo_ham=memory[12];
+  //echo_ham=memory[12];
+  echo_ham=0;
   beep_ham=memory[14];
   //ctcss_tone=memory[17];
   if((26565000 > freq_a) || (29690000 < freq_a) || (freq_a == 0))
@@ -223,7 +228,14 @@ Byte 17
     #endif
     tune(freq_a,step);
     _delay_ms(28);
-    modulation(mod);
+    if(vfo == 0)
+    {
+      set_modulation(ham_mod_a);
+    }
+    else
+    {
+      set_modulation(ham_mod_b);
+    }
   }
   else
   {
@@ -232,7 +244,7 @@ Byte 17
     #endif
     channel(cb_channel);
     _delay_ms(28);
-    modulation(cb_mod);
+    set_modulation(cb_mod);
   }
   set_ctcss(ctcss);
   set_rpt(rpt);
@@ -263,7 +275,7 @@ void set_echo(unsigned int echo_value)
     treiber(wert);
     display_echo(1);
     echo_ham=1;
-    memory[12]=1;
+    //memory[12]=1;
   }
   else
   {
@@ -274,7 +286,7 @@ void set_echo(unsigned int echo_value)
     treiber(wert);
     display_echo(0);
     echo_ham=0;
-    memory[12]=0;
+    //memory[12]=0;
   }
 }
 
@@ -307,6 +319,7 @@ void setvfo(unsigned int vfo_value)
     vfo=0;
     uart_puts("VFO -> A\r\n");
     tune(freq_a,step);
+    set_modulation(ham_mod_a);
     display_write_vfo('A');
     memory[13] &= ~(1 << 0);
   }
@@ -315,6 +328,7 @@ void setvfo(unsigned int vfo_value)
     vfo=1;
     uart_puts("VFO -> B\r\n");
     tune(freq_b,step);
+    set_modulation(ham_mod_b);
     display_write_vfo('B');
     memory[13] |= ( 1 << 0);
   }
@@ -605,7 +619,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   return 0;
 }
 
-int modulation(unsigned int mod)
+void set_modulation(unsigned int mod)
 {
   #ifdef debug 
   uart_puts("Modulation: ");
@@ -669,7 +683,14 @@ int modulation(unsigned int mod)
   // ab ins EEPROM
   if(modus==1)
   {
-    memory[5]=mod;
+    if(vfo == 0)
+    {
+      memory[12] = (memory[12] & 0x1f) | (mod << 5); 
+    }
+    else
+    {
+      memory[12]=(memory[12] & 0xe3) | ( mod << 2);
+    }
   }
   else
   {	

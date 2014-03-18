@@ -21,7 +21,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 
 //int ichbinaus=0;
 unsigned int memory[MEM_SIZE];
-int mod;
+unsigned int mod;
 unsigned int freq;
 unsigned int cb_channel;
 unsigned int cb_mod;
@@ -40,6 +40,8 @@ unsigned long freq_a;
 unsigned long freq_b;
 unsigned int vfo;
 unsigned int f=0;
+unsigned int ham_mod_a;
+unsigned int ham_mod_b;
 
 //
 // Counter für S-Meter
@@ -104,6 +106,7 @@ ISR (INT5_vect)
 */
 ISR (INT7_vect)
 {
+  wdt_reset();
   #ifdef debug
   uart_puts("INT7\r\n");
   #endif
