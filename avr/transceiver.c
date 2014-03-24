@@ -502,7 +502,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   #ifdef debug
   uart_puts("tune(): DAVOR\r\n");
   uart_puts("tune: Frequenz : ");
-  uart_puts(ltoa(freq_a, string, 10));
+  uart_puts(ltoa(freq2tune, string, 10));
   uart_puts("\r\n");
   #endif
 
@@ -510,13 +510,19 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   {
     if(freq2tune > HAM_FREQ_MAX)
     {
-      uart_puts("freq2tune > HAM_FREQ_MAX\r\n");
-      freq2tune=HAM_FREQ_MIN;
+      freq2tune=(unsigned long)HAM_FREQ_MIN;
     }
     if(freq2tune < HAM_FREQ_MIN)
     {
-      uart_puts("freq2tune < HAM_FREQ_MIN\r\n");
-      freq2tune=HAM_FREQ_MAX;
+      freq2tune=(unsigned long)HAM_FREQ_MAX;
+    }
+    if(vfo==0)
+    {
+      freq_a=freq2tune;
+    }
+    else
+    {
+      freq_b=freq2tune;
     }
   }
 
@@ -524,7 +530,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   #ifdef debug
   uart_puts("tune(): DANACH\r\n");
   uart_puts("tune: Frequenz : ");
-  uart_puts(ltoa(freq_a, string, 10));
+  uart_puts(ltoa(freq2tune, string, 10));
   uart_puts("\r\n");
   #endif
   //
