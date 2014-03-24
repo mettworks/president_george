@@ -4,6 +4,7 @@
 #include "led.h"
 #include "transceiver.h"
 #include "display.h"
+#include "memory.h"
 #include <avr/wdt.h>
 #ifdef debug
 #include "debug.h"
@@ -35,6 +36,94 @@ extern unsigned int f;
 extern unsigned long freq_a;
 extern unsigned long freq_b;
 extern int vfo;
+
+
+void init_timer0(void)
+{
+  //
+  // http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
+  // das ist Timer0
+  // Register TIMSK, Bit OCIE0 startet den INT
+  //
+  // CTC Modus, Vorteiler 128
+  TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
+  TCNT0 = 0x00; //Timer 0 mit Null initialisieren
+  OCR0 = 64;  //Vergleichsregister initialisieren
+}
+void init_timer3(void)
+{
+  //
+  // das ist Timer3
+  //
+  TCCR3A |= (1 << WGM31) | (1<<COM3A1);
+
+  TCCR3B |= (1 << WGM33) | (1 << WGM32) | (1 << CS30) | (1 << CS32);
+
+  ICR3 = 65535; //TOP
+  OCR3A = 65535;
+
+}
+
+void set_timer0(char status)
+{
+  if(status == 0)
+  {
+    #ifdef debug
+    uart_puts("Timer0 gestoppt\r\n");
+    #endif
+    TIMSK &= ~(1 << OCIE0);
+  }
+  else
+  {
+    #ifdef debug
+    uart_puts("Timer0 gestartet\r\n");
+    #endif
+    TIMSK |= (1 << OCIE0);
+  }
+}
+
+void set_timer1(char status)
+{
+  /*
+  if(status == 0)
+  {
+    #ifdef debug
+    uart_puts("Timer1 gestoppt\r\n");
+    #endif
+    TIMSK &= ~(1 << OCIE1A);
+  }
+  else
+  {
+    #ifdef debug
+    uart_puts("Timer1 gestartet\r\n");
+    #endif
+    TIMSK |= (1 << OCIE1A);
+  }
+  */
+}
+void set_timer3(char status)
+{
+  if(status == 0)
+  {
+    #ifdef debug
+    uart_puts("Timer3 gestoppt\r\n");
+    #endif
+    ETIMSK &= ~(1 << OCIE3A);
+  }
+  else
+  {
+    #ifdef debug
+    uart_puts("Timer3 gestartet\r\n");
+    #endif
+    ETIMSK |= (1 << OCIE3A);
+  }
+}
+void toogle_f(void)
+{
+  set_timer3(0);
+  display_del_function();
+  f=0;
+}
 void boot(void)
 {
   #ifdef debug
@@ -161,8 +250,13 @@ void setmodus(int data)
 
 void keycheck(void)
 {
+  EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
-	
+
+  _delay_ms(100);
+
+  unsigned int quick=0;
+
   #ifdef debug
   char string[20];
   uart_puts("Daten: ");
@@ -170,8 +264,6 @@ void keycheck(void)
   uart_puts(string);
   uart_puts("\r\n");
   #endif
-
-  _delay_ms(200);
   
   if((keys & 0x20000) == 0)
   {
@@ -203,19 +295,22 @@ void keycheck(void)
     format_memory();
     wdt_enable(WDTO_15MS);
   }
-
+  /*
   else if((keys & 0x1) == 0)
   {
     #ifdef debug
     uart_puts("Dimmer\r\n");
     #endif
   }
+  */
+  /*
   else if((keys & 0x8) == 0)
   {
     #ifdef debug
     uart_puts("CH19\r\n");
     #endif
   }
+  */
   else if((keys & 0x20000000) == 0)
   {
     #ifdef debug
@@ -245,22 +340,18 @@ void keycheck(void)
     #endif
     if(led_br == 0)
     {
-      uart_puts("-> 20\r\n");
       led_br=20;
     }
     else if(led_br == 20)
     {
-      uart_puts("-> 100\r\n");
       led_br=100;
     }
     else if(led_br == 255)
     {
-      uart_puts("-> 0\r\n");
       led_br=0;
     }
     else
     {
-      uart_puts("-> 255\r\n");
       led_br=255;
     }
     led_helligkeit1(led_br,led_color_v);
@@ -383,7 +474,9 @@ void keycheck(void)
     else if((keys & 0x40) == 0)
   {
     f=1;
+    #ifdef debug
     uart_puts("F\r\n");
+    #endif
     init_timer3();
     //set_timer3(1);
     display_write_function();
@@ -391,7 +484,8 @@ void keycheck(void)
   }
   // 
   // Drehschalter + ODER CH+
-  else if(((keys & 0x2) == 0) || ((keys & 0x80) == 0))
+  //  0x2
+  else if(((keys & 0x1) == 0) || ((keys & 0x2) == 0))
   {
     #ifdef debug
     uart_puts("Drehschalter + ODER Taster +\r\n");
@@ -420,7 +514,7 @@ void keycheck(void)
   }
   // 
   // Drehschalter - ODER CH-
-  else if((keys & 0x4) == 0)
+  else if(((keys & 0x4) == 0) || ((keys & 0x8) == 0 ))
   {
     #ifdef debug
     uart_puts("Drehschalter - ODER Taster -\r\n");
@@ -466,7 +560,15 @@ void keycheck(void)
     uart_puts("unbekannter Eingang\r\n");
     #endif
   }
-  /*
+  if(quick == 0)
+  {
+    _delay_ms(100);
+  }
+  else
+  {
+    _delay_ms(50);
+  }
+  
   if(keys != 0xffffffff)
   {
     set_timer0(1);
@@ -474,6 +576,7 @@ void keycheck(void)
   else
   {
     set_timer0(0);
+    EIMSK |= (1 << INT7);
   }
-  */
 }
+

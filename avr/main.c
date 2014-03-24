@@ -178,23 +178,6 @@ void scan(void)
   }
 }
 */
-void set_timer3(char status)
-{
-  if(status == 0)
-  {
-    #ifdef debug
-    uart_puts("Timer3 gestoppt\r\n");
-    #endif
-    ETIMSK &= ~(1 << OCIE3A);
-  }
-  else
-  {
-    #ifdef debug
-    uart_puts("Timer3 gestartet\r\n");
-    #endif
-    ETIMSK |= (1 << OCIE3A);
-  }
-}
 uint16_t adc_read(void )
 {
   // ADC1 auswählen
@@ -259,13 +242,6 @@ ISR (TIMER3_COMPA_vect)
   uart_puts("INT TIMER3_COMPA_vect\r\n");
   #endif
   toogle_f();
-}
-
-void toogle_f(void)
-{
-  set_timer3(0);
-  display_del_function();
-  f=0;
 }
 
 ISR (TIMER1_COMPA_vect) 
@@ -485,97 +461,6 @@ ISR (SPM_READY_vect)
   }
 }
 
-void init_timer0(void)
-{
-  //
-  // http://timogruss.de/2013/06/die-timer-des-atmega128-ctc-modus-clear-timer-on-compare/
-  // das ist Timer0
-  // Register TIMSK, Bit OCIE0 startet den INT
-  //
-  // CTC Modus, Vorteiler 128
-  TCCR0 |= (1 << WGM01)|(1 << CS02)|(1 << CS00);
-  TCNT0 = 0x00; //Timer 0 mit Null initialisieren
-  OCR0 = 64;  //Vergleichsregister initialisieren
-}
-void init_timer3(void)
-{
-  //
-  // das ist Timer3
-  //
-  TCCR3A |= (1 << WGM31) | (1<<COM3A1);
-
-  TCCR3B |= (1 << WGM33) | (1 << WGM32) | (1 << CS30) | (1 << CS32);
-
-  ICR3 = 65535; //TOP
-  OCR3A = 65535;
-
-}
-//
-// vielleicht noch auf 1/10 Hz genau? :-D
-void init_tone(void)
-{
-  // 
-  // Anregung: http://www.mikrocontroller.net/topic/215420
-  DDRB |= (1<<PB5); 
-
-  TCCR1A |= (1 << WGM11) | (1<<COM1A1);
-  // 64 ist Vorteiler
-  TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS10) | (1 << CS11);
-}
-void tone(unsigned int tonefreq)
-{
-  if(tonefreq == 0)
-  {
-    ICR1=0;
-    OCR1A=0;
-  }
-  else
-  {
-    ICR1 = (((18432000/64) / tonefreq) - 1); //TOP
-    OCR1A = (((18432000/64) / tonefreq) - 1)/2;
-  }
-}
-
-void set_timer0(char status)
-{
-  if(status == 0)
-  {
-    #ifdef debug
-    uart_puts("Timer0 gestoppt\r\n");
-    #endif
-    TIMSK &= ~(1 << OCIE0);
-  }
-  else
-  {
-    #ifdef debug
-    uart_puts("Timer0 gestartet\r\n");
-    #endif
-    TIMSK |= (1 << OCIE0);
-  }
-}
-
-
-
-void set_timer1(char status)
-{
-  /*
-  if(status == 0)
-  {
-    #ifdef debug
-    uart_puts("Timer1 gestoppt\r\n");
-    #endif
-    TIMSK &= ~(1 << OCIE1A);
-  }
-  else
-  {
-    #ifdef debug
-    uart_puts("Timer1 gestartet\r\n");
-    #endif
-    TIMSK |= (1 << OCIE1A);
-  }
-  */
-}
-
 int main(void) 
 {
   cli();
@@ -587,7 +472,9 @@ int main(void)
   if ((MCUCSR & (1 << WDRF)))           // watchdog-reset
   {
     MCUCSR = 0;                                         // Reset-Flags zurücksetzen
+    #ifdef debug
     uart_puts("Wachhund Fehler");
+    #endif
   }
   wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
   wdt_reset();
@@ -605,15 +492,7 @@ int main(void)
 
   wdt_reset();
 
-  //led_helligkeit1(25,0);
-  //led_helligkeit2(25,0);
-  //display_write_modus(0);
   //adc_init();
-
-  //init_timer0();
-  //init_tone();
-  //init_timer1();
-  //set_timer1(1);
 
   #ifdef debug
   inituart();
@@ -630,25 +509,12 @@ int main(void)
 
   sei();
 
-  //_delay_ms(1500);
-  //wdt_reset();
-  //_delay_ms(1500);
-  wdt_reset();
-  //led_helligkeit1(led_br,led_color_v);
-  //led_helligkeit2(led_br,led_color_v);
-  //
-  //sei();
-  //set_timer3(1);
+  led_helligkeit1(0x255,led_color_v);
+  led_helligkeit2(0x255,led_color_v);
+  
   while(1)
   {
     wdt_reset();
-    //set_timer3(1);
-    //_delay_ms(1000);
-    //uart_puts(".");
-
-    //_delay_ms(100);
-    //zaehler++;
-    //uart_puts("-");
     //messung_s();
   }
 } 

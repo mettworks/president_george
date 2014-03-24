@@ -429,10 +429,12 @@ void display_write_vfo(char display_vfo)
 
 void display_write_frequenz(unsigned long freq2write)
 {
+  #ifdef debug
   uart_puts("display_write_frequenz():\r\n");
   uart_puts("Frequenz : ");
   uart_puts(ltoa(freq2write, string, 10));
   uart_puts("\r\n");
+  #endif
 
   // Punkt anmachen
   daten[37]=0x01;

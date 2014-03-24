@@ -38,8 +38,8 @@
 #define TREIBER_SWR 14
 #define TREIBER_SRF 15
 
-#define HAM_FREQ_MIN 28000000
-#define HAM_FREQ_MAX 29690000
+#define HAM_FREQ_MIN 28000000UL
+#define HAM_FREQ_MAX 29690000UL
 
 #define CB_CH_MIN 1
 #define CB_CH_MAX 80
@@ -166,7 +166,7 @@ Byte 17
   cb_channel=memory[4];
   cb_mod=memory[6];
   ctcss=memory[16];
-  rpt=memory[18];
+  //rpt=memory[18];
   //echo_ham=memory[12];
   echo_ham=0;
   beep_ham=memory[14];
@@ -317,7 +317,9 @@ void setvfo(unsigned int vfo_value)
   if(vfo_value == 0)
   {
     vfo=0;
+    #ifdef debug
     uart_puts("VFO -> A\r\n");
+    #endif
     tune(freq_a,step);
     set_modulation(ham_mod_a);
     display_write_vfo('A');
@@ -326,7 +328,9 @@ void setvfo(unsigned int vfo_value)
   else
   {
     vfo=1;
+    #ifdef debug
     uart_puts("VFO -> B\r\n");
+    #endif
     tune(freq_b,step);
     set_modulation(ham_mod_b);
     display_write_vfo('B');
@@ -365,7 +369,7 @@ void set_rpt(unsigned int rpt_value)
     #endif
     display_rpt(1);
     rpt=1;
-    memory[18]=1;
+    //memory[18]=1;
   }
   else
   {
@@ -374,7 +378,7 @@ void set_rpt(unsigned int rpt_value)
     #endif
     display_rpt(0);
     rpt=0;
-    memory[18]=0;
+    //memory[18]=0;
   }
 }
 
@@ -495,21 +499,30 @@ void channel(unsigned int ch)
 
 int tune(unsigned long freq2tune,unsigned int step2tune)
 {
+  #ifdef debug
+  uart_puts("tune(): DAVOR\r\n");
+  uart_puts("tune: Frequenz : ");
+  uart_puts(ltoa(freq_a, string, 10));
+  uart_puts("\r\n");
+  #endif
+
   if(modus==1)
   {
     if(freq2tune > HAM_FREQ_MAX)
     {
+      uart_puts("freq2tune > HAM_FREQ_MAX\r\n");
       freq2tune=HAM_FREQ_MIN;
     }
     if(freq2tune < HAM_FREQ_MIN)
     {
+      uart_puts("freq2tune < HAM_FREQ_MIN\r\n");
       freq2tune=HAM_FREQ_MAX;
     }
   }
 
   //freq2tune=freq2tune/1000;
   #ifdef debug
-  uart_puts("tune(): Beginn\r\n");
+  uart_puts("tune(): DANACH\r\n");
   uart_puts("tune: Frequenz : ");
   uart_puts(ltoa(freq_a, string, 10));
   uart_puts("\r\n");
@@ -696,7 +709,6 @@ void set_modulation(unsigned int mod)
   {	
     memory[6]=mod;
   }
-  return 0;
 }
 
 int beep(void)
@@ -751,3 +763,29 @@ int rogerbeep(void)
 */
   return 0;
 }
+//
+// vielleicht noch auf 1/10 Hz genau? :-D
+void init_tone(void)
+{
+  // 
+  // Anregung: http://www.mikrocontroller.net/topic/215420
+  DDRB |= (1<<PB5);
+
+  TCCR1A |= (1 << WGM11) | (1<<COM1A1);
+  // 64 ist Vorteiler
+  TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS10) | (1 << CS11);
+}
+void tone(unsigned int tonefreq)
+{
+  if(tonefreq == 0)
+  {
+    ICR1=0;
+    OCR1A=0;
+  }
+  else
+  {
+    ICR1 = (((18432000/64) / tonefreq) - 1); //TOP
+    OCR1A = (((18432000/64) / tonefreq) - 1)/2;
+  }
+}
+

@@ -16,17 +16,6 @@
 
 extern unsigned int memory[MEM_SIZE];
 
-void format_memory(void)
-{
-  unsigned int i;
-  while(i < MEM_SIZE)
-  {
-    memory[i]=0;
-    i++;
-  }
-  save2memory();
-}
-
 unsigned char ReadSPI(void)
 {
   unsigned char data;
@@ -121,11 +110,11 @@ int save2memory(void)
   int i=0;
   unsigned int H_Add=0;    
   unsigned int L_Add=0;
-  unsigned char IOReg;
+  //unsigned char IOReg;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  IOReg = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
-  IOReg = SPDR;
+  //IOReg = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
+  //IOReg = SPDR;
   PORTB |= (1<<PB0);                         //ChipSelect aus
   while(i < MEM_SIZE)
   {
@@ -157,11 +146,11 @@ void read_memory(void)
   int i=0;
   unsigned int H_Add=0;    
   unsigned int L_Add=0;
-  unsigned char IOReg;
+  //unsigned char IOReg;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  IOReg = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
-  IOReg = SPDR;
+  //IOReg = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
+  //IOReg = SPDR;
   PORTB |= (1<<PB0);                         	//ChipSelect aus
 
   while(i < MEM_SIZE)
@@ -187,3 +176,15 @@ void read_memory(void)
   uart_puts("read_memory() ENDE\r\n");
   #endif
 }
+void format_memory(void)
+{
+  unsigned int i=0;
+  while(i < MEM_SIZE)
+  {
+    memory[i]=0;
+    i++;
+  }
+  save2memory();
+}
+
+
