@@ -117,8 +117,8 @@ Mod HAM A   Mod HAM B     Mod CB  color display green   color keys green
 Byte 13
 #######
      7    6     5           4               3               2               1             0
-1    on   cb    split on    NBANL ham on    NBANL cb on     HICUT ham on    HICUT cb on   VFO B active
-0    off  ham   split off   NBANL ham off   NBANL cb off    HICUT ham off   HICUT cb off  VFO A active
+1    on   ham   split on    NBANL ham on    NBANL cb on     HICUT ham on    HICUT cb on   VFO B active
+0    off  cb	split off   NBANL ham off   NBANL cb off    HICUT ham off   HICUT cb off  VFO A active
 
 Byte 14
 #######
@@ -146,86 +146,51 @@ Byte 17
 
 */
 
-  freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
-  freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
-
-  if(memory[13] &1) 
+  if(memory[13] &(1<<6))
   {
-    vfo=1;
+    #ifdef debug 
+    uart_puts("Modus CB\r\n");
+    #endif
+    modus=1;
+    cb_channel=memory[8];
+    cb_mod=memory[12] >> 2 & 0x5;
+
+    channel(cb_channel);
+    set_modulation(cb_mod);
   }
   else
   {
-    vfo=0;
-  }
+    #ifdef debug 
+    uart_puts("Modus HAM\r\n");
+    #endif
+    modus=0;
+    freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
+    freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
 
-  ham_mod_a = memory[12] >> 5; 
-  ham_mod_b = memory[12] >> 2 & 0x7; 
-
-  modus=memory[1];
-  step=5;
-  cb_channel=memory[4];
-  cb_mod=memory[6];
-  ctcss=memory[16];
-  //rpt=memory[18];
-  //echo_ham=memory[12];
-  echo_ham=0;
-  beep_ham=memory[14];
-  //ctcss_tone=memory[17];
-  if((26565000 > freq_a) || (29690000 < freq_a) || (freq_a == 0))
-  {
-    #ifdef debug
-    uart_puts("Frequenz A aus dem EEPROM ist falsch!\r\n");
-    #endif
-    freq_a=28000000;
-  }
-  if((26565000 > freq_b) || (29690000 < freq_b) || (freq_b == 0))
-  {
-    #ifdef debug
-    uart_puts("Frequenz B aus dem EEPROM ist falsch!\r\n");
-    #endif
-    freq_b=28000000;
-  }
-  if((1 > mod) || (4 < mod))
-  {
-    #ifdef debug
-    uart_puts("Modulationsart aus dem EEPROM ist falsch!\r\n");
-    #endif
-    mod=1;
-  }
-  if((1 > modus) || (2 < modus))
-  {
-    #ifdef debug
-    uart_puts("Modus aus dem EEPROM ist falsch!\r\n");
-    #endif
-    modus=1;
-  }
-  if((1 > cb_channel) || (4 < cb_channel))
-  {
-    #ifdef debug
-    uart_puts("Kanal (CB) aus dem EEPROM ist falsch!\r\n");
-    #endif
-    cb_channel=1;
-    memory[4]=1;
-  }	
-  if((1 > cb_mod) || (4 < cb_mod))
-  {
-    #ifdef debug
-    uart_puts("Modulationsart (CB) aus dem EEPROM ist falsch!\r\n");
-    #endif
-    cb_mod=1;
-    memory[6]=1;
-  }
-
-  treiber(wert); 
-  _delay_ms(28);
-  wert |= (1 << TREIBER_MUTE);
-  treiber(wert);
-  _delay_ms(28);
-  if(modus == 1)
-  {
-    #ifdef debug
-    uart_puts("Modus: HAM\r\n");
-    #endif
+    if(memory[13] &0) 
+    {
+      vfo=1;
+    }
+    else
+    {
+      vfo=0;
+    }
+    ham_mod_a = memory[12] >> 5; 
+    ham_mod_b = memory[12] >> 2 & 0x7;
+    if((26565000 > freq_a) || (29690000 < freq_a) || (freq_a == 0))
+    {
+      #ifdef debug
+      uart_puts("Frequenz A aus dem EEPROM ist falsch!\r\n");
+      #endif
+      freq_a=28000000;
+    }
+    if((26565000 > freq_b) || (29690000 < freq_b) || (freq_b == 0))
+    {
+      #ifdef debug
+      uart_puts("Frequenz B aus dem EEPROM ist falsch!\r\n");
+      #endif
+      freq_b=28000000;
+    }
     tune(freq_a,step);
     _delay_ms(28);
     if(vfo == 0)
@@ -236,31 +201,29 @@ Byte 17
     {
       set_modulation(ham_mod_b);
     }
+    setvfo(vfo);
   }
-  else
-  {
-    #ifdef debug
-    uart_puts("Modus: CB\r\n");
-    #endif
-    channel(cb_channel);
-    _delay_ms(28);
-    set_modulation(cb_mod);
-  }
-  set_ctcss(ctcss);
-  set_rpt(rpt);
-  set_echo(echo_ham);
-  set_beep(beep_ham);
-  setvfo(vfo);
+
+  step=5;
+  //ctcss=memory[16];
+  //rpt=memory[18];
+  //echo_ham=memory[12];
+  //echo_ham=0;
+  //beep_ham=memory[14];
+  //ctcss_tone=memory[17];
+
+  treiber(wert); 
+  _delay_ms(28);
+  wert |= (1 << TREIBER_MUTE);
+  treiber(wert);
+  _delay_ms(28);
+  //set_ctcss(ctcss);
+  //set_rpt(rpt);
+  //set_echo(echo_ham);
+  //set_beep(beep_ham);
   //display_write_vfo('A');
   display_write_modus(0);
 
-  
-  #ifdef debug
-  uart_puts("Frequenz: ");
-  uart_puts(itoa(freq_a, string, 10));
-  uart_puts("\r\n");
-  uart_puts("init_geraet() ENDE\r\n");
-  #endif
   return 0;
 }
 
@@ -323,7 +286,7 @@ void setvfo(unsigned int vfo_value)
     tune(freq_a,step);
     set_modulation(ham_mod_a);
     display_write_vfo('A');
-    memory[13] &= ~(1 << 0);
+    memory[13] &= ~(0 << 0);
   }
   else
   {
@@ -334,7 +297,7 @@ void setvfo(unsigned int vfo_value)
     tune(freq_b,step);
     set_modulation(ham_mod_b);
     display_write_vfo('B');
-    memory[13] |= ( 1 << 0);
+    memory[13] |= ( 0 << 0);
   }
 }
 
@@ -446,9 +409,8 @@ int rx(void)
   return 0;
 }
  
-int ch2freq(unsigned int ch)
+unsigned long ch2freq(unsigned int ch)
 {
-
   #ifdef debug 
   uart_puts("ch2freq(): Kanal ");
   char text[10];
@@ -456,10 +418,11 @@ int ch2freq(unsigned int ch)
   uart_puts(text);
   uart_puts(" -> ");
   #endif
-  unsigned int data;
-  data=channels[ch-1];
+  unsigned long data;
+  data=(unsigned long)channels[ch-1];
+  data=data*1000;
   #ifdef debug
-  utoa(data,text,10);
+  ltoa(data,text,10);
   uart_puts(text);
   uart_puts("\r\n");
   #endif
@@ -482,7 +445,7 @@ void channel(unsigned int ch)
     uart_puts("channel(): Kanal ist kleiner als CB_CH_MIN -> CB_CH_MAX ");
     #endif
   }
-  unsigned int cb_freq;
+  unsigned long cb_freq;
   #ifdef debug 
   uart_puts("channel(): Kanal ");
   char text[10];
@@ -493,20 +456,13 @@ void channel(unsigned int ch)
   cb_freq=ch2freq(ch);
   tune(cb_freq,5);
   display_write_channel(ch);
-  memory[4]=ch;
+  memory[8]=ch;
   cb_channel=ch;
 }
 
 int tune(unsigned long freq2tune,unsigned int step2tune)
 {
-  #ifdef debug
-  uart_puts("tune(): DAVOR\r\n");
-  uart_puts("tune: Frequenz : ");
-  uart_puts(ltoa(freq2tune, string, 10));
-  uart_puts("\r\n");
-  #endif
-
-  if(modus==1)
+  if(modus==0)
   {
     if(freq2tune > HAM_FREQ_MAX)
     {
@@ -525,10 +481,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
       freq_b=freq2tune;
     }
   }
-
-  //freq2tune=freq2tune/1000;
   #ifdef debug
-  uart_puts("tune(): DANACH\r\n");
   uart_puts("tune: Frequenz : ");
   uart_puts(ltoa(freq2tune, string, 10));
   uart_puts("\r\n");
@@ -545,7 +498,13 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   // die Bitfolge muss 17 Bits lang sein
   unsigned int teiler_ref; 
   // TODO: define !
-  teiler_ref=10240/step2tune;
+  teiler_ref=10240000/(step2tune*1000);
+  #ifdef debug
+  uart_puts("tune: Teiler REF : ");
+  uart_puts(ltoa(teiler_ref, string, 10));
+  uart_puts("\r\n");
+  #endif
+
   int index[16];
   int i;
   for(i=0; teiler_ref > 0; i++)
@@ -580,8 +539,16 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   begin1();
   unsigned int teiler_soll;
   // TODO! / 1000 !! ??
-  unsigned int teiler_soll_temp=(freq2tune/1000)+10695;
-  teiler_soll=teiler_soll_temp/step2tune;
+  unsigned long teiler_soll_temp=(freq2tune)+10695000;
+  teiler_soll=teiler_soll_temp/(step2tune*1000);
+  #ifdef debug
+  uart_puts("tune: Teiler SOLL : ");
+  uart_puts(ltoa(teiler_soll, string, 10));
+  uart_puts("\r\n");
+  #endif
+
+
+
   int index_soll[24];
   int j;
   for(j=0; teiler_soll > 0; j++)

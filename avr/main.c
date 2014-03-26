@@ -511,7 +511,10 @@ int main(void)
 
   led_helligkeit1(0x255,led_color_v);
   led_helligkeit2(0x255,led_color_v);
-  
+
+  //tune(27405000,5);
+  //set_modulation(1);
+
   while(1)
   {
     wdt_reset();

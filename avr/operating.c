@@ -244,7 +244,20 @@ void setmodus(int data)
   #ifdef debug
   uart_puts("setmodus():\r\n");
   #endif
-  memory[1]=data;
+  if(data==0)
+  {
+    #ifdef debug
+    uart_puts("-> HAM\r\n");
+    #endif
+    memory[13] &= ~(1 << 6);
+  }
+  else
+  {
+    #ifdef debug
+    uart_puts("-> CB\r\n");
+    #endif
+    memory[13] |= ( 1 << 6);
+  }
   init_geraet();
 }
 
@@ -255,7 +268,7 @@ void keycheck(void)
 
   _delay_ms(100);
 
-  unsigned int quick=0;
+  //unsigned int quick=0;
 
   #ifdef debug
   char string[20];
@@ -270,7 +283,8 @@ void keycheck(void)
     #ifdef debug
     uart_puts("RX->TX\r\n");
     #endif
-    if(modus == 2)
+    /*
+    if(modus == 1)
     {
       #ifdef debug
       uart_puts("kein Sendebetrieb auf dieser Frequenz...\r\n");
@@ -278,10 +292,13 @@ void keycheck(void)
     }
     else
     {
+    */
       tx();
       display_write_modus(1);
       txstat=1;
+    /*
     }
+    */
   }
 
   else if((keys & 0x10400) == 0)
@@ -460,15 +477,21 @@ void keycheck(void)
   else if((keys & 0x8000000) == 0)
   {
     #ifdef debug
-    uart_puts("PA\r\n");
+    uart_puts("HAM/CB\r\n");
     #endif
-    if(modus==1)
+    if(modus==0)
     {
-      setmodus(2);
-    }
-    else if(modus==2)
-    {
+      #ifdef debug
+      uart_puts("-> CB\r\n");
+      #endif
       setmodus(1);
+    }
+    else
+    {
+      #ifdef debug
+      uart_puts("-> HAM\r\n");
+      #endif
+      setmodus(0);
     }
   }
     else if((keys & 0x40) == 0)
@@ -490,7 +513,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Drehschalter + ODER Taster +\r\n");
     #endif
-    if(modus==1)
+    if(modus==0)
     {
       if(vfo==0)
       {
@@ -519,7 +542,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Drehschalter - ODER Taster -\r\n");
     #endif
-    if(modus==1)
+    if(modus==0)
     {
       if(vfo==0)
       {
@@ -560,15 +583,6 @@ void keycheck(void)
     uart_puts("unbekannter Eingang\r\n");
     #endif
   }
-  if(quick == 0)
-  {
-    _delay_ms(100);
-  }
-  else
-  {
-    _delay_ms(50);
-  }
-  
   if(keys != 0xffffffff)
   {
     set_timer0(1);
