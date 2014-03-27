@@ -19,7 +19,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <stdint.h>
 #endif
 
-//int ichbinaus=0;
+int ichbinaus=0;
 unsigned int memory[MEM_SIZE];
 unsigned int mod;
 unsigned int freq;
@@ -69,7 +69,6 @@ ISR (INT4_vect)
   #endif
   off();
 }
-/*
 ISR (INT5_vect)
 {
   #ifdef debug
@@ -86,9 +85,9 @@ ISR (INT5_vect)
       uart_puts("AN\r\n");
       #endif
       PORTA |= (1<<PA7);	// einschalten
-      //led_helligkeit1(led_dimm1);
-      //led_helligkeit2(led_dimm2);
       init_geraet();
+      led_helligkeit1(0x0,led_color_v);
+      led_helligkeit2(0x0,led_color_v);
       ichbinaus=0;
       EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
     }
@@ -101,15 +100,14 @@ ISR (INT5_vect)
       display_clear();
       save2memory();
       PORTA &= ~(1<<PA7);	// ausschalten...
-      //led_helligkeit1(0,0);
-      //led_helligkeit2(0,0);
+      led_helligkeit1(0x0,led_color_v);
+      led_helligkeit2(0x0,led_color_v);
       // LED 9 ist die am Taster 1...
-      //led_pwm(10,255,0);
+      //led_pwm(0x0,1,255);
       EIMSK = (1<< INT5);
     }
   }
 }
-*/
 ISR (INT7_vect)
 {
   wdt_reset();
