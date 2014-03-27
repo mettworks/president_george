@@ -86,8 +86,8 @@ ISR (INT5_vect)
       #endif
       PORTA |= (1<<PA7);	// einschalten
       init_geraet();
-      led_helligkeit1(0x0,led_color_v);
-      led_helligkeit2(0x0,led_color_v);
+      led_helligkeit1(0x255,led_color_v);
+      led_helligkeit2(0x255,led_color_v);
       ichbinaus=0;
       EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
     }
