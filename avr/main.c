@@ -26,10 +26,12 @@ unsigned int freq;
 unsigned int cb_channel;
 unsigned int cb_mod;
 unsigned int step = 5;
+unsigned int step2=0;
 unsigned int ctcss;
 unsigned int rpt;
 unsigned int echo_ham;
 unsigned int beep_ham;
+unsigned int beep_cb;
 int txstat=0;
 int modus;
 unsigned int led_br=255;
@@ -42,6 +44,7 @@ unsigned int vfo;
 unsigned int f=0;
 unsigned int ham_mod_a;
 unsigned int ham_mod_b;
+unsigned int split;
 
 //
 // Counter für S-Meter
@@ -56,6 +59,9 @@ unsigned int adcvalues[20];
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+  TIMSK=0;
+  EIMSK=0;
+
   cli();
   wdt_disable();
   #ifdef debug
@@ -464,7 +470,6 @@ ISR (SPM_READY_vect)
 int main(void) 
 {
   cli();
-  _delay_ms(500);
   if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))              // external, power-on- oder brown-out-reset
   {
     MCUCSR = 0;                                         // Reset-Flags zurücksetzen
@@ -488,8 +493,6 @@ int main(void)
   read_memory();
   init_geraet();
  
-  _delay_ms(500);
-
   wdt_reset();
 
   //adc_init();
@@ -500,10 +503,6 @@ int main(void)
   uart_puts("Init fertig\r\n");
   #endif
 
-  wdt_reset();
-  _delay_ms(500);
-  wdt_reset();
-
   init_led(ADDR_LED00);
   init_led(ADDR_LED01);
 
@@ -512,8 +511,6 @@ int main(void)
   led_helligkeit1(0x255,led_color_v);
   led_helligkeit2(0x255,led_color_v);
 
-  //tune(27405000,5);
-  //set_modulation(1);
 
   while(1)
   {

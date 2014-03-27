@@ -56,6 +56,8 @@ extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
 extern unsigned int beep_ham;
+extern unsigned int beep_cb;
+
 char string[10];
 
 extern unsigned int memory[MEM_SIZE];
@@ -64,6 +66,7 @@ extern unsigned long freq_b;
 extern unsigned int vfo;
 extern unsigned int ham_mod_a;
 extern unsigned int ham_mod_b;
+extern unsigned int step2;
 
 void off(void)
 {
@@ -166,6 +169,7 @@ Byte 17
     modus=0;
     freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
     freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
+    step2 = memory[15] >> 3;
 
     if(memory[13] &0) 
     {
@@ -387,7 +391,7 @@ int rx(void)
   {
     tone(0);
   }
-  if(beep_ham == 1)
+  if((beep_ham == 1) || (beep_cb == 1))
   {
     rogerbeep();
   }
@@ -761,4 +765,3 @@ void tone(unsigned int tonefreq)
     OCR1A = (((18432000/64) / tonefreq) - 1)/2;
   }
 }
-

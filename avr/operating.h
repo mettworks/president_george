@@ -12,3 +12,5 @@ void init_timer3(void);
 void set_timer0(char status);
 void set_timer1(char status);
 void set_timer3(char status);
+unsigned long mkstep2(unsigned int step2);
+

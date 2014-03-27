@@ -14,10 +14,13 @@
 #endif
 
 unsigned long keys;
+unsigned int set_step=0;
 extern int led_farbe;
 extern unsigned int led_dimm1;
 extern unsigned int led_dimm2;
 extern unsigned int step;
+extern unsigned int step2;
+
 extern unsigned int freq;
 extern int mod;
 extern int cb_mod;
@@ -29,6 +32,7 @@ extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
 extern unsigned int beep_ham;
+extern unsigned int beep_cb;
 extern unsigned int led_br;
 extern unsigned int led_color_v;
 extern unsigned int f;
@@ -36,8 +40,37 @@ extern unsigned int f;
 extern unsigned long freq_a;
 extern unsigned long freq_b;
 extern int vfo;
+extern unsigned int split;
 
-
+unsigned long mkstep2(unsigned int step2)
+{
+  unsigned long data=0;
+  if(step2 == 0)
+  {
+    data=1000;
+  }
+  else if(step2 == 1)
+  {
+    data=5000;
+  }
+  else if(step2 == 2)
+  {
+    data=10000;
+  }
+  else if(step2 == 3)
+  {
+    data=25000;
+  }
+  else if(step2 == 4)
+  {
+    data=100000;
+  }
+  else if(step2 == 5)
+  {
+    data=1000000;
+  }
+  return data;
+}
 void init_timer0(void)
 {
   //
@@ -78,6 +111,7 @@ void set_timer0(char status)
     #ifdef debug
     uart_puts("Timer0 gestartet\r\n");
     #endif
+    TCNT0=0;
     TIMSK |= (1 << OCIE0);
   }
 }
@@ -115,14 +149,22 @@ void set_timer3(char status)
     #ifdef debug
     uart_puts("Timer3 gestartet\r\n");
     #endif
+    TCNT3=0;
     ETIMSK |= (1 << OCIE3A);
   }
 }
 void toogle_f(void)
 {
   set_timer3(0);
-  display_del_function();
-  f=0;
+  display_memory_swap();
+  if(f==1)
+  {
+    f=0;
+  }
+  else if(set_step == 1)
+  {
+    set_step=0;
+  }
 }
 void boot(void)
 {
@@ -266,7 +308,7 @@ void keycheck(void)
   EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
 
-  _delay_ms(100);
+  _delay_ms(250);
 
   //unsigned int quick=0;
 
@@ -293,6 +335,13 @@ void keycheck(void)
     else
     {
     */
+      if(modus == 0)
+      {
+	if(split == 1)
+	{
+	  setvfo(1);
+	}
+      }
       tx();
       display_write_modus(1);
       txstat=1;
@@ -405,43 +454,74 @@ void keycheck(void)
     }
     else
     {
-      if(beep_ham == 0)
+      if(modus == 0)
       {
-	set_beep(1);
+	if(beep_ham == 0)
+	{
+	  set_beep(1);
+	}
+	else
+	{
+	  set_beep(0);
+	}
       }
       else
       {
-	set_beep(0);
+	if(beep_cb == 0)
+	{
+	  set_beep(1);
+	}
+	else
+	{
+	  set_beep(0);
+	}
       }
       toogle_f();
     }
   }
+  else if((keys & 0x10) == 0)
+  {
+    #ifdef debug
+    uart_puts("Split\r\n");
+    #endif
+    if(split == 0)
+    {
+      split=1;
+    }
+    else
+    {
+      split=0;
+    }
+    display_rpt(split);
+  }
+
   else if((keys & 0x20) == 0)
   {
     #ifdef debug
     uart_puts("VFO\r\n");
     #endif
-    if(vfo == 0)
+    if(modus == 0)
     {
-      setvfo(1);
-    }
-    else
-    {
-      setvfo(0);
+      if(vfo == 0)
+      {
+	setvfo(1);
+      }
+      else
+      {
+	setvfo(0);
+      }
     }
   }
   else if((keys & 0x1000000) == 0)
   {
     #ifdef debug
-    uart_puts("Beep\r\n");
+    uart_puts("Step\r\n");
     #endif
-    if(beep_ham == 0)
+    if(modus == 0)
     {
-      set_beep(1);
-    }
-    else
-    {
-      set_beep(0);
+      display_write_step(step2);
+      set_timer3(1);
+      set_step=1;
     }
   }	
   else if((keys & 0x10000) == 0)
@@ -501,7 +581,6 @@ void keycheck(void)
     uart_puts("F\r\n");
     #endif
     init_timer3();
-    //set_timer3(1);
     display_write_function();
     set_timer3(1);
   }
@@ -513,26 +592,60 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Drehschalter + ODER Taster +\r\n");
     #endif
-    if(modus==0)
+    if(set_step == 1)
     {
-      if(vfo==0)
+      if(step2 == 0)
       {
-	freq_a=freq_a+1000;
-	tune(freq_a,step);
+	step2=1;
       }
-      else
+      else if(step2 == 1)
       {
-	freq_b=freq_b+1000;
-	tune(freq_b,step);
+	step2=2;
       }
+      else if(step2 == 2)
+      {
+	step2=3;
+      }
+      else if(step2 == 3)
+      {
+	step2=4;
+      }
+      else if(step2 == 4)
+      {
+	step2=5;
+      }
+      else if(step2 == 5)
+      {
+	step2=0;
+      }
+      memory[15] = (memory[15] & 0xf) | ( mod << 3);
+      init_timer3();
+      display_write_frequenz(mkstep2(step2));
+      set_timer3(1);
     }
     else
     {
-      #ifdef debug
-      uart_puts("Modus CB\r\n");
-      #endif
-      cb_channel++;
-      channel(cb_channel);
+      if(modus==0)
+      {
+	if(vfo==0)
+	{
+	  freq_a=freq_a+(mkstep2(step2));
+	  tune(freq_a,step);
+	}
+	else
+	{
+	  freq_b=freq_b+(mkstep2(step2));
+	  tune(freq_b,step);
+	}
+      }
+      else
+      {
+	#ifdef debug
+	uart_puts("Modus CB\r\n");
+	#endif
+	cb_channel++;
+	channel(cb_channel);
+      }
     }
   }
   // 
@@ -542,23 +655,57 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Drehschalter - ODER Taster -\r\n");
     #endif
-    if(modus==0)
+    if(set_step == 1)
     {
-      if(vfo==0)
+      if(step2 == 5)
       {
-	freq_a=freq_a-1000;
-	tune(freq_a,step);
+	step2=4;
       }
-      else
+      else if(step2 == 4)
       {
-	freq_b=freq_b-1000;
-	tune(freq_b,step);
+	step2=3;
       }
+      else if(step2 == 3)
+      {
+	step2=2;
+      }
+      else if(step2 == 2)
+      {
+	step2=1;
+      }
+      else if(step2 == 1)
+      {
+	step2=0;
+      }
+      else if(step2 == 0)
+      {
+	step2=5;
+      }
+      memory[15] = (memory[15] & 0xf) | ( mod << 3);
+      init_timer3();
+      display_write_frequenz(mkstep2(step2));
+      set_timer3(1);
     }
     else
     {
-      cb_channel--;
-      channel(cb_channel);
+      if(modus==0)
+      {
+	if(vfo==0)
+	{
+	  freq_a=freq_a-(mkstep2(step2));
+	  tune(freq_a,step);
+	}
+	else
+	{
+	  freq_b=freq_b-(mkstep2(step2));
+	  tune(freq_b,step);
+	}
+      }
+      else
+      {
+	cb_channel--;
+	channel(cb_channel);
+      }
     }
   }	
 	
@@ -573,6 +720,13 @@ void keycheck(void)
       #endif
       //rogerbeep();
       display_write_modus(0);
+      if(modus == 0)
+      {
+	if(split == 1)
+	{
+	  setvfo(0);
+	}
+      }
       rx();
       txstat=0;
     }
@@ -590,7 +744,7 @@ void keycheck(void)
   else
   {
     set_timer0(0);
-    EIMSK |= (1 << INT7);
   }
+  EIMSK |= (1 << INT7);
 }
 
