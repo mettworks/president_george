@@ -186,14 +186,14 @@ Byte 17
       #ifdef debug
       uart_puts("Frequenz A aus dem EEPROM ist falsch!\r\n");
       #endif
-      freq_a=28000000;
+      freq_a=28500000;
     }
     if((26565000 > freq_b) || (29690000 < freq_b) || (freq_b == 0))
     {
       #ifdef debug
       uart_puts("Frequenz B aus dem EEPROM ist falsch!\r\n");
       #endif
-      freq_b=28000000;
+      freq_b=28500000;
     }
     tune(freq_a,step);
     _delay_ms(28);
@@ -614,7 +614,7 @@ void set_modulation(unsigned int mod)
   #ifdef debug 
   uart_puts("Modulation: ");
   #endif
-  if(mod == 1)
+  if(mod == 2)
   {
     // 1 FM
     #ifdef debug 
@@ -625,7 +625,7 @@ void set_modulation(unsigned int mod)
     wert &= ~(1 << TREIBER_USB);
     wert &= ~(1 << TREIBER_LSB);
   }
-  else if(mod == 2)
+  else if(mod == 3)
   {
     // 2 AM
     #ifdef debug 
@@ -636,7 +636,7 @@ void set_modulation(unsigned int mod)
     wert &= ~(1 << TREIBER_USB);
     wert &= ~(1 << TREIBER_LSB);
   }
-  else if(mod == 3)
+  else if(mod == 0)
   {
     // 3 USB
     #ifdef debug 
@@ -647,7 +647,7 @@ void set_modulation(unsigned int mod)
     wert &= ~(1 << TREIBER_AM);
     wert &= ~(1 << TREIBER_LSB);
   }
-  else if(mod == 4)
+  else if(mod == 1)
   {
     // 4 LSB
     #ifdef debug 
@@ -671,15 +671,17 @@ void set_modulation(unsigned int mod)
   display_write_mod(mod);
   //
   // ab ins EEPROM
-  if(modus==1)
+  if(modus==0)
   {
     if(vfo == 0)
     {
-      memory[12] = (memory[12] & 0x1f) | (mod << 5); 
+      memory[12] = (memory[12] & 0x1f) | (mod << 5);
+      ham_mod_a = mod;
     }
     else
     {
       memory[12]=(memory[12] & 0xe3) | ( mod << 2);
+      ham_mod_b = mod;
     }
   }
   else

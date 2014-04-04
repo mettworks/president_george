@@ -475,33 +475,33 @@ void display_write_modus(unsigned char modus)
 void display_write_mod(unsigned char mod)
 {
   //uart_puts("display_write_mod():\r\n");
-  // 1 FM 21
-  // 2 AM 12
-  // 3 USB 39
-  // 4 LSB 30
+  // 2 FM 21
+  // 3 AM 12
+  // 0 USB 39
+  // 1 LSB 30
 	
-  if(mod == 1)
+  if(mod == 2)
   {
     daten[12]=0x0;
     daten[21]=0x01;
     daten[30]=0x0;
     daten[39]=0x0;
   }
-  else if(mod == 2)
+  else if(mod == 3)
   {
     daten[12]=0x01;
     daten[21]=0x0;
     daten[30]=0x0;
     daten[39]=0x0;
   }
-  else if(mod == 3)
+  else if(mod == 0)
   {
     daten[12]=0x0;
     daten[21]=0x0;
     daten[30]=0x0;
     daten[39]=0x01;
   }
-  else if(mod == 4)
+  else if(mod == 1)
   {
     daten[12]=0x0;
     daten[21]=0x0;
