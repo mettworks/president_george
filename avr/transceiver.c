@@ -686,7 +686,7 @@ void set_modulation(unsigned int mod)
   }
   else
   {	
-    memory[6]=mod;
+    //memory[6]=mod;
   }
 }
 
