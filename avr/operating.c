@@ -185,6 +185,7 @@ void boot(void)
   // PC1 ist LED Grün                                           -> Ausgang
   // PA7 ist Ein/Aus                                            -> Ausgang
   // PA2 ist "Busy" (Rauschsperre offen)                        -> Eingang
+  // PB5 ist der Ausgang fuer Rogerbeep etc.			-> Ausgang
 
   // PE4
   DDRE &= ~(1<<PE4);    // Eingang
@@ -238,8 +239,8 @@ void boot(void)
   display_init();
   //init_led(ADDR_LED00);
   //init_led(ADDR_LED01);
-  init_timer0();
-  init_timer3();
+  //init_timer0();
+  //init_timer3();
   init_tone();
   #ifdef debug
   uart_puts("boot() ENDE\r\n");
@@ -305,13 +306,13 @@ void setmodus(int data)
 
 void keycheck(void)
 {
-  EIMSK &= ~(1 << INT7);
+  //EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
 
-  _delay_ms(250);
+  //_delay_ms(250);
 
   //unsigned int quick=0;
-
+  /*
   #ifdef debug
   char string[20];
   uart_puts("Daten: ");
@@ -319,7 +320,7 @@ void keycheck(void)
   uart_puts(string);
   uart_puts("\r\n");
   #endif
-  
+  */
   if((keys & 0x20000) == 0)
   {
     #ifdef debug
@@ -335,6 +336,8 @@ void keycheck(void)
     else
     {
     */
+    if(txstat == 0)
+    {
       if(modus == 0)
       {
 	if(split == 1)
@@ -345,6 +348,7 @@ void keycheck(void)
       tx();
       display_write_modus(1);
       txstat=1;
+    }
     /*
     }
     */
@@ -745,5 +749,5 @@ void keycheck(void)
   {
     set_timer0(0);
   }
-  EIMSK |= (1 << INT7);
+  //EIMSK |= (1 << INT7);
 }

@@ -372,11 +372,14 @@ int tx(void)
     wert |= (1 << TREIBER_TR);
     treiber(wert);
     _delay_ms(250);
+    /*
     if(ctcss==1)
     {
       tone(67);
     }
-    //beep();
+    */
+    //tone(750);
+    uart_puts("tx() ENDE\r\n");
   }
   return 0;
 }
@@ -387,14 +390,14 @@ int rx(void)
   {
     tune(freq+100,5);
   }
-  if(ctcss==1)
-  {
-    tone(0);
-  }
+  /*
   if((beep_ham == 1) || (beep_cb == 1))
   {
     rogerbeep();
   }
+  */
+  rogerbeep();
+  _delay_ms(100);
   ichsende=0;
   // alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
   //
@@ -410,6 +413,7 @@ int rx(void)
   wert |= (1 << TREIBER_MUTE);
   treiber(wert);
   _delay_ms(4);
+  uart_puts("rx() ENDE\r\n");
   return 0;
 }
  
@@ -690,63 +694,20 @@ void set_modulation(unsigned int mod)
   }
 }
 
-int beep(void)
-{
-/*
-  // 2 Töne
-  DDRB |= (1<<PB5); 
-
-  TCCR1A = (1<<WGM10) | (1<<COM1A1); 
-  TCCR1B = (1<<CS11) | (1<<CS10);
-  //TCCR1B=
-  OCR1A = 128-1;
-*/
-/* 
-  _delay_ms(250);
-  TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
-  _delay_ms(100);
-  TCCR1A = (1<<WGM10) | (1<<COM1A1); 
-  _delay_ms(250);
-  TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
-  */
-  return 0;
-}
-
 int rogerbeep(void)
 {
   #ifdef debug
   uart_puts("rogerbeep()\r\n");
   #endif
-  tone(1000);
-  _delay_ms(500);
-  tone(1500);
-  _delay_ms(500);
-  tone(0);
-/*
-  //
-  // 2 Töne
-  DDRB |= (1<<PB5); 
-  TCCR1A = (1<<WGM10) | (1<<COM1A1); 
-  TCCR1B = (1<<CS11) | (1<<CS10);	
-  OCR1A = 128-1; 
-  
-  _delay_ms(1000);
-
-  TCCR1A &= ~((1 << COM1A1) | (1 << WGM10)); 
-  _delay_ms(100);
-  
-  TCCR1A = (1<<WGM10) | (1<<COM1A1); 
+  init_tone();
+  tone(2520);
   _delay_ms(250);
-  	
-  TCCR1A &= ~((1 << COM1A1) | (1 << WGM10));
-*/
+  tone(0);
   return 0;
 }
-//
-// vielleicht noch auf 1/10 Hz genau? :-D
 void init_tone(void)
 {
-  // 
+  //
   // Anregung: http://www.mikrocontroller.net/topic/215420
   DDRB |= (1<<PB5);
 
@@ -754,6 +715,9 @@ void init_tone(void)
   // 64 ist Vorteiler
   TCCR1B |= (1 << WGM13) | (1 << WGM12) | (1 << CS10) | (1 << CS11);
 }
+
+//
+// TODO: Tiefe Frequenzen passen nicht!
 void tone(unsigned int tonefreq)
 {
   if(tonefreq == 0)

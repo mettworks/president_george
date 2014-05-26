@@ -235,9 +235,11 @@ void adc_init(void)
 
 ISR (TIMER0_COMP_vect)
 {
+  /*
   #ifdef debug
   uart_puts("INT Timer0\r\n");
   #endif
+  */
   keycheck();
 }
 ISR (TIMER3_COMPA_vect)
@@ -248,6 +250,8 @@ ISR (TIMER3_COMPA_vect)
   toogle_f();
 }
 
+//
+// IRQ fuer tonausgabe
 ISR (TIMER1_COMPA_vect) 
 {
   #ifdef debug
@@ -508,10 +512,9 @@ int main(void)
 
   led_helligkeit1(0x255,led_color_v);
   led_helligkeit2(0x255,led_color_v);
-
-
+  
   while(1)
-  {
+  { 
     wdt_reset();
     //messung_s();
   }
