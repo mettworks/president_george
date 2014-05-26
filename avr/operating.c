@@ -15,6 +15,7 @@
 
 unsigned long keys;
 unsigned int set_step=0;
+unsigned int quick=0;
 extern int led_farbe;
 extern unsigned int led_dimm1;
 extern unsigned int led_dimm2;
@@ -239,9 +240,9 @@ void boot(void)
   display_init();
   //init_led(ADDR_LED00);
   //init_led(ADDR_LED01);
-  //init_timer0();
-  //init_timer3();
-  init_tone();
+  init_timer0();
+  init_timer3();
+  //init_tone();
   #ifdef debug
   uart_puts("boot() ENDE\r\n");
   #endif
@@ -306,11 +307,20 @@ void setmodus(int data)
 
 void keycheck(void)
 {
-  //EIMSK &= ~(1 << INT7);
+  EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
-
-  //_delay_ms(250);
-
+  _delay_ms(250);
+  /*
+  if(quick == 0)
+  {
+    uart_puts("keycheck(): Verzoegerung\r\n");
+    _delay_ms(250);
+  }
+  else
+  {
+    uart_puts("keycheck(): KEINE Verzoegerung\r\n");
+  }
+  */
   //unsigned int quick=0;
   /*
   #ifdef debug
@@ -744,10 +754,12 @@ void keycheck(void)
   if(keys != 0xffffffff)
   {
     set_timer0(1);
+    //quick=0;
   }
   else
   {
     set_timer0(0);
+    //quick=1;
   }
-  //EIMSK |= (1 << INT7);
+  EIMSK |= (1 << INT7);
 }
