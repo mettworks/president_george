@@ -20,7 +20,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #endif
 
 int ichbinaus=0;
-unsigned int memory[MEM_SIZE];
+unsigned char memory[MEM_SIZE];
 unsigned int mod;
 unsigned int freq;
 unsigned int cb_channel;
@@ -36,7 +36,6 @@ int txstat=0;
 int modus;
 unsigned int led_br=255;
 unsigned int led_color_v=0;
-
 
 unsigned long freq_a;
 unsigned long freq_b;
@@ -395,7 +394,6 @@ ISR (TIMER3_CAPT_vect)
   {
   }
 }
-
 ISR (TIMER3_COMPB_vect)
 {
   #ifdef debug
@@ -472,18 +470,18 @@ ISR (SPM_READY_vect)
 int main(void) 
 {
   cli();
-  if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))              // external, power-on- oder brown-out-reset
+  if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))    // external, power-on- oder brown-out-reset
   {
-    MCUCSR = 0;                                         // Reset-Flags zurücksetzen
+    MCUCSR = 0;									      // Reset-Flags zurücksetzen
   }
-  if ((MCUCSR & (1 << WDRF)))           // watchdog-reset
+  if ((MCUCSR & (1 << WDRF)))							      // watchdog-reset
   {
-    MCUCSR = 0;                                         // Reset-Flags zurücksetzen
+    MCUCSR = 0;									      // Reset-Flags zurücksetzen
     #ifdef debug
     uart_puts("Wachhund Fehler");
     #endif
   }
-  wdt_enable(WDTO_2S);         // Watchdog mit 2 Sekunden
+  wdt_enable(WDTO_2S);								      // Watchdog mit 2 Sekunden
   wdt_reset();
   #ifdef debug
   inituart();

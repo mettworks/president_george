@@ -60,7 +60,7 @@ extern unsigned int beep_cb;
 
 char string[10];
 
-extern unsigned int memory[MEM_SIZE];
+extern unsigned char memory[MEM_SIZE];
 extern unsigned long freq_a;
 extern unsigned long freq_b;
 extern unsigned int vfo;
@@ -555,8 +555,6 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   uart_puts("\r\n");
   #endif
 
-
-
   int index_soll[24];
   int j;
   for(j=0; teiler_soll > 0; j++)
@@ -585,22 +583,6 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   end1();
 	
   display_write_frequenz(freq2tune);
-  //
-  // Frequenz erfolgreich geändert, ab in EEPROM, bei Spannungswegfall... :-)
-  if(vfo == 0)
-  {
-    memory[3] = freq2tune / 16777215;
-    memory[2] = freq2tune / 65535;
-    memory[1] = freq2tune / 256;
-    memory[0] = freq2tune % 256;
-  }
-  else
-  {
-    memory[7] = freq2tune / 16777215;
-    memory[6] = freq2tune / 65535;
-    memory[5] = freq2tune / 256;
-    memory[4] = freq2tune % 256;
-  } 
   /*
   if(modus==1)
   {

@@ -14,7 +14,26 @@
 #include <stdint.h>
 #endif
 
-extern unsigned int memory[MEM_SIZE];
+extern unsigned char memory[MEM_SIZE];
+
+void save_freq(unsigned long freq2tune,unsigned int vfo)
+{
+  uart_puts("save_freq()\r\n");
+  if(vfo == 0)
+  {
+    memory[3] = freq2tune / 16777215;
+    memory[2] = freq2tune / 65535;
+    memory[1] = freq2tune / 256;
+    memory[0] = freq2tune % 256;
+  }
+  else
+  {
+    memory[7] = freq2tune / 16777215;
+    memory[6] = freq2tune / 65535;
+    memory[5] = freq2tune / 256;
+    memory[4] = freq2tune % 256;
+  }
+}
 
 unsigned char ReadSPI(void)
 {
@@ -25,7 +44,7 @@ unsigned char ReadSPI(void)
   return data;                 
 }
 	
-void WriteSPI(unsigned int data)
+void WriteSPI(unsigned char data)
 {
   SPDR = data;   //Byte ins Datenregister schreiben
   while(!(SPSR & (1<<SPIF)));
@@ -73,7 +92,7 @@ void SPIWIPPolling(void)
   while (status & 0x01);	//Wiederhole bis WIP Bit auf Null gesetzt wird
 }
 	
-void ByteWriteSPI(unsigned int HighAdd, unsigned int LowAdd, unsigned int data)
+void ByteWriteSPI(unsigned char HighAdd, unsigned char LowAdd, unsigned char data)
 {
   WriteEnable();          //Schreiben aktivieren
   PORTB &= ~(1<<PB0);     //ChipSelect an
@@ -108,13 +127,10 @@ int save2memory(void)
   uart_puts("save2memory():\r\n");
   #endif
   int i=0;
-  unsigned int H_Add=0;    
-  unsigned int L_Add=0;
-  //unsigned char IOReg;
+  unsigned char H_Add=0;    
+  unsigned char L_Add=0;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   //SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  //IOReg = SPSR;                            //SPI Status und SPI Datenregister einmal auslesen
-  //IOReg = SPDR;
   PORTB |= (1<<PB0);                         //ChipSelect aus
   while(i < MEM_SIZE)
   {
@@ -144,13 +160,10 @@ void read_memory(void)
   uart_puts("read_memory()\r\n");
   #endif
   int i=0;
-  unsigned int H_Add=0;    
-  unsigned int L_Add=0;
-  //unsigned char IOReg;
+  unsigned char H_Add=0;    
+  unsigned char L_Add=0;
   DDRB = (1<<PB0) | (1<<PB2) | (1<<PB1);      //SS (ChipSelect), MOSI und SCK als Output, MISO als Input
   SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);   	//SPI Enable und Master Mode, Sampling on Rising Edge, Clock Division 16
-  //IOReg = SPSR;                            		//SPI Status und SPI Datenregister einmal auslesen
-  //IOReg = SPDR;
   PORTB |= (1<<PB0);                         	//ChipSelect aus
 
   while(i < MEM_SIZE)

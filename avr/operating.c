@@ -27,7 +27,7 @@ extern int mod;
 extern int cb_mod;
 extern int txstat;
 extern int modus;
-extern unsigned int memory[MEM_SIZE];
+extern unsigned char memory[MEM_SIZE];
 extern int cb_channel;
 extern unsigned int ctcss;
 extern unsigned int rpt;
@@ -645,11 +645,13 @@ void keycheck(void)
 	{
 	  freq_a=freq_a+(mkstep2(step2));
 	  tune(freq_a,step);
+	  save_freq(freq_a,vfo);
 	}
 	else
 	{
 	  freq_b=freq_b+(mkstep2(step2));
 	  tune(freq_b,step);
+	  save_freq(freq_b,vfo);
 	}
       }
       else
@@ -708,11 +710,13 @@ void keycheck(void)
 	{
 	  freq_a=freq_a-(mkstep2(step2));
 	  tune(freq_a,step);
+	  save_freq(freq_a,vfo);
 	}
 	else
 	{
 	  freq_b=freq_b-(mkstep2(step2));
 	  tune(freq_b,step);
+	  save_freq(freq_b,vfo);
 	}
       }
       else

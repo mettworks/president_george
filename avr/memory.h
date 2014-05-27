@@ -9,3 +9,5 @@ unsigned char ByteReadSPI(unsigned char, unsigned char, unsigned char);
 int save2memory(void);
 void read_memory(void);
 void format_memory(void);
+
+void save_freq(unsigned long freq2tune,unsigned int vfo);
