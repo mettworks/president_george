@@ -3,6 +3,7 @@
 #include <avr/interrupt.h>
 #include "transceiver.h"
 #include "3wire.h"
+#include "led.h"
 #include "display.h"
 #include "memory.h"
 #include "operating.h"
@@ -44,6 +45,8 @@
 #define CB_CH_MIN 1
 #define CB_CH_MAX 80
 
+extern unsigned int led_color_v;
+extern int ichbinaus;
 unsigned int wert = 0;
 int ichsende=0;
 extern unsigned int freq;
@@ -55,8 +58,10 @@ extern int modus;
 extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
+extern unsigned int echo_cb;
 extern unsigned int beep_ham;
 extern unsigned int beep_cb;
+extern unsigned int beep;
 
 char string[10];
 
@@ -70,7 +75,47 @@ extern unsigned int step2;
 
 void off(void)
 {
+  _delay_ms(100);
+  //
+  // Entprellung
+  if ( !(PINE & (1<<PINE5)) )
+  {
+    if(ichbinaus == 1)
+    {
+      #ifdef debug
+      uart_puts("AN\r\n");
+      #endif
+      memory[13] &= ~( 1 << 7);
+      PORTA |= (1<<PA7);        // einschalten
+      init_geraet();
+      led_helligkeit1(0x255,led_color_v);
+      led_helligkeit2(0x255,led_color_v);
+      ichbinaus=0;
+      EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+    }
+    else
+    {
+      ichbinaus=1;
+      #ifdef debug
+      uart_puts("AUS\r\n");
+      #endif
+      memory[13] |= ( 1 << 7);
+      display_clear();
+      save2memory();
+      PORTA &= ~(1<<PA7);       // ausschalten...
+      led_helligkeit1(0x0,led_color_v);
+      led_helligkeit2(0x0,led_color_v);
+      // LED 9 ist die am Taster 1...
+      //led_pwm(0x0,1,255);
+      EIMSK = (1<< INT5);
+    }
+  }
+
+}
+void off2(void)
+{
   cli();
+  memory[13] |= ( 1 << 7);
   wdt_disable();
   #ifdef debug
   uart_puts("AUS\r\n");
@@ -79,6 +124,8 @@ void off(void)
   #ifdef debug
   uart_puts("Fertig\r\n");
   #endif
+  EIMSK = (1<< INT5);
+  sei();
   while(1)
   {
   }
@@ -120,8 +167,8 @@ Mod HAM A   Mod HAM B     Mod CB  color display green   color keys green
 Byte 13
 #######
      7    6     5           4               3               2               1             0
-1    on   ham   split on    NBANL ham on    NBANL cb on     HICUT ham on    HICUT cb on   VFO B active
-0    off  cb	split off   NBANL ham off   NBANL cb off    HICUT ham off   HICUT cb off  VFO A active
+1    off  ham   split on    NBANL ham on    NBANL cb on     HICUT ham on    HICUT cb on   VFO B active
+0    on   cb	split off   NBANL ham off   NBANL cb off    HICUT ham off   HICUT cb off  VFO A active
 
 Byte 14
 #######
@@ -148,7 +195,19 @@ Byte 17
 0 relais off  +
 
 */
-
+/*
+  if(memory[13] &(1<<7))
+  {
+    uart_puts("ich bleibe aus...\r\n");
+    EIMSK = (1<< INT5);
+    ichbinaus=1;
+    off2();
+  }
+  else
+  {
+    ichbinaus=0;
+  }
+*/
   if(memory[13] &(1<<6))
   {
     #ifdef debug 
@@ -156,10 +215,15 @@ Byte 17
     #endif
     modus=1;
     cb_channel=memory[8];
-    cb_mod=memory[12] >> 2 & 0x5;
+    cb_mod=memory[12] >> 2 & 0x3;
 
     channel(cb_channel);
     set_modulation(cb_mod);
+    echo_cb=memory[14] & 0x01;
+    set_echo(echo_cb);
+    beep_cb=memory[14] >> 2 & 0x01;
+    set_beep(beep_cb);
+
   }
   else
   {
@@ -179,8 +243,8 @@ Byte 17
     {
       vfo=0;
     }
-    ham_mod_a = memory[12] >> 5; 
-    ham_mod_b = memory[12] >> 2 & 0x7;
+    ham_mod_a = memory[12] >> 6; 
+    ham_mod_b = memory[12] >> 4 & 0x3;
     if((26565000 > freq_a) || (29690000 < freq_a) || (freq_a == 0))
     {
       #ifdef debug
@@ -206,6 +270,10 @@ Byte 17
       set_modulation(ham_mod_b);
     }
     setvfo(vfo);
+    echo_ham=memory[14] >> 1 & 0x01;
+    set_echo(echo_ham);
+    beep_ham=memory[14] >> 3 & 0x01;
+    set_beep(beep_ham);
   }
 
   step=5;
@@ -241,8 +309,14 @@ void set_echo(unsigned int echo_value)
     wert |= (1 << TREIBER_ECHO);
     treiber(wert);
     display_echo(1);
-    echo_ham=1;
-    //memory[12]=1;
+    if(modus==0)
+    {
+      echo_ham=1;
+    }
+    else
+    {
+      echo_cb=1;
+    }
   }
   else
   {
@@ -252,8 +326,14 @@ void set_echo(unsigned int echo_value)
     wert &= ~(1 << TREIBER_ECHO);
     treiber(wert);
     display_echo(0);
-    echo_ham=0;
-    //memory[12]=0;
+    if(modus==0)
+    {
+      echo_ham=0;
+    }
+    else
+    {
+      echo_cb=0;
+    }
   }
 }
 
@@ -265,8 +345,16 @@ void set_beep(unsigned int beep_value)
     uart_puts("set_beep(): AN\r\n");
     #endif
     display_beep(1);
-    beep_ham=1;
-    memory[14]=1;
+    if(modus==0)
+    {
+      beep_ham=1;
+    }
+    else
+    {
+      beep_cb=1;
+    }
+
+    beep=1;
   }
   else
   {
@@ -274,8 +362,15 @@ void set_beep(unsigned int beep_value)
     uart_puts("set_beep(): AUS\r\n");
     #endif
     display_beep(0);
-    beep_ham=0;
-    memory[14]=0;
+    if(modus==0)
+    {
+      beep_ham=0;
+    }
+    else
+    {
+      beep_cb=0;
+    }
+    beep=0;
   }
 }
 
@@ -396,8 +491,11 @@ int rx(void)
     rogerbeep();
   }
   */
-  rogerbeep();
-  _delay_ms(100);
+  if(beep == 1)
+  {
+    rogerbeep();
+    _delay_ms(100);
+  }
   ichsende=0;
   // alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
   //
@@ -464,7 +562,6 @@ void channel(unsigned int ch)
   cb_freq=ch2freq(ch);
   tune(cb_freq,5);
   display_write_channel(ch);
-  memory[8]=ch;
   cb_channel=ch;
 }
 
@@ -655,25 +752,6 @@ void set_modulation(unsigned int mod)
   #endif
   treiber(wert);
   display_write_mod(mod);
-  //
-  // ab ins EEPROM
-  if(modus==0)
-  {
-    if(vfo == 0)
-    {
-      memory[12] = (memory[12] & 0x1f) | (mod << 5);
-      ham_mod_a = mod;
-    }
-    else
-    {
-      memory[12]=(memory[12] & 0xe3) | ( mod << 2);
-      ham_mod_b = mod;
-    }
-  }
-  else
-  {	
-    //memory[6]=mod;
-  }
 }
 
 int rogerbeep(void)

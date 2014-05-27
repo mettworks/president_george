@@ -19,7 +19,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:
 #include <stdint.h>
 #endif
 
-int ichbinaus=0;
+int ichbinaus;
 unsigned char memory[MEM_SIZE];
 unsigned int mod;
 unsigned int freq;
@@ -30,8 +30,10 @@ unsigned int step2=0;
 unsigned int ctcss;
 unsigned int rpt;
 unsigned int echo_ham;
+unsigned int echo_cb;
 unsigned int beep_ham;
 unsigned int beep_cb;
+unsigned int beep;
 int txstat=0;
 int modus;
 unsigned int led_br=255;
@@ -66,46 +68,14 @@ ISR (INT4_vect)
   #ifdef debug
   uart_puts("INT4_vect()\r\n");
   #endif
-  off();
+  off2();
 }
 ISR (INT5_vect)
 {
   #ifdef debug
   uart_puts("INT5_vect()\r\n");
   #endif
-  _delay_ms(100);
-  //
-  // Entprellung
-  if ( !(PINE & (1<<PINE5)) ) 
-  {
-    if(ichbinaus == 1)
-    {
-      #ifdef debug
-      uart_puts("AN\r\n");
-      #endif
-      PORTA |= (1<<PA7);	// einschalten
-      init_geraet();
-      led_helligkeit1(0x255,led_color_v);
-      led_helligkeit2(0x255,led_color_v);
-      ichbinaus=0;
-      EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
-    }
-    else
-    {
-      ichbinaus=1;
-      #ifdef debug
-      uart_puts("AUS\r\n");
-      #endif
-      display_clear();
-      save2memory();
-      PORTA &= ~(1<<PA7);	// ausschalten...
-      led_helligkeit1(0x0,led_color_v);
-      led_helligkeit2(0x0,led_color_v);
-      // LED 9 ist die am Taster 1...
-      //led_pwm(0x0,1,255);
-      EIMSK = (1<< INT5);
-    }
-  }
+  off();
 }
 ISR (INT7_vect)
 {

@@ -11,3 +11,7 @@ void read_memory(void);
 void format_memory(void);
 
 void save_freq(unsigned long freq2tune,unsigned int vfo);
+void save_ch(unsigned char ch);
+void save_mod(unsigned char mod);
+void save_echo(unsigned int echo);
+void save_beep(unsigned int beep);

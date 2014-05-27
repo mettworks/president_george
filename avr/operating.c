@@ -32,6 +32,7 @@ extern int cb_channel;
 extern unsigned int ctcss;
 extern unsigned int rpt;
 extern unsigned int echo_ham;
+extern unsigned int echo_cb;
 extern unsigned int beep_ham;
 extern unsigned int beep_cb;
 extern unsigned int led_br;
@@ -243,6 +244,8 @@ void boot(void)
   init_timer0();
   init_timer3();
   //init_tone();
+  init_led(ADDR_LED00);
+  init_led(ADDR_LED01);
   #ifdef debug
   uart_puts("boot() ENDE\r\n");
   #endif
@@ -457,13 +460,31 @@ void keycheck(void)
     #endif
     if(f == 0)
     {
-      if(echo_ham == 0)
+      if(modus == 0)
       {
-	set_echo(1);
+	if(echo_ham == 0)
+	{
+	  set_echo(1);
+	  save_echo(1);
+	}
+	else
+	{
+	  set_echo(0);
+	  save_echo(0);
+	}
       }
       else
       {
-	set_echo(0);
+	if(echo_cb == 0)
+	{
+	  set_echo(1);
+	  save_echo(1);
+	}
+	else
+	{
+	  set_echo(0);
+	  save_echo(0);
+  	}
       }
     }
     else
@@ -473,10 +494,12 @@ void keycheck(void)
 	if(beep_ham == 0)
 	{
 	  set_beep(1);
+	  save_beep(1);
 	}
 	else
 	{
 	  set_beep(0);
+	  save_beep(0);
 	}
       }
       else
@@ -484,10 +507,12 @@ void keycheck(void)
 	if(beep_cb == 0)
 	{
 	  set_beep(1);
+	  save_beep(1);
 	}
 	else
 	{
 	  set_beep(0);
+	  save_beep(0);
 	}
       }
       toogle_f();
@@ -544,6 +569,7 @@ void keycheck(void)
     uart_puts("M1\r\n");
     #endif
     set_modulation(3);
+    save_mod(3);
   }
   else if((keys & 0x40000) == 0)
   {
@@ -551,6 +577,7 @@ void keycheck(void)
     uart_puts("M2\r\n");
     #endif
     set_modulation(2);
+    save_mod(2);
   }
   else if((keys & 0x80000) == 0)
   {
@@ -558,6 +585,7 @@ void keycheck(void)
     uart_puts("M3\r\n");
     #endif
     set_modulation(1);
+    save_mod(1);
   }
   else if((keys & 0x100000) == 0)
   {
@@ -565,6 +593,7 @@ void keycheck(void)
     uart_puts("M4\r\n");
     #endif
     set_modulation(0);
+    save_mod(0);
   }
 
   // PA
@@ -661,6 +690,7 @@ void keycheck(void)
 	#endif
 	cb_channel++;
 	channel(cb_channel);
+	save_ch(cb_channel);
       }
     }
   }
@@ -723,6 +753,7 @@ void keycheck(void)
       {
 	cb_channel--;
 	channel(cb_channel);
+	save_ch(cb_channel);
       }
     }
   }	

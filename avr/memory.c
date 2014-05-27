@@ -15,7 +15,12 @@
 #endif
 
 extern unsigned char memory[MEM_SIZE];
+extern int modus;
+extern int vfo;
+extern unsigned int ham_mod_a;
+extern unsigned int ham_mod_b;
 
+// TODO vfo global
 void save_freq(unsigned long freq2tune,unsigned int vfo)
 {
   uart_puts("save_freq()\r\n");
@@ -35,6 +40,86 @@ void save_freq(unsigned long freq2tune,unsigned int vfo)
   }
 }
 
+void save_ch(unsigned char ch)
+{
+  memory[8] = ch;
+}
+
+void save_mod(unsigned char mod)
+{
+  if(modus==0)
+  {
+    if(vfo == 0)
+    {
+      // xx00 0000
+      memory[12] = (memory[12] & 0x3f) | (mod << 6);
+      ham_mod_a = mod;
+    }
+    else
+    {
+      // 00xx 0000
+      memory[12]=(memory[12] & 0xcf) | ( mod << 4);
+      ham_mod_b = mod;
+    }
+  }
+  else
+  {
+    // 0000 xx00
+    memory[12]=(memory[12] & 0xf3) | ( mod << 2);
+  }
+}
+
+void save_echo(unsigned int echo)
+{
+  if(modus == 0)
+  {
+    if(echo == 0)
+    {
+      memory[14] &= ~(1 << 1);
+    }
+    else
+    {
+      memory[14] |= (1 << 1);
+    }
+  }
+  else
+  {
+    if(echo == 0)
+    {
+      memory[14] &= ~(1 << 0);
+    }
+    else
+    {
+      memory[14] |= (1 << 0);
+    }
+  }
+}
+
+void save_beep(unsigned int beep)
+{
+  if(modus == 0)
+  {
+    if(beep == 0)
+    {
+      memory[14] &= ~(1 << 3);
+    }
+    else
+    {
+      memory[14] |= (1 << 3);
+    }
+  }
+  else
+  {
+    if(beep == 0)
+    {
+      memory[14] &= ~(1 << 2);
+    }
+    else
+    {
+      memory[14] |= (1 << 2);
+    }
+  }
+}
 unsigned char ReadSPI(void)
 {
   unsigned char data;
