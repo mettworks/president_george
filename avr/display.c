@@ -75,106 +75,12 @@ extern unsigned int f;
 
 void display_daten2temp(void)
 {
-  #ifdef debug
-  uart_puts("display_daten2temp()\r\n");
-  #endif
-  uart_puts("Inhalt daten DAVOR:\r\n");
-  unsigned int i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
-  uart_puts("Inhalt daten_temp DAVOR:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten_temp[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
   memcpy(daten_temp,daten,sizeof(daten));
-  uart_puts("Inhalt daten DANACH:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
-  uart_puts("Inhalt daten_temp DANACH:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten_temp[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
 }
 
 void display_temp2daten(void)
 {
-  #ifdef debug
-  uart_puts("display_temp2daten()\r\n");
-  #endif
-  uart_puts("Inhalt daten DAVOR:\r\n");
-  unsigned int i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
-  uart_puts("Inhalt daten_temp DAVOR:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten_temp[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
   memcpy(daten,daten_temp,sizeof(daten_temp));
-  uart_puts("Inhalt daten DANACH:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
-  uart_puts("Inhalt daten_temp DANACH:\r\n");
-  i=0;
-  while(i<104)
-  {
-    char text[10];
-    ltoa(daten_temp[i],text,10);
-    uart_puts(text);
-    uart_puts(" ");
-    i++;
-  }
-  uart_puts("\r\n");
 }
 
 void display_clear(void)

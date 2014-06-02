@@ -310,9 +310,10 @@ void setmodus(int data)
 
 void keycheck(void)
 {
+  //quick=0;
   EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
-  _delay_ms(250);
+  //_delay_ms(250);
   /*
   if(quick == 0)
   {
@@ -339,6 +340,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("RX->TX\r\n");
     #endif
+    quick=0;
     /*
     if(modus == 1)
     {
@@ -373,6 +375,7 @@ void keycheck(void)
     uart_puts("M1 + SELECT\r\n");
     uart_puts("RESET!\r\n");
     #endif
+    quick=0;
     cli();
     wdt_disable();
     format_memory();
@@ -399,12 +402,14 @@ void keycheck(void)
     #ifdef debug
     uart_puts("DC\r\n");
     #endif
+    quick=0;
   }
   else if((keys & 0x100) == 0)
   {
     #ifdef debug
     uart_puts("Meter\r\n");
     #endif
+    quick=0;
     if(led_color_v == 0)
     {
       led_color_v=1;
@@ -421,6 +426,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("LED Helligkeit\r\n");
     #endif
+    quick=0;
     if(led_br == 0)
     {
       led_br=20;
@@ -445,19 +451,21 @@ void keycheck(void)
     #ifdef debug
     uart_puts("SELECT\r\n");
     #endif
-    tune(28000,5);
+    quick=0;
   }
   else if((keys & 0x4000000) == 0)
   {
     #ifdef debug
     uart_puts("SCAN\r\n");
     #endif
+    quick=0;
   }	
   else if((keys & 0x2000000) == 0)
   {
     #ifdef debug
     uart_puts("Echo\r\n");
     #endif
+    quick=0;
     if(f == 0)
     {
       if(modus == 0)
@@ -523,6 +531,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Split\r\n");
     #endif
+    quick=0;
     if(split == 0)
     {
       split=1;
@@ -539,6 +548,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("VFO\r\n");
     #endif
+    quick=0;
     if(modus == 0)
     {
       if(vfo == 0)
@@ -556,6 +566,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Step\r\n");
     #endif
+    quick=0;
     if(modus == 0)
     {
       display_write_step(step2);
@@ -568,6 +579,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("M1\r\n");
     #endif
+    quick=0;
     set_modulation(3);
     save_mod(3);
   }
@@ -576,6 +588,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("M2\r\n");
     #endif
+    quick=0;
     set_modulation(2);
     save_mod(2);
   }
@@ -584,6 +597,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("M3\r\n");
     #endif
+    quick=0;
     set_modulation(1);
     save_mod(1);
   }
@@ -592,6 +606,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("M4\r\n");
     #endif
+    quick=0;
     set_modulation(0);
     save_mod(0);
   }
@@ -602,6 +617,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("HAM/CB\r\n");
     #endif
+    quick=0;
     if(modus==0)
     {
       #ifdef debug
@@ -617,12 +633,13 @@ void keycheck(void)
       setmodus(0);
     }
   }
-    else if((keys & 0x40) == 0)
+  else if((keys & 0x40) == 0)
   {
-    f=1;
     #ifdef debug
     uart_puts("F\r\n");
     #endif
+    f=1;
+    quick=0;
     init_timer3();
     display_write_function();
     set_timer3(1);
@@ -632,6 +649,14 @@ void keycheck(void)
   //  0x2
   else if(((keys & 0x1) == 0) || ((keys & 0x2) == 0))
   {
+    if((keys & 0x2) == 0)
+    {
+      quick=1;
+    }
+    else
+    {
+      quick=0;
+    }
     #ifdef debug
     uart_puts("Drehschalter + ODER Taster +\r\n");
     #endif
@@ -701,6 +726,14 @@ void keycheck(void)
     #ifdef debug
     uart_puts("Drehschalter - ODER Taster -\r\n");
     #endif
+    if((keys & 0x4) == 0)
+    {
+      quick=1;
+    }
+    else
+    {
+      quick=0;
+    }
     if(set_step == 1)
     {
       if(step2 == 5)
@@ -788,13 +821,25 @@ void keycheck(void)
   }
   if(keys != 0xffffffff)
   {
-    set_timer0(1);
-    //quick=0;
+    if(quick==0)
+    {
+      set_timer0(1);
+    }
   }
   else
   {
-    set_timer0(0);
-    //quick=1;
+    if(quick==0)
+    {
+      set_timer0(0);
+    }
+  }
+  if(quick==1)
+  {
+    _delay_ms(7);
+  }
+  else
+  {
+    _delay_ms(250);
   }
   EIMSK |= (1 << INT7);
 }

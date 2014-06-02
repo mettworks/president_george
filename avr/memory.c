@@ -23,7 +23,6 @@ extern unsigned int ham_mod_b;
 // TODO vfo global
 void save_freq(unsigned long freq2tune,unsigned int vfo)
 {
-  uart_puts("save_freq()\r\n");
   if(vfo == 0)
   {
     memory[3] = freq2tune / 16777215;

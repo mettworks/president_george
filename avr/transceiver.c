@@ -474,7 +474,6 @@ int tx(void)
     }
     */
     //tone(750);
-    uart_puts("tx() ENDE\r\n");
   }
   return 0;
 }
@@ -511,7 +510,6 @@ int rx(void)
   wert |= (1 << TREIBER_MUTE);
   treiber(wert);
   _delay_ms(4);
-  uart_puts("rx() ENDE\r\n");
   return 0;
 }
  

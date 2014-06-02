@@ -7,6 +7,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune);
 void set_modulation(unsigned int mod);
 int rogerbeep(void);
 void off(void);
+void off2(void);
 void channel(unsigned int ch);
 unsigned long ch2freq(unsigned int ch);
 void set_ctcss(unsigned int ctcss_value);
