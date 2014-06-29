@@ -34,6 +34,9 @@ unsigned int echo_cb;
 unsigned int beep_ham;
 unsigned int beep_cb;
 unsigned int beep;
+
+unsigned int c_timer3=0;
+
 int txstat=0;
 int modus;
 unsigned int led_br=255;
@@ -204,19 +207,25 @@ void adc_init(void)
 
 ISR (TIMER0_COMP_vect)
 {
-  /*
   #ifdef debug
   uart_puts("INT Timer0\r\n");
   #endif
-  */
   keycheck();
 }
 ISR (TIMER3_COMPA_vect)
 {
-  #ifdef debug
-  uart_puts("INT TIMER3_COMPA_vect\r\n");
-  #endif
-  toogle_f();
+  if(c_timer3 > 150)
+  {
+    c_timer3=0;
+    #ifdef debug
+    uart_puts("INT TIMER3_COMPA_vect\r\n");
+    #endif
+    toogle_f();
+  }
+  else
+  { 
+    c_timer3++;
+  }
 }
 
 //
@@ -480,7 +489,7 @@ int main(void)
 
   led_helligkeit1(0x255,led_color_v);
   led_helligkeit2(0x255,led_color_v);
-  
+
   while(1)
   { 
     wdt_reset();
