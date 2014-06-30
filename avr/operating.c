@@ -135,10 +135,18 @@ void init_timer3(void)
   //  Timer/Counter Control Register 
   //TCCR3A |= (1 << WGM32);
   //TCCR3A |= (1 << WGM31);
-  TCCR3A |= (WGM31);
-  TCCR3B |= (1 << CS30)|(1<<CS32);
+  //TCCR3A |= (WGM31);
+  //TCCR3B |= (1 << CS30)|(1<<CS32);
+
+
+  //TCCR3A |= (1 << WGM31) | (1<<COM3A1);
+  //TCCR3A |= (1 << WGM32);
+  TCCR3B |= (1 << WGM32) | (1 << CS30) | (1 << CS32);
+
+    //
+
   // Timer/Counter Daten Register 
-  //TCNT3 = 0; //Timer mit Null initialisieren
+  TCNT3 = 0; //Timer mit Null initialisieren
   OCR3A = 0xffff;  //Vergleichsregister initialisieren
 }
 
@@ -157,8 +165,8 @@ void set_timer3(char status)
     #ifdef debug
     uart_puts("Timer3 gestartet\r\n");
     #endif
+    init_timer3();
     // 
-    TCNT3=0;
     // Compare Interrupt einschalten
     ETIMSK |= (1 << OCIE3A);
   }

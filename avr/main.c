@@ -35,7 +35,7 @@ unsigned int beep_ham;
 unsigned int beep_cb;
 unsigned int beep;
 
-unsigned int c_timer3=0;
+//unsigned int c_timer3=0;
 
 int txstat=0;
 int modus;
@@ -214,18 +214,24 @@ ISR (TIMER0_COMP_vect)
 }
 ISR (TIMER3_COMPA_vect)
 {
+  //TCNT3=0xffff;
+  //OCR3A = 0xffff;
+  /*
   if(c_timer3 > 150)
   {
     c_timer3=0;
+    */
     #ifdef debug
     uart_puts("INT TIMER3_COMPA_vect\r\n");
     #endif
     toogle_f();
+    /*
   }
   else
   { 
     c_timer3++;
   }
+  */
 }
 
 //
