@@ -214,24 +214,11 @@ ISR (TIMER0_COMP_vect)
 }
 ISR (TIMER3_COMPA_vect)
 {
-  //TCNT3=0xffff;
-  //OCR3A = 0xffff;
-  /*
-  if(c_timer3 > 150)
-  {
-    c_timer3=0;
-    */
-    #ifdef debug
-    uart_puts("INT TIMER3_COMPA_vect\r\n");
-    #endif
-    toogle_f();
-    /*
-  }
-  else
-  { 
-    c_timer3++;
-  }
-  */
+  #ifdef debug
+  uart_puts("INT TIMER3_COMPA_vect\r\n");
+  #endif
+  toogle_f();
+  //set_timer3(0);
 }
 
 //
@@ -241,7 +228,8 @@ ISR (TIMER1_COMPA_vect)
   #ifdef debug
   uart_puts("INT Timer1A\r\n");
   #endif
-  PORTB ^= (1 << 5);
+ // PORTD ^= (1<<PD1);
+  //PORTB ^= (1 << 5);
 }
 ISR (TIMER1_COMPB_vect) 
 {
@@ -454,7 +442,13 @@ ISR (SPM_READY_vect)
 
 int main(void) 
 {
+  //
+  // Timermessung per Logikanalyzer
+  DDRE = (1<<DDE0);
+  // low
+  PORTE &= ~(1<<PE0);
   cli();
+  /*
   if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))    // external, power-on- oder brown-out-reset
   {
     MCUCSR = 0;									      // Reset-Flags zurücksetzen
@@ -468,6 +462,7 @@ int main(void)
   }
   wdt_enable(WDTO_2S);								      // Watchdog mit 2 Sekunden
   wdt_reset();
+  */
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -478,7 +473,7 @@ int main(void)
   read_memory();
   init_geraet();
  
-  wdt_reset();
+  //wdt_reset();
 
   //adc_init();
 
@@ -498,7 +493,13 @@ int main(void)
 
   while(1)
   { 
-    wdt_reset();
+    //wdt_reset();
     //messung_s();
+    /*
+    set_timer3(1);
+    _delay_ms(8000);
+    set_timer3(1);
+    _delay_ms(8000);
+    */
   }
 } 

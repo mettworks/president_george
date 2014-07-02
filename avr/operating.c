@@ -89,6 +89,7 @@ void init_timer0(void)
 
 void set_timer0(char status)
 {
+  /*
   if(status == 0)
   {
     #ifdef debug
@@ -104,6 +105,7 @@ void set_timer0(char status)
     TCNT0=0;
     TIMSK |= (1 << OCIE0);
   }
+  */
 }
 
 void set_timer1(char status)
@@ -129,43 +131,35 @@ void set_timer1(char status)
 void init_timer3(void)
 {
   //
-  // das ist Timer3
-  //
-  // CTC Mode
-  //  Timer/Counter Control Register 
-  //TCCR3A |= (1 << WGM32);
-  //TCCR3A |= (1 << WGM31);
-  //TCCR3A |= (WGM31);
-  //TCCR3B |= (1 << CS30)|(1<<CS32);
-
-
-  //TCCR3A |= (1 << WGM31) | (1<<COM3A1);
-  //TCCR3A |= (1 << WGM32);
-  TCCR3B |= (1 << WGM32) | (1 << CS30) | (1 << CS32);
-
-    //
-
-  // Timer/Counter Daten Register 
-  TCNT3 = 0; //Timer mit Null initialisieren
-  OCR3A = 0xffff;  //Vergleichsregister initialisieren
 }
-
 void set_timer3(char status)
 {
   if(status == 0)
   {
+    // low
+    PORTE &= ~(1<<PE0);
     #ifdef debug
     uart_puts("Timer3 gestoppt\r\n");
     #endif
     // Compare Interrupt abschalten
     ETIMSK &= ~(1 << OCIE3A);
+    TCCR3A = 0;
+    TCCR3B =0; 
+    TCNT3 = 0; //Timer mit Null initialisieren
+    OCR3A = 0;  //Vergleichsregister initialisieren
   }
   else
   {
+    // high
+    PORTE |= (1<<PE0);
     #ifdef debug
     uart_puts("Timer3 gestartet\r\n");
     #endif
-    init_timer3();
+    TCCR3A = 0;
+    TCCR3B |= (1 << WGM32) | (1 << CS30) | (1 << CS32);
+    TCNT3 = 0; //Timer mit Null initialisieren
+    OCR3A = 0xffff;  //Vergleichsregister initialisieren
+
     // 
     // Compare Interrupt einschalten
     ETIMSK |= (1 << OCIE3A);
