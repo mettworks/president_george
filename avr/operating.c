@@ -43,6 +43,8 @@ extern unsigned long freq_a;
 extern unsigned long freq_b;
 extern int vfo;
 extern unsigned int split;
+extern unsigned int ham_mod_a;
+extern unsigned int ham_mod_b;
 
 unsigned long mkstep2(unsigned int step2)
 {
@@ -89,7 +91,6 @@ void init_timer0(void)
 
 void set_timer0(char status)
 {
-  /*
   if(status == 0)
   {
     #ifdef debug
@@ -105,7 +106,6 @@ void set_timer0(char status)
     TCNT0=0;
     TIMSK |= (1 << OCIE0);
   }
-  */
 }
 
 void set_timer1(char status)
@@ -579,9 +579,18 @@ void keycheck(void)
     quick=0;
     if(modus == 0)
     {
-      display_write_step(step2);
-      set_timer3(1);
-      set_step=1;
+      if(set_step==0)
+      {
+	display_write_step(step2);
+	set_timer3(1);
+	set_step=1;
+      }
+      else
+      {
+	set_timer3(0);
+	display_memory_swap();
+	set_step=0;
+      }
     }
   }	
   else if((keys & 0x10000) == 0)
@@ -590,8 +599,23 @@ void keycheck(void)
     uart_puts("M1\r\n");
     #endif
     quick=0;
-    set_modulation(3);
+    if(modus==0)
+    {
+      if(vfo==0)
+      {
+	tune(freq_a,step,3);
+      }
+      else
+      {
+	tune(freq_b,step,3);
+      }
+    }
+    else
+    {
+      tune2channel(cb_channel,3);
+    }
     save_mod(3);
+    display_write_mod(3);
   }
   else if((keys & 0x40000) == 0)
   {
@@ -599,8 +623,23 @@ void keycheck(void)
     uart_puts("M2\r\n");
     #endif
     quick=0;
-    set_modulation(2);
+    if(modus==0)
+    {
+      if(vfo==0)
+      {
+	tune(freq_a,step,2);
+      }
+      else
+      {
+	tune(freq_b,step,2);
+      }
+    }
+    else
+    {
+      tune2channel(cb_channel,2);
+    }
     save_mod(2);
+    display_write_mod(2);
   }
   else if((keys & 0x80000) == 0)
   {
@@ -608,8 +647,23 @@ void keycheck(void)
     uart_puts("M3\r\n");
     #endif
     quick=0;
-    set_modulation(1);
+    if(modus==0)
+    {
+      if(vfo==0)
+      {
+	tune(freq_a,step,1);
+      }
+      else
+      {
+	tune(freq_b,step,1);
+      }
+    }
+    else
+    {
+      tune2channel(cb_channel,1);
+    }
     save_mod(1);
+    display_write_mod(1);
   }
   else if((keys & 0x100000) == 0)
   {
@@ -617,8 +671,23 @@ void keycheck(void)
     uart_puts("M4\r\n");
     #endif
     quick=0;
-    set_modulation(0);
+    if(modus==0)
+    {
+      if(vfo==0)
+      {
+	tune(freq_a,step,0);
+      }
+      else
+      {
+	tune(freq_b,step,0);
+      }
+    }
+    else
+    {
+      tune2channel(cb_channel,0);
+    }
     save_mod(0);
+    display_write_mod(0);
   }
 
   // PA
@@ -697,7 +766,6 @@ void keycheck(void)
 	step2=0;
       }
       memory[15] = (memory[15] & 0xf) | ( mod << 3);
-      init_timer3();
       display_write_frequenz(mkstep2(step2));
       set_timer3(1);
     }
@@ -708,14 +776,16 @@ void keycheck(void)
 	if(vfo==0)
 	{
 	  freq_a=freq_a+(mkstep2(step2));
-	  tune(freq_a,step);
+	  tune(freq_a,step,ham_mod_a);
 	  save_freq(freq_a,vfo);
+	  display_write_frequenz(freq_a);
 	}
 	else
 	{
 	  freq_b=freq_b+(mkstep2(step2));
-	  tune(freq_b,step);
+	  tune(freq_b,step,ham_mod_b);
 	  save_freq(freq_b,vfo);
+          display_write_frequenz(freq_b);
 	}
       }
       else
@@ -724,8 +794,10 @@ void keycheck(void)
 	uart_puts("Modus CB\r\n");
 	#endif
 	cb_channel++;
-	channel(cb_channel);
+	tune2channel(cb_channel,cb_mod);
 	save_ch(cb_channel);
+	display_write_channel(cb_channel);
+	display_write_frequenz(ch2freq(cb_channel));
       }
     }
   }
@@ -771,7 +843,6 @@ void keycheck(void)
 	step2=5;
       }
       memory[15] = (memory[15] & 0xf) | ( mod << 3);
-      init_timer3();
       display_write_frequenz(mkstep2(step2));
       set_timer3(1);
     }
@@ -782,21 +853,25 @@ void keycheck(void)
 	if(vfo==0)
 	{
 	  freq_a=freq_a-(mkstep2(step2));
-	  tune(freq_a,step);
+	  tune(freq_a,step,ham_mod_a);
 	  save_freq(freq_a,vfo);
+          display_write_frequenz(freq_a);
 	}
 	else
 	{
 	  freq_b=freq_b-(mkstep2(step2));
-	  tune(freq_b,step);
+	  tune(freq_b,step,ham_mod_b);
 	  save_freq(freq_b,vfo);
+          display_write_frequenz(freq_b);
 	}
       }
       else
       {
 	cb_channel--;
-	channel(cb_channel);
+	tune2channel(cb_channel,cb_mod);
 	save_ch(cb_channel);
+	display_write_channel(cb_channel);
+	display_write_frequenz(ch2freq(cb_channel));
       }
     }
   }	
@@ -845,11 +920,18 @@ void keycheck(void)
   }
   if(quick==1)
   {
-    _delay_ms(50);
+    #ifdef debug
+    uart_puts("quick -> 1\r\n");
+    #endif
+    EIMSK |= (1 << INT7);
+    _delay_ms(70);
   }
   else
   {
+    #ifdef debug
+    uart_puts("quick -> 0\r\n");
+    #endif
+    EIMSK |= (1 << INT7);
     _delay_ms(250);
   }
-  EIMSK |= (1 << INT7);
 }

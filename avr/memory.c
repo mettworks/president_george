@@ -19,6 +19,8 @@ extern int modus;
 extern int vfo;
 extern unsigned int ham_mod_a;
 extern unsigned int ham_mod_b;
+extern unsigned long freq_a;
+extern unsigned long freq_b;
 
 // TODO vfo global
 void save_freq(unsigned long freq2tune,unsigned int vfo)
@@ -29,6 +31,7 @@ void save_freq(unsigned long freq2tune,unsigned int vfo)
     memory[2] = freq2tune / 65535;
     memory[1] = freq2tune / 256;
     memory[0] = freq2tune % 256;
+    freq_a=freq2tune;
   }
   else
   {
@@ -36,6 +39,7 @@ void save_freq(unsigned long freq2tune,unsigned int vfo)
     memory[6] = freq2tune / 65535;
     memory[5] = freq2tune / 256;
     memory[4] = freq2tune % 256;
+    freq_b=freq2tune;
   }
 }
 

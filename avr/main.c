@@ -218,7 +218,6 @@ ISR (TIMER3_COMPA_vect)
   uart_puts("INT TIMER3_COMPA_vect\r\n");
   #endif
   toogle_f();
-  //set_timer3(0);
 }
 
 //

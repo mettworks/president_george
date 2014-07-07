@@ -217,13 +217,16 @@ Byte 17
     cb_channel=memory[8];
     cb_mod=memory[12] >> 2 & 0x3;
 
-    channel(cb_channel);
-    set_modulation(cb_mod);
+    tune2channel(cb_channel,cb_mod);
+    // TODO!
+    //set_modulation(cb_mod);
     echo_cb=memory[14] & 0x01;
     set_echo(echo_cb);
     beep_cb=memory[14] >> 2 & 0x01;
     set_beep(beep_cb);
-
+    display_write_channel(cb_channel);
+    display_write_frequenz(ch2freq(cb_channel));
+    display_write_mod(cb_mod);
   }
   else
   {
@@ -259,15 +262,21 @@ Byte 17
       #endif
       freq_b=28500000;
     }
-    tune(freq_a,step);
+    //tune(freq_a,step);
     _delay_ms(28);
     if(vfo == 0)
     {
-      set_modulation(ham_mod_a);
+      //set_modulation(ham_mod_a);
+      tune(freq_a,step,ham_mod_a);
+      display_write_mod(ham_mod_a);
+      display_write_frequenz(freq_a);
     }
     else
     {
-      set_modulation(ham_mod_b);
+      //set_modulation(ham_mod_b);
+      tune(freq_b,step,ham_mod_b);
+      display_write_mod(ham_mod_b);
+      display_write_frequenz(freq_b);
     }
     setvfo(vfo);
     echo_ham=memory[14] >> 1 & 0x01;
@@ -382,10 +391,11 @@ void setvfo(unsigned int vfo_value)
     #ifdef debug
     uart_puts("VFO -> A\r\n");
     #endif
-    tune(freq_a,step);
-    set_modulation(ham_mod_a);
+    tune(freq_a,step,ham_mod_a);
     display_write_vfo('A');
     memory[13] &= ~(0 << 0);
+    display_write_frequenz(freq_a);
+    display_write_mod(ham_mod_a);
   }
   else
   {
@@ -393,10 +403,11 @@ void setvfo(unsigned int vfo_value)
     #ifdef debug
     uart_puts("VFO -> B\r\n");
     #endif
-    tune(freq_b,step);
-    set_modulation(ham_mod_b);
+    tune(freq_b,step,ham_mod_b);
     display_write_vfo('B');
     memory[13] |= ( 0 << 0);
+    display_write_frequenz(freq_b);
+    display_write_mod(ham_mod_b);
   }
 }
 
@@ -449,10 +460,12 @@ int tx(void)
   if(ichsende != 1)
   {
     ichsende=1;
+    /*
     if(rpt==1)
     {
       tune(freq-100,5);
     }
+    */
     // alle Bits sind in der gleichen Reihenfolge wie im Schaltplan angegeben
     //
     // Senden:
@@ -480,10 +493,12 @@ int tx(void)
 
 int rx(void)
 {
+  /*
   if(rpt==1)
   {
     tune(freq+100,5);
   }
+  */
   /*
   if((beep_ham == 1) || (beep_cb == 1))
   {
@@ -533,7 +548,7 @@ unsigned long ch2freq(unsigned int ch)
   return data;
 }
 
-void channel(unsigned int ch)
+void tune2channel(unsigned int ch,unsigned int cb_mod)
 {
   if(ch > CB_CH_MAX)
   {
@@ -558,13 +573,75 @@ void channel(unsigned int ch)
   uart_puts("\r\n");
   #endif
   cb_freq=ch2freq(ch);
-  tune(cb_freq,5);
-  display_write_channel(ch);
+  tune(cb_freq,5,cb_mod);
+  //display_write_channel(ch);
+  //display_write_freq(ch_freq);
   cb_channel=ch;
 }
 
-int tune(unsigned long freq2tune,unsigned int step2tune)
+int tune(unsigned long freq2tune,unsigned int step2tune,unsigned int mod)
 {
+  #ifdef debug 
+  uart_puts("Modulation: ");
+  #endif
+  if(mod == 2)
+  {
+    // 1 FM
+    #ifdef debug 
+    uart_puts("FM");
+    #endif 
+    wert |= (1 << TREIBER_FM);
+    wert &= ~(1 << TREIBER_AM);
+    wert &= ~(1 << TREIBER_USB);
+    wert &= ~(1 << TREIBER_LSB);
+  }
+  else if(mod == 3)
+  {
+    // 2 AM
+    #ifdef debug 
+    uart_puts("AM"); 
+    #endif
+    wert |= (1 << TREIBER_AM);
+    wert &= ~(1 << TREIBER_FM);
+    wert &= ~(1 << TREIBER_USB);
+    wert &= ~(1 << TREIBER_LSB);
+  }
+  else if(mod == 0)
+  {
+    // 3 USB
+    #ifdef debug 
+    uart_puts("USB");
+    #endif
+    wert |= (1 << TREIBER_USB);
+    wert &= ~(1 << TREIBER_FM);
+    wert &= ~(1 << TREIBER_AM);
+    wert &= ~(1 << TREIBER_LSB);
+  }
+  else if(mod == 1)
+  {
+    // 4 LSB
+    #ifdef debug 
+    uart_puts("LSB");
+    #endif
+    wert |= (1 << TREIBER_LSB);
+    wert &= ~(1 << TREIBER_FM);
+    wert &= ~(1 << TREIBER_AM);
+    wert &= ~(1 << TREIBER_USB);
+    //
+    // LSB -5kHz!
+    freq2tune=freq2tune-5000;
+  }
+  else
+  {
+    #ifdef debug 
+    uart_puts("unbekannte modulation!");
+    #endif
+  }
+  #ifdef debug 
+  uart_puts("\r\n");
+  #endif
+  treiber(wert);
+
   if(modus==0)
   {
     if(freq2tune > HAM_FREQ_MAX)
@@ -575,6 +652,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
     {
       freq2tune=(unsigned long)HAM_FREQ_MAX;
     }
+    /*
     if(vfo==0)
     {
       freq_a=freq2tune;
@@ -583,6 +661,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
     {
       freq_b=freq2tune;
     }
+    */
   }
   #ifdef debug
   uart_puts("tune: Frequenz : ");
@@ -677,7 +756,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   data0();
   end1();
 	
-  display_write_frequenz(freq2tune);
+  //display_write_frequenz(freq2tune);
   /*
   if(modus==1)
   {
@@ -689,7 +768,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune)
   #endif
   return 0;
 }
-
+/*
 void set_modulation(unsigned int mod)
 {
   #ifdef debug 
@@ -751,7 +830,7 @@ void set_modulation(unsigned int mod)
   treiber(wert);
   display_write_mod(mod);
 }
-
+*/
 int rogerbeep(void)
 {
   #ifdef debug

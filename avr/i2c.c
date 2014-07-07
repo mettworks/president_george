@@ -24,8 +24,8 @@
 /* I2C clock in Hz */
 //#define SCL_CLOCK  10000L
 
-#define SCL_CLOCK  200000L
-//#define SCL_CLOCK  400000L
+//#define SCL_CLOCK  200000L
+#define SCL_CLOCK  300000L
 
 
 /*************************************************************************
