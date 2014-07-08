@@ -13,6 +13,11 @@
 #include <stdint.h>
 #endif
 
+#define HAM_FREQ_MIN 28000000UL
+#define HAM_FREQ_MAX 29690000UL
+#define CB_CH_MIN 1
+#define CB_CH_MAX 80
+
 unsigned long keys;
 unsigned int set_step=0;
 unsigned int quick=0;
@@ -776,12 +781,21 @@ void keycheck(void)
 	if(vfo==0)
 	{
 	  freq_a=freq_a+(mkstep2(step2));
+    	  if(freq_a > HAM_FREQ_MAX)
+	  {
+	    freq_a=(unsigned long)HAM_FREQ_MIN;
+	  }
+
 	  tune(freq_a,step,ham_mod_a);
 	  save_freq(freq_a,vfo);
 	  display_write_frequenz(freq_a);
 	}
 	else
 	{
+    	  if(freq_b > HAM_FREQ_MAX)
+	  {
+	    freq_b=(unsigned long)HAM_FREQ_MIN;
+	  }
 	  freq_b=freq_b+(mkstep2(step2));
 	  tune(freq_b,step,ham_mod_b);
 	  save_freq(freq_b,vfo);
@@ -794,6 +808,10 @@ void keycheck(void)
 	uart_puts("Modus CB\r\n");
 	#endif
 	cb_channel++;
+	if(cb_channel > CB_CH_MAX)
+	{
+	  cb_channel=CB_CH_MIN;
+	}
 	tune2channel(cb_channel,cb_mod);
 	save_ch(cb_channel);
 	display_write_channel(cb_channel);
@@ -853,6 +871,10 @@ void keycheck(void)
 	if(vfo==0)
 	{
 	  freq_a=freq_a-(mkstep2(step2));
+	  if(freq_a < HAM_FREQ_MIN)
+	  {
+	    freq_a=(unsigned long)HAM_FREQ_MAX;
+	  }
 	  tune(freq_a,step,ham_mod_a);
 	  save_freq(freq_a,vfo);
           display_write_frequenz(freq_a);
@@ -860,6 +882,10 @@ void keycheck(void)
 	else
 	{
 	  freq_b=freq_b-(mkstep2(step2));
+	  if(freq_b < HAM_FREQ_MIN)
+	  {
+	    freq_b=(unsigned long)HAM_FREQ_MAX;
+	  }
 	  tune(freq_b,step,ham_mod_b);
 	  save_freq(freq_b,vfo);
           display_write_frequenz(freq_b);
@@ -868,6 +894,10 @@ void keycheck(void)
       else
       {
 	cb_channel--;
+	if(cb_channel < CB_CH_MIN)
+	{
+	  cb_channel=CB_CH_MAX;
+	}
 	tune2channel(cb_channel,cb_mod);
 	save_ch(cb_channel);
 	display_write_channel(cb_channel);

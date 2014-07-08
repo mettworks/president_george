@@ -39,12 +39,6 @@
 #define TREIBER_SWR 14
 #define TREIBER_SRF 15
 
-#define HAM_FREQ_MIN 28000000UL
-#define HAM_FREQ_MAX 29690000UL
-
-#define CB_CH_MIN 1
-#define CB_CH_MAX 80
-
 extern unsigned int led_color_v;
 extern int ichbinaus;
 unsigned int wert = 0;
@@ -207,7 +201,7 @@ Byte 17
   {
     ichbinaus=0;
   }
-*/
+  */
   if(memory[13] &(1<<6))
   {
     #ifdef debug 
@@ -550,20 +544,6 @@ unsigned long ch2freq(unsigned int ch)
 
 void tune2channel(unsigned int ch,unsigned int cb_mod)
 {
-  if(ch > CB_CH_MAX)
-  {
-    ch=CB_CH_MIN;
-    #ifdef debug
-    uart_puts("channel(): Kanal ist groesser als CB_CH_MAX -> CB_CH_MIN ");
-    #endif
-  }
-  if(ch < CB_CH_MIN)
-  {
-    ch=CB_CH_MAX;
-    #ifdef debug
-    uart_puts("channel(): Kanal ist kleiner als CB_CH_MIN -> CB_CH_MAX ");
-    #endif
-  }
   unsigned long cb_freq;
   #ifdef debug 
   uart_puts("channel(): Kanal ");
@@ -574,8 +554,6 @@ void tune2channel(unsigned int ch,unsigned int cb_mod)
   #endif
   cb_freq=ch2freq(ch);
   tune(cb_freq,5,cb_mod);
-  //display_write_channel(ch);
-  //display_write_freq(ch_freq);
   cb_channel=ch;
 }
 
@@ -642,27 +620,6 @@ int tune(unsigned long freq2tune,unsigned int step2tune,unsigned int mod)
   #endif
   treiber(wert);
 
-  if(modus==0)
-  {
-    if(freq2tune > HAM_FREQ_MAX)
-    {
-      freq2tune=(unsigned long)HAM_FREQ_MIN;
-    }
-    if(freq2tune < HAM_FREQ_MIN)
-    {
-      freq2tune=(unsigned long)HAM_FREQ_MAX;
-    }
-    /*
-    if(vfo==0)
-    {
-      freq_a=freq2tune;
-    }
-    else
-    {
-      freq_b=freq2tune;
-    }
-    */
-  }
   #ifdef debug
   uart_puts("tune: Frequenz : ");
   uart_puts(ltoa(freq2tune, string, 10));
@@ -766,7 +723,7 @@ int tune(unsigned long freq2tune,unsigned int step2tune,unsigned int mod)
   #ifdef debug
   uart_puts("tune(): Ende\r\n");
   #endif
-  return 0;
+  return 0; 
 }
 /*
 void set_modulation(unsigned int mod)
