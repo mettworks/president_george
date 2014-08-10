@@ -21,6 +21,40 @@ extern unsigned int ham_mod_a;
 extern unsigned int ham_mod_b;
 extern unsigned long freq_a;
 extern unsigned long freq_b;
+extern unsigned int led_br;
+extern unsigned int led_color_v;
+
+void save_led_br1(unsigned int led_br)
+{
+  memory[10]=led_br;
+}
+void save_led_br2(unsigned int led_br)
+{
+  memory[9]=led_br;
+}
+void save_led_color1(unsigned int led_color_v)
+{
+  if(led_color_v == 0)
+  {
+    memory[12] &= ~(1 << 1);
+  }
+  else
+  {
+    memory[12] |= (1 << 1);
+  }
+}
+void save_led_color2(unsigned int led_color_v)
+{
+  if(led_color_v == 0)
+  {
+    memory[12] &= ~(1 << 0);
+  }
+  else
+  {
+    memory[12] |= (1 << 0);
+  }
+}
+
 
 // TODO vfo global
 void save_freq(unsigned long freq2tune,unsigned int vfo)
@@ -208,12 +242,6 @@ unsigned char ByteReadSPI(unsigned char HighAdd, unsigned char LowAdd)
 
 int save2memory(void)
 {
-  //
-  // Wichtig, hier werden Interrupts gesperrt!
-  cli();
-  #ifdef debug
-  uart_puts("save2memory():\r\n");
-  #endif
   int i=0;
   unsigned char H_Add=0;    
   unsigned char L_Add=0;
@@ -223,6 +251,7 @@ int save2memory(void)
   while(i < MEM_SIZE)
   {
     ByteWriteSPI(H_Add,L_Add,memory[i]);
+    /*
     #ifdef debug
     char string[20];
     uart_puts("H_Add: ");
@@ -236,9 +265,13 @@ int save2memory(void)
     uart_puts(string);
     uart_puts("\r\n");
     #endif
+    */
     L_Add++;
     i++;
   }
+  #ifdef debug
+  uart_puts("alles gespeichert\r\n");
+  #endif
   return 0;
 }
 

@@ -15,3 +15,7 @@ void save_ch(unsigned char ch);
 void save_mod(unsigned char mod);
 void save_echo(unsigned int echo);
 void save_beep(unsigned int beep);
+void save_led_br1(unsigned int led_br);
+void save_led_br2(unsigned int led_br);
+void save_led_color1(unsigned int led_color_v);
+void save_led_color2(unsigned int led_color_v);

@@ -93,7 +93,6 @@ void init_timer0(void)
   OCR0 = 64;  //Vergleichsregister initialisieren
 }
 
-
 void set_timer0(char status)
 {
   if(status == 0)
@@ -133,10 +132,6 @@ void set_timer1(char status)
   */
 }
 
-void init_timer3(void)
-{
-  //
-}
 void set_timer3(char status)
 {
   if(status == 0)
@@ -206,7 +201,7 @@ void boot(void)
 
   // PE4
   DDRE &= ~(1<<PE4);    // Eingang
-  //PORTE |= (1<<PE4);  // internen Pullup aktivieren
+  PORTE |= (1<<PE4);  // internen Pullup aktivieren
 
   // PE7
   DDRE &= ~(1<<PE7);    // Eingang
@@ -249,15 +244,12 @@ void boot(void)
   EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
   EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
   EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
-  EICRB |= (0 << ISC50) | (1 << ISC51);    // fallende Flanke
+  EICRB |= (0 << ISC50) | (0 << ISC51);    // fallende Flanke
   EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
-
   i2c_init();
   display_init();
-  //init_led(ADDR_LED00);
-  //init_led(ADDR_LED01);
   init_timer0();
-  init_timer3();
+  //init_timer3();
   //init_tone();
   init_led(ADDR_LED00);
   init_led(ADDR_LED01);
@@ -326,7 +318,7 @@ void setmodus(int data)
 void keycheck(void)
 {
   //quick=0;
-  EIMSK &= ~(1 << INT7);
+  //EIMSK &= ~(1 << INT7);
   keys=keysauslesen();
   //_delay_ms(250);
   /*
@@ -433,8 +425,10 @@ void keycheck(void)
     {
       led_color_v=0;
     }
-    led_helligkeit1(led_br,led_color_v);
-    led_helligkeit2(led_br,led_color_v);
+    set_led_br1(led_br,led_color_v);
+    set_led_br2(led_br,led_color_v);
+    save_led_color1(led_color_v);
+    save_led_color2(led_color_v);
   }	
   else if((keys & 0x200) == 0)
   {
@@ -458,8 +452,10 @@ void keycheck(void)
     {
       led_br=255;
     }
-    led_helligkeit1(led_br,led_color_v);
-    led_helligkeit2(led_br,led_color_v);
+    set_led_br1(led_br,led_color_v);
+    set_led_br2(led_br,led_color_v);
+    save_led_br1(led_br);
+    save_led_br2(led_br);
   }	
   else if((keys & 0x400) == 0)
   {
@@ -724,7 +720,7 @@ void keycheck(void)
     #endif
     f=1;
     quick=0;
-    init_timer3();
+    //init_timer3();
     display_write_function();
     set_timer3(1);
   }
@@ -953,7 +949,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("quick -> 1\r\n");
     #endif
-    EIMSK |= (1 << INT7);
+    //EIMSK |= (1 << INT7);
     _delay_ms(70);
   }
   else
@@ -961,7 +957,7 @@ void keycheck(void)
     #ifdef debug
     uart_puts("quick -> 0\r\n");
     #endif
-    EIMSK |= (1 << INT7);
+    //EIMSK |= (1 << INT7);
     _delay_ms(250);
   }
 }

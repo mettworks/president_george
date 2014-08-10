@@ -8,14 +8,16 @@
 #include <stdint.h>
 #endif
 
-
-void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
+//
+// Brightness LED Backlight Keys 
+void set_led_br1(unsigned int led_dimm, unsigned int led_color)
 {
   #ifdef debug 
   uart_puts("led_helligkeit1()\r\n");
   #endif
   if(led_color == 0)
   {
+    uart_puts("color 0\r\n");
     led_pwm(1,led_dimm,	ADDR_LED00);
     led_pwm(2,0x0,	ADDR_LED00);
     led_pwm(3,led_dimm,	ADDR_LED00);
@@ -65,7 +67,9 @@ void led_helligkeit1(unsigned int led_dimm, unsigned int led_color)
   #endif
 }
 
-void led_helligkeit2(unsigned int led_dimm, unsigned int led_color)
+//
+// Brightness LED Backlight Display
+void set_led_br2(unsigned int led_dimm, unsigned int led_color)
 {
   #ifdef debug 
   uart_puts("led_helligkeit2()\r\n");

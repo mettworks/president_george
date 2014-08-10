@@ -1,5 +1,10 @@
 /*
 avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -Uefuse:w:0xFF:m -U hfuse:w:0xC9:m -U lfuse:w:0xDF:m
+
+neuer Versuch
+Brown Out Detection 2.7V
+avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -U lfuse:w:0x9f:m -U hfuse:w:0xc9:m -U efuse:w:0xff:m 
+
 */
 
 #include <avr/io.h>
@@ -39,8 +44,8 @@ unsigned int beep;
 
 int txstat=0;
 int modus;
-unsigned int led_br=255;
-unsigned int led_color_v=0;
+unsigned int led_br;
+unsigned int led_color_v;
 
 unsigned long freq_a;
 unsigned long freq_b;
@@ -63,14 +68,13 @@ unsigned int adcvalues[20];
 // beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
 ISR (INT4_vect)
 {
+  cli();
   TIMSK=0;
   EIMSK=0;
-
-  cli();
-  wdt_disable();
   #ifdef debug
   uart_puts("INT4_vect()\r\n");
   #endif
+  wdt_disable();
   off2();
 }
 ISR (INT5_vect)
@@ -441,13 +445,26 @@ ISR (SPM_READY_vect)
 
 int main(void) 
 {
+  /*
+  inituart();
+  DDRE &= ~(1<<PE4);    // Eingang
+  PORTE |= (1<<PE4);  // internen Pullup aktivieren
+  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
+  EIMSK |= (1 << INT4);
+  sei();
+  uart_puts("fertig\r\n");
+  while(1)
+  {
+  }
+  */
+  /*
   //
   // Timermessung per Logikanalyzer
   DDRE = (1<<DDE0);
   // low
   PORTE &= ~(1<<PE0);
+  */
   cli();
-  /*
   if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))    // external, power-on- oder brown-out-reset
   {
     MCUCSR = 0;									      // Reset-Flags zurücksetzen
@@ -461,7 +478,6 @@ int main(void)
   }
   wdt_enable(WDTO_2S);								      // Watchdog mit 2 Sekunden
   wdt_reset();
-  */
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -472,7 +488,7 @@ int main(void)
   read_memory();
   init_geraet();
  
-  //wdt_reset();
+  wdt_reset();
 
   //adc_init();
 
@@ -482,17 +498,11 @@ int main(void)
   uart_puts("Init fertig\r\n");
   #endif
 
-  init_led(ADDR_LED00);
-  init_led(ADDR_LED01);
-
   sei();
-
-  led_helligkeit1(0x255,led_color_v);
-  led_helligkeit2(0x255,led_color_v);
 
   while(1)
   { 
-    //wdt_reset();
+    wdt_reset();
     //messung_s();
     /*
     set_timer3(1);

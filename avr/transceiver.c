@@ -40,6 +40,7 @@
 #define TREIBER_SRF 15
 
 extern unsigned int led_color_v;
+extern unsigned int led_br;
 extern int ichbinaus;
 unsigned int wert = 0;
 int ichsende=0;
@@ -74,6 +75,9 @@ void off(void)
   // Entprellung
   if ( !(PINE & (1<<PINE5)) )
   {
+    #ifdef debug
+    uart_puts("off():\r\n");
+    #endif
     if(ichbinaus == 1)
     {
       #ifdef debug
@@ -82,8 +86,8 @@ void off(void)
       memory[13] &= ~( 1 << 7);
       PORTA |= (1<<PA7);        // einschalten
       init_geraet();
-      led_helligkeit1(0x255,led_color_v);
-      led_helligkeit2(0x255,led_color_v);
+      //led_helligkeit1(0x255,led_color_v);
+      //led_helligkeit2(0x255,led_color_v);
       ichbinaus=0;
       EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
     }
@@ -97,23 +101,29 @@ void off(void)
       display_clear();
       save2memory();
       PORTA &= ~(1<<PA7);       // ausschalten...
-      led_helligkeit1(0x0,led_color_v);
-      led_helligkeit2(0x0,led_color_v);
-      // LED 9 ist die am Taster 1...
-      //led_pwm(0x0,1,255);
+      set_led_br1(0x0,led_color_v);
+      set_led_br2(0x0,led_color_v);
+      if(led_color_v == 0)
+      {
+	led_pwm(7,0x255,ADDR_LED00);
+      }
+      else
+      {
+	led_pwm(8,0x255,ADDR_LED00);
+      }
       EIMSK = (1<< INT5);
+      sei();
+      while(1)
+      {
+	wdt_reset();
+      }
     }
   }
 
 }
 void off2(void)
 {
-  cli();
-  memory[13] |= ( 1 << 7);
-  wdt_disable();
-  #ifdef debug
-  uart_puts("AUS\r\n");
-  #endif
+  //memory[13] |= ( 1 << 7);
   save2memory();
   #ifdef debug
   uart_puts("Fertig\r\n");
@@ -156,8 +166,8 @@ Byte   11 Brightness Standby
 Byte 12
 #######
     7-6       5-4         3-2     1                     0
-Mod HAM A   Mod HAM B     Mod CB  color display green   color keys green 
-                                  color display red     color keys red
+1 Mod HAM A   Mod HAM B   Mod CB  color display red	color keys red
+0                                 color display green   color keys green
 Byte 13
 #######
      7    6     5           4               3               2               1             0
@@ -202,6 +212,13 @@ Byte 17
     ichbinaus=0;
   }
   */
+
+
+  led_color_v=memory[12] & (1 << 0);
+  led_br=memory[10];
+  set_led_br1(led_br,led_color_v);
+  set_led_br2(led_br,led_color_v);
+
   if(memory[13] &(1<<6))
   {
     #ifdef debug 
@@ -231,6 +248,7 @@ Byte 17
     freq_a = ((unsigned long int) memory[0]) + ((unsigned long int) memory[1] << 8) + ((unsigned long int) memory[2] << 16) + ((unsigned long int) memory[3] << 24);
     freq_b = ((unsigned long int) memory[4]) + ((unsigned long int) memory[5] << 8) + ((unsigned long int) memory[6] << 16) + ((unsigned long int) memory[7] << 24);
     step2 = memory[15] >> 3;
+    
 
     if(memory[13] &0) 
     {
