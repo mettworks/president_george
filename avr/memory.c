@@ -251,7 +251,6 @@ int save2memory(void)
   while(i < MEM_SIZE)
   {
     ByteWriteSPI(H_Add,L_Add,memory[i]);
-    /*
     #ifdef debug
     char string[20];
     uart_puts("H_Add: ");
@@ -265,7 +264,6 @@ int save2memory(void)
     uart_puts(string);
     uart_puts("\r\n");
     #endif
-    */
     L_Add++;
     i++;
   }

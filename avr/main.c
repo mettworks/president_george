@@ -69,12 +69,12 @@ unsigned int adcvalues[20];
 ISR (INT4_vect)
 {
   cli();
+  //wdt_disable();
   TIMSK=0;
   EIMSK=0;
   #ifdef debug
   uart_puts("INT4_vect()\r\n");
   #endif
-  wdt_disable();
   off2();
 }
 ISR (INT5_vect)
@@ -465,6 +465,7 @@ int main(void)
   PORTE &= ~(1<<PE0);
   */
   cli();
+  /*
   if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))    // external, power-on- oder brown-out-reset
   {
     MCUCSR = 0;									      // Reset-Flags zurücksetzen
@@ -478,6 +479,7 @@ int main(void)
   }
   wdt_enable(WDTO_2S);								      // Watchdog mit 2 Sekunden
   wdt_reset();
+  */
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -488,7 +490,7 @@ int main(void)
   read_memory();
   init_geraet();
  
-  wdt_reset();
+  //wdt_reset();
 
   //adc_init();
 
@@ -502,7 +504,7 @@ int main(void)
 
   while(1)
   { 
-    wdt_reset();
+    //wdt_reset();
     //messung_s();
     /*
     set_timer3(1);
