@@ -251,7 +251,7 @@ int save2memory(void)
   while(i < MEM_SIZE)
   {
     ByteWriteSPI(H_Add,L_Add,memory[i]);
-    #ifdef debug
+    #ifdef debug_mem
     char string[20];
     uart_puts("H_Add: ");
     sprintf(string,"%u,",H_Add);
@@ -288,7 +288,7 @@ void read_memory(void)
   while(i < MEM_SIZE)
   {
     memory[i]=ByteReadSPI(H_Add,L_Add);
-    #ifdef debug
+    #ifdef debug_mem
     char string[20];
     uart_puts("H_Add: ");
     sprintf(string,"%u,",H_Add);

@@ -16,7 +16,7 @@ avrdude -p atmega128 -P /dev/ttyACM0 -c stk500v2 -v -U lfuse:w:0x9f:m -U hfuse:w
 #include "transceiver.h"
 #include "operating.h"
 #include "i2c.h"
-#include <avr/wdt.h> 
+//#include <avr/wdt.h> 
 #ifdef debug
 #include "debug.h"
 #include <stdlib.h>
@@ -62,21 +62,6 @@ unsigned int adccounter=20;
 unsigned int adcvalues[20];
 #define ADCMESSUNGEN 20;
 */
-//
-// IRQ für Spannungsabfall
-// wegspeichern der Einstellungen im EEPROM
-// beim wiederkommen von VCC, wird durch ein RC Glied Reset ausgelöst
-ISR (INT4_vect)
-{
-  cli();
-  //wdt_disable();
-  TIMSK=0;
-  EIMSK=0;
-  #ifdef debug
-  uart_puts("INT4_vect()\r\n");
-  #endif
-  off2();
-}
 ISR (INT5_vect)
 {
   #ifdef debug
@@ -86,7 +71,7 @@ ISR (INT5_vect)
 }
 ISR (INT7_vect)
 {
-  wdt_reset();
+  //wdt_reset();
   #ifdef debug
   uart_puts("INT7\r\n");
   #endif
@@ -445,41 +430,7 @@ ISR (SPM_READY_vect)
 
 int main(void) 
 {
-  /*
-  inituart();
-  DDRE &= ~(1<<PE4);    // Eingang
-  PORTE |= (1<<PE4);  // internen Pullup aktivieren
-  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
-  EIMSK |= (1 << INT4);
-  sei();
-  uart_puts("fertig\r\n");
-  while(1)
-  {
-  }
-  */
-  /*
-  //
-  // Timermessung per Logikanalyzer
-  DDRE = (1<<DDE0);
-  // low
-  PORTE &= ~(1<<PE0);
-  */
   cli();
-  /*
-  if ((MCUCSR & (1 << EXTRF)) || (MCUCSR & (1 << PORF)) || (MCUCSR & (1 << BORF)))    // external, power-on- oder brown-out-reset
-  {
-    MCUCSR = 0;									      // Reset-Flags zurücksetzen
-  }
-  if ((MCUCSR & (1 << WDRF)))							      // watchdog-reset
-  {
-    MCUCSR = 0;									      // Reset-Flags zurücksetzen
-    #ifdef debug
-    uart_puts("Wachhund Fehler");
-    #endif
-  }
-  wdt_enable(WDTO_2S);								      // Watchdog mit 2 Sekunden
-  wdt_reset();
-  */
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -490,10 +441,6 @@ int main(void)
   read_memory();
   init_geraet();
  
-  //wdt_reset();
-
-  //adc_init();
-
   #ifdef debug
   inituart();
   uart_puts("\r\n\r\n");
@@ -504,13 +451,5 @@ int main(void)
 
   while(1)
   { 
-    //wdt_reset();
-    //messung_s();
-    /*
-    set_timer3(1);
-    _delay_ms(8000);
-    set_timer3(1);
-    _delay_ms(8000);
-    */
   }
 } 

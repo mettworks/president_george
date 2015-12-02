@@ -70,6 +70,7 @@ extern unsigned int step2;
 
 void off(void)
 {
+  cli();
   _delay_ms(100);
   //
   // Entprellung
@@ -89,10 +90,18 @@ void off(void)
       //led_helligkeit1(0x255,led_color_v);
       //led_helligkeit2(0x255,led_color_v);
       ichbinaus=0;
-      EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+      EIMSK |= (1<< INT7) | (1<< INT5) | (1<< INT6);
+      sei();
     }
     else
     {
+      off2();
+    }
+  }
+
+}
+void off2(void)
+{
       ichbinaus=1;
       #ifdef debug
       uart_puts("AUS\r\n");
@@ -115,24 +124,7 @@ void off(void)
       sei();
       while(1)
       {
-	wdt_reset();
-      }
-    }
-  }
-
-}
-void off2(void)
-{
-  //memory[13] |= ( 1 << 7);
-  save2memory();
-  #ifdef debug
-  uart_puts("Fertig\r\n");
-  #endif
-  EIMSK = (1<< INT5);
-  sei();
-  while(1)
-  {
-  }
+      }	
 }
 
 int init_geraet(void)
@@ -199,7 +191,6 @@ Byte 17
 0 relais off  +
 
 */
-/*
   if(memory[13] &(1<<7))
   {
     uart_puts("ich bleibe aus...\r\n");
@@ -211,7 +202,6 @@ Byte 17
   {
     ichbinaus=0;
   }
-  */
 
 
   led_color_v=memory[12] & (1 << 0);

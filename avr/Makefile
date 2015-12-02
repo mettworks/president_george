@@ -40,6 +40,7 @@
 F_OSC = 18432000
 # -Ddebug sets Debugging via rs232
 # MEM_SIZE, Grosse des Array's Memory
+# debug_mem, Debug fuer speicher
 CDEFS = -DF_CPU=$(F_OSC)UL -DMEM_SIZE=17 -DADDR_LED00=0xC0 -DADDR_LED01=0xC2 -Ddebug
 
 # MCU name

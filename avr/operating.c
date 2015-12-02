@@ -185,7 +185,6 @@ void boot(void)
   #endif
   //
   // Ein und Ausgaeng
-  // PE4, INT4 ist VCC Kontrolle                                -> Eingang
   // PE7, INT7 ist 1. Port Expander                             -> Eingang
   // PE6, INT6 ist 2. Port Expander                             -> Eingang
   // PE5, INT5 ist Taster 1, Ein/Aus                            -> Eingang
@@ -198,10 +197,6 @@ void boot(void)
   // PA7 ist Ein/Aus                                            -> Ausgang
   // PA2 ist "Busy" (Rauschsperre offen)                        -> Eingang
   // PB5 ist der Ausgang fuer Rogerbeep etc.			-> Ausgang
-
-  // PE4
-  DDRE &= ~(1<<PE4);    // Eingang
-  PORTE |= (1<<PE4);  // internen Pullup aktivieren
 
   // PE7
   DDRE &= ~(1<<PE7);    // Eingang
@@ -243,9 +238,8 @@ void boot(void)
 
   EICRB |= (0 << ISC70) | (0 << ISC71);    // 0 löst aus
   EICRB |= (0 << ISC60) | (0 << ISC61);    // 0 löst aus
-  EICRB |= (0 << ISC40) | (1 << ISC41);    // fallende Flanke
   EICRB |= (0 << ISC50) | (0 << ISC51);    // fallende Flanke
-  EIMSK |= (1 << INT4) | (1<< INT7) | (1<< INT5) | (1<< INT6);
+  EIMSK |= (1<< INT7) | (1<< INT5) | (1<< INT6);
   i2c_init();
   display_init();
   init_timer0();
@@ -814,6 +808,7 @@ void keycheck(void)
 	display_write_frequenz(ch2freq(cb_channel));
       }
     }
+   save2memory();
   }
   // 
   // Drehschalter - ODER CH-
@@ -900,6 +895,7 @@ void keycheck(void)
 	display_write_frequenz(ch2freq(cb_channel));
       }
     }
+    save2memory();
   }	
 	
   // AM ENDE LASSEN!
