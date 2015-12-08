@@ -55,16 +55,6 @@ unsigned int ham_mod_a;
 unsigned int ham_mod_b;
 unsigned int split;
 
-//
-// Counter für S-Meter
-unsigned int adccounter=20;
-unsigned int adcwarmup=60;
-unsigned int adcvalues[20];
-uint32_t sum_min=99999;
-uint32_t sum_max=0;
-
-#define ADCMESSUNGEN 20;
-
 ISR (INT5_vect)
 {
   #ifdef debug
