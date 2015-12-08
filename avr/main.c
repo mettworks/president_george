@@ -57,11 +57,14 @@ unsigned int split;
 
 //
 // Counter für S-Meter
-/*
 unsigned int adccounter=20;
+unsigned int adcwarmup=60;
 unsigned int adcvalues[20];
+uint32_t sum_min=99999;
+uint32_t sum_max=0;
+
 #define ADCMESSUNGEN 20;
-*/
+
 ISR (INT5_vect)
 {
   #ifdef debug
@@ -143,56 +146,7 @@ void scan(void)
   }
 }
 */
-uint16_t adc_read(void )
-{
-  // ADC1 auswählen
-  //ADMUX |= (1<<MUX0);
-  //ADMUX |= (1 << MUX3) | (1<<MUX0);
-  ADMUX |= (1<<MUX0);
-  ADCSRA |= (1<<ADSC);
-  while (ADCSRA & (1<<ADSC) ) 
-  {   
-  }
-  return ADCW;                   
-}
-/*
-void messung_s(void)
-{
-  uint16_t messwert;
-  messwert=adc_read();
-  uint32_t sum=0;
-  unsigned int i;
-  //char s[7];
-	
-  if(adccounter == 0)
-  {
-    i=ADCMESSUNGEN;
-    while(i > 0)
-    {
-      sum=sum+adcvalues[i];
-      i--;
-    }
-    sum=sum/ADCMESSUNGEN;
-    //uart_puts("Durchschnitt: ");
-    //uart_puts( itoa( sum, s, 10 ) );
-    //uart_puts("\r\n");
-    display_write_meter(sum);
-    adccounter=ADCMESSUNGEN;
-  }
-  else
-  {
-    adcvalues[adccounter]=messwert;
-    adccounter--;
-  }
-}
-*/
-void adc_init(void)
-{
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);	  // Set ADC prescaler to 128 - 125KHz sample rate @ 16MHz
-  ADMUX |= (1 << REFS0) | (1 << REFS1);			  // 2.65 V
-  ADCSRA |= (1 << ADEN);				  // Enable ADC
-  ADCSRA |= (1 << ADSC);				  // Start A2D Conversions	
-}
+
 
 ISR (TIMER0_COMP_vect)
 {
@@ -427,6 +381,31 @@ ISR (SPM_READY_vect)
   {
   }
 }
+void adc_init(void)
+{
+  ADMUX |= (1<< REFS0) | (1<<MUX0);
+  ADCSRA |=  ( 1 << ADEN) |  (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+}
+
+uint16_t adc_read(void)
+{
+  ADCSRA |= ( 1 << ADSC);
+  while ( ADCSRA & (1<<ADSC) )  
+  {
+  }
+  return ADCW;
+}
+
+void messung_s(void)
+{
+  char s[7];
+  uint16_t messwert;
+  messwert=adc_read();
+  uart_puts("Messwert: ");
+  uart_puts( itoa( messwert, s, 10 ) );
+  uart_puts("\r\n");
+  display_write_meter(messwert);
+}
 
 int main(void) 
 {
@@ -449,7 +428,13 @@ int main(void)
 
   sei();
 
+  adc_init();
+
+  // :-D 
+  //tune(24890000,1,2);
+
   while(1)
   { 
+    messung_s();
   }
 } 

@@ -323,7 +323,8 @@ void display_write_meter(uint32_t value)
   
   */
   daten[76]=0x01;
-  if(value > 500)
+  // S9+10 -> 158µV -> 1,2V
+  if(value > 222) 
   {
     daten[82]=0x01;
     daten[88]=0x01;
@@ -334,20 +335,47 @@ void display_write_meter(uint32_t value)
     daten[98]=0x01;
     daten[97]=0x01;
   }
-  else if(value > 320)
+  // S9 -> 50µV -> 1,07V
+  else if(value > 195)
   {
     daten[82]=0x01;
     daten[88]=0x01;
     daten[91]=0x01;
     daten[92]=0x01;
-    daten[95]=0x0;
+    daten[95]=0x01;
+    daten[93]=0x01;
+    daten[98]=0x01;
+    daten[97]=0x0;
+  }
+  // S8 -> 25µV -> 0,98V
+  else if(value > 174) 
+  {
+    daten[82]=0x01;
+    daten[88]=0x01;
+    daten[91]=0x01;
+    daten[92]=0x01;
+    daten[95]=0x01;
+    daten[93]=0x01;
+    daten[98]=0x0;
+    daten[97]=0x0;
+  }
+  // S7 -> 12,6µV -> 169mV
+  else if(value > 6) 
+  {
+    daten[82]=0x01;
+    daten[88]=0x01;
+    daten[91]=0x01;
+    daten[92]=0x01;
+    daten[95]=0x01;
     daten[93]=0x0;
     daten[98]=0x0;
     daten[97]=0x0;
   }
+  // S6 -> 6,3µV -> 158mV
+  // S5 -> 3,16µV -> 158mV
   else
   {
-    daten[82]=0x01;
+    daten[82]=0x0;
     daten[88]=0x0;
     daten[91]=0x0;
     daten[92]=0x0;
