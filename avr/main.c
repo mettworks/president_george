@@ -423,8 +423,61 @@ int main(void)
   // :-D 
   //tune(24890000,1,2);
 
+// char *testtemp;
+/*
+  while(1)
+{
+  uart_puts("START\r\n");
+  i2c_init();
+   i2c_start_wait(0x50);
+   i2c_write(0x0);
+    i2c_start_wait(0x51);
+    testtemp=i2c_readNak();
+    uart_puts("ENDE");
+  _delay_ms(2000);
+}
+*/
+/*
+  i2c_stop();
+  _delay_ms(2000);
+
+*/
+/*  while(1)
+{
+*/
+
+/*
+  uart_puts("START\r\n");
+  i2c_init();
+   i2c_start(0x50);
+   i2c_write(0x0);
+    i2c_readNak();
+    i2c_start(0x51);
+    i2c_readNak();
+    uart_puts("ENDE\r\n");
+  i2c_stop();
+  _delay_ms(2000);
+*/
+/*
+  uart_puts("START\r\n");
+  i2c_init();
+   i2c_start(0x50);
+   i2c_write(0x0);
+    i2c_readNak();
+    i2c_start(0x51);
+    i2c_readNak();
+    uart_puts("ENDE\r\n");
+  i2c_stop();
+  _delay_ms(2000);
+
+  uart_puts("\r\n");
+*/
+/*
+}
+*/
+
   while(1)
   { 
-    messung_s();
+    //messung_s();
   }
 } 

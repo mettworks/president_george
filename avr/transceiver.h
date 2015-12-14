@@ -17,3 +17,4 @@ void set_beep(unsigned int beep_value);
 void setvfo(unsigned int vfo);
 void tone(unsigned int tonefreq);
 void init_tone(void);
+void i2c_poti(unsigned char value);

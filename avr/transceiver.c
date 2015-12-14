@@ -6,6 +6,7 @@
 #include "led.h"
 #include "display.h"
 #include "memory.h"
+#include "i2c.h"
 #include "operating.h"
 //#include "channels.h"
 #include <avr/wdt.h>
@@ -796,16 +797,45 @@ void set_modulation(unsigned int mod)
   display_write_mod(mod);
 }
 */
+
+void i2c_poti(unsigned char value)
+{
+  i2c_init();
+  /*
+  i2c_start_wait(0x50);
+  i2c_write(0x8);
+  i2c_write(0x80);
+  i2c_stop();
+  */
+
+  i2c_start_wait(0x50);
+  i2c_write(0x0);
+  i2c_write(value);
+  i2c_stop();
+}
+
+
 int rogerbeep(void)
 {
   #ifdef debug
   uart_puts("rogerbeep()\r\n");
   #endif
+/*
   init_tone();
   tone(2520);
   _delay_ms(250);
   tone(0);
   return 0;
+*/
+  init_tone();
+  i2c_poti(0x0);
+  tone(2520);
+  _delay_ms(1000);
+  i2c_poti(0xff);
+  tone(2520);
+  _delay_ms(1000);
+  tone(0);
+  return(0);
 }
 void init_tone(void)
 {

@@ -342,6 +342,7 @@ void keycheck(void)
     uart_puts("RX->TX\r\n");
     #endif
     quick=0;
+    /*
     if(modus == 1)
     {
       #ifdef debug
@@ -350,6 +351,7 @@ void keycheck(void)
     }
     else
     {
+    */
       if(txstat == 0)
       {
 	if(modus == 0)
@@ -363,7 +365,7 @@ void keycheck(void)
 	display_write_modus(1);
 	txstat=1;
       }
-    }
+    //}
   }
 
   else if((keys & 0x10400) == 0)
